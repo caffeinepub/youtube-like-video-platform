@@ -14,6 +14,20 @@ export class ExternalBlob {
     static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
     withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
+export interface AdminAnalytics {
+    totalViews: bigint;
+    totalVideos: bigint;
+    totalUsers: bigint;
+    totalComments: bigint;
+}
+export interface PlaylistView {
+    id: string;
+    title: string;
+    owner: Principal;
+    createdAt: Time;
+    description: string;
+    videos: Array<string>;
+}
 export type Time = bigint;
 export interface Comment {
     id: string;
@@ -22,19 +36,33 @@ export interface Comment {
     timestamp: Time;
     videoId: string;
 }
+export interface AdminDashboard {
+    analytics: AdminAnalytics;
+    users: Array<UserProfile>;
+    videos: Array<VideoMetadata>;
+}
 export interface VideoMetadata {
     id: string;
     title: string;
     duration: bigint;
+    isShort: boolean;
     description: string;
     videoFile: ExternalBlob;
     viewCount: bigint;
     uploader: Principal;
     uploadDate: Time;
 }
+export interface ApiKey {
+    key: string;
+    active: boolean;
+    owner: Principal;
+    createdAt: Time;
+    apiLabel: string;
+}
 export interface UserProfile {
     name: string;
     channelDescription: string;
+    avatar?: Uint8Array;
 }
 export enum UserRole {
     admin = "admin",
@@ -43,18 +71,41 @@ export enum UserRole {
 }
 export interface backendInterface {
     addComment(videoId: string, content: string): Promise<void>;
+    addVideoToPlaylist(playlistId: string, videoId: string): Promise<void>;
+    adminRemoveUserProfile(user: Principal): Promise<void>;
+    adminRemoveVideo(videoId: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    clearVideoComments(videoId: string): Promise<void>;
+    createApiKey(apiLabel: string): Promise<string>;
+    createPlaylist(title: string, description: string): Promise<string>;
+    deleteComment(videoId: string, commentId: string): Promise<void>;
+    deletePlaylist(playlistId: string): Promise<void>;
+    getAdminDashboard(): Promise<AdminDashboard>;
     getAllVideos(): Promise<Array<VideoMetadata>>;
+    getApiKeys(): Promise<Array<ApiKey>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getChannelVideoCount(channel: Principal): Promise<bigint>;
     getChannelVideos(channel: Principal): Promise<Array<VideoMetadata>>;
+    getCommentCount(videoId: string): Promise<bigint>;
     getComments(videoId: string): Promise<Array<Comment>>;
+    getPlaylistById(playlistId: string): Promise<PlaylistView | null>;
+    getPlaylistVideos(playlistId: string): Promise<Array<VideoMetadata>>;
+    getPlaylistsByOwner(owner: Principal): Promise<Array<PlaylistView>>;
+    getSubscriberCount(channel: Principal): Promise<bigint>;
     getSubscribers(channel: Principal): Promise<Array<Principal>>;
+    getTrendingVideos(): Promise<Array<VideoMetadata>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getUserSubscriptions(user: Principal): Promise<Array<Principal>>;
     getVideo(videoId: string): Promise<VideoMetadata | null>;
     incrementViewCount(videoId: string): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
+    removeVideoFromPlaylist(playlistId: string, videoId: string): Promise<void>;
+    revokeApiKey(key: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    searchVideos(searchTerm: string): Promise<Array<VideoMetadata>>;
     subscribeToChannel(channel: Principal): Promise<void>;
-    uploadVideo(title: string, description: string, duration: bigint, videoFile: ExternalBlob): Promise<string>;
+    unsubscribeFromChannel(channel: Principal): Promise<void>;
+    uploadVideo(title: string, description: string, duration: bigint, videoFile: ExternalBlob, isShort: boolean): Promise<string>;
+    validateApiKey(key: string): Promise<boolean>;
 }

@@ -1,21 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Build a YouTube-like video sharing platform where users can upload, watch, comment on, and share videos.
+**Goal:** Integrate the camera recording flow directly into the UploadVideoPage so users can record, preview, and upload a Short in one continuous flow without leaving the page.
 
 **Planned changes:**
-- Create backend data model for video metadata (title, description, upload date, duration, view count, uploader info)
-- Implement video upload functionality with title and description fields
-- Build video player interface with playback controls (play, pause, volume, fullscreen, progress bar)
-- Create video listing page with thumbnails, titles, view counts, and upload dates
-- Implement Internet Identity authentication for uploading and managing videos
-- Add video sharing functionality with shareable links
-- Implement comments system for authenticated users
-- Create subscription system allowing users to follow content creators
-- Build recommendation system showing suggested videos based on popularity and viewing history
-- Implement view count tracking that increments on playback
-- Create user profile pages showing uploaded videos and subscriber count
-- Design modern, vibrant interface with bold visual theme emphasizing video content discovery
-- Display platform branding logo and favicon
+- Add a "Record & Upload Short" button on the UploadVideoPage that opens the existing CameraRecordingModal.
+- After the user confirms a recording in the modal, automatically populate the upload form with the recorded Blob as the selected video file.
+- Automatically enable the "Mark as Short" toggle when a recording is confirmed via the camera flow.
+- Validate the recorded clip duration client-side; if it exceeds 60 seconds, show a warning and uncheck the Short toggle.
+- Keep title and description fields editable so the user can complete and submit the form without re-selecting a file.
+- If the user cancels the modal, leave the upload form state unchanged.
 
-**User-visible outcome:** Users can authenticate with Internet Identity, upload videos with metadata, watch videos with full playback controls, browse video listings, leave comments, subscribe to creators, view personalized recommendations, share video links, and visit user profiles showing uploaded content and subscriber counts.
+**User-visible outcome:** Users can record a video clip directly on the UploadVideoPage, have it auto-populated as a Short in the upload form, and submit — all without navigating away from the page.

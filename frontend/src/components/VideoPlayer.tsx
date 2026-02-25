@@ -3,6 +3,7 @@ import { Play, Pause, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import ShareButton from './ShareButton';
+import AdOverlay from './AdOverlay';
 import type { VideoMetadata } from '../backend';
 
 interface VideoPlayerProps {
@@ -20,67 +21,111 @@ export default function VideoPlayer({ video, onPlay }: VideoPlayerProps) {
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
+  const [showAd, setShowAd] = useState(false);
+  const [adDismissed, setAdDismissed] = useState(false);
 
   const videoUrl = video.videoFile.getDirectURL();
+  const isLongForm = !video.isShort;
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    const vid = videoRef.current;
+    if (!vid) return;
 
-    const updateTime = () => setCurrentTime(video.currentTime);
-    const updateDuration = () => setDuration(video.duration);
+    const updateTime = () => setCurrentTime(vid.currentTime);
+    const updateDuration = () => setDuration(vid.duration);
 
-    video.addEventListener('timeupdate', updateTime);
-    video.addEventListener('loadedmetadata', updateDuration);
+    vid.addEventListener('timeupdate', updateTime);
+    vid.addEventListener('loadedmetadata', updateDuration);
 
     return () => {
-      video.removeEventListener('timeupdate', updateTime);
-      video.removeEventListener('loadedmetadata', updateDuration);
+      vid.removeEventListener('timeupdate', updateTime);
+      vid.removeEventListener('loadedmetadata', updateDuration);
     };
   }, []);
 
+  const startPlayback = () => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    vid.play();
+    setIsPlaying(true);
+    if (!hasStartedPlaying) {
+      setHasStartedPlaying(true);
+      onPlay?.();
+    }
+  };
+
   const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
+    const vid = videoRef.current;
+    if (!vid) return;
 
     if (isPlaying) {
-      video.pause();
+      vid.pause();
+      setIsPlaying(false);
     } else {
-      video.play();
-      if (!hasStartedPlaying) {
-        setHasStartedPlaying(true);
-        onPlay?.();
+      // Show ad for long-form videos on first play
+      if (isLongForm && !adDismissed && !hasStartedPlaying) {
+        setShowAd(true);
+        // Pause the video while ad is showing
+        vid.pause();
+        setIsPlaying(false);
+        if (!hasStartedPlaying) {
+          setHasStartedPlaying(true);
+          onPlay?.();
+        }
+      } else {
+        startPlayback();
       }
     }
-    setIsPlaying(!isPlaying);
+  };
+
+  const handleAdSkip = () => {
+    setShowAd(false);
+    setAdDismissed(true);
+    // Restart video from beginning
+    const vid = videoRef.current;
+    if (vid) {
+      vid.currentTime = 0;
+    }
+    startPlayback();
+  };
+
+  const handleAdComplete = () => {
+    setShowAd(false);
+    setAdDismissed(true);
+    // Start video from beginning
+    const vid = videoRef.current;
+    if (vid) {
+      vid.currentTime = 0;
+    }
+    startPlayback();
   };
 
   const toggleMute = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = !isMuted;
+    const vid = videoRef.current;
+    if (!vid) return;
+    vid.muted = !isMuted;
     setIsMuted(!isMuted);
   };
 
   const handleVolumeChange = (value: number[]) => {
-    const video = videoRef.current;
-    if (!video) return;
+    const vid = videoRef.current;
+    if (!vid) return;
     const newVolume = value[0];
     setVolume(newVolume);
-    video.volume = newVolume / 100;
+    vid.volume = newVolume / 100;
     if (newVolume === 0) {
       setIsMuted(true);
-      video.muted = true;
+      vid.muted = true;
     } else if (isMuted) {
       setIsMuted(false);
-      video.muted = false;
+      vid.muted = false;
     }
   };
 
   const handleSeek = (value: number[]) => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.currentTime = value[0];
+    const vid = videoRef.current;
+    if (!vid) return;
+    vid.currentTime = value[0];
     setCurrentTime(value[0]);
   };
 
@@ -114,8 +159,14 @@ export default function VideoPlayer({ video, onPlay }: VideoPlayerProps) {
         className="w-full aspect-video"
         onClick={togglePlay}
       />
-      
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+
+      {/* Ad Overlay — only for long-form videos */}
+      {showAd && isLongForm && (
+        <AdOverlay onSkip={handleAdSkip} onComplete={handleAdComplete} />
+      )}
+
+      {/* Video Controls */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity z-10">
         <Slider
           value={[currentTime]}
           max={duration || 100}
@@ -123,7 +174,7 @@ export default function VideoPlayer({ video, onPlay }: VideoPlayerProps) {
           onValueChange={handleSeek}
           className="mb-3"
         />
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
@@ -134,7 +185,7 @@ export default function VideoPlayer({ video, onPlay }: VideoPlayerProps) {
             >
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </Button>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 size="icon"
@@ -152,12 +203,12 @@ export default function VideoPlayer({ video, onPlay }: VideoPlayerProps) {
                 className="w-20"
               />
             </div>
-            
+
             <span className="text-white text-sm">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <ShareButton videoId={video.id} />
             <Button

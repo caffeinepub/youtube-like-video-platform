@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 3,
-  "summary": "A YouTube-like video platform with comprehensive features including video upload, viewing, and sharing capabilities",
+  "projectStateVersion": 29,
+  "summary": "A YouTube-like video platform called Mediatube with comprehensive features including video upload, viewing, sharing, camera video recording, and more",
   "architectural_notes": [
     "Video streaming platform architecture required",
     "Need video storage and CDN integration",
@@ -10,7 +10,6 @@
   ],
   "known_issues": [],
   "isFixRequest": false,
-  "imageRequirements": "## Required Images\n- Modern video platform logo with play button element in vibrant colors (logo.dim_256x256.png)\n- Platform favicon icon with recognizable video symbol (favicon.dim_64x64.png)",
   "existing_features": [
     {
       "id": "feature-implement-video-upload-functionality-allowing-users-to-upload-video-files-with-title-and-description",
@@ -99,6 +98,190 @@
         "REQ-13"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-rebuild-and-restore-all-existing-platform-features-including-video-upload-video-playback-with-controls-video-listing-page-user-authentication-via-internet-identity-video-sharing-comments-system-subscription-system-video-recommendations-and-user-profile-pages-to-a-fully-working-state",
+      "title": "Rebuild and restore all existing platform features including video upload, video playback with controls, video listing page, user authentication via Internet Identity, video sharing, comments system, subscription system, video recommendations, and user profile pages to a fully working state.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-an-api-key-management-ui-page-accessible-from-the-user-s-profile-or-account-settings-the-page-should-allow-authenticated-users-to-generate-new-api-keys-assign-them-a-label-view-existing-keys-with-partial-masking-and-revoke-keys-with-a-confirmation-step",
+      "title": "Build an API Key Management UI page accessible from the user's profile or account settings. The page should allow authenticated users to generate new API keys, assign them a label, view existing keys (with partial masking), and revoke keys with a confirmation step.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-sign-in-with-google-authentication-option-on-the-home-page-login-flow-displayed-prominently-alongside-the-existing-internet-identity-login-button-the-google-login-button-should-follow-standard-google-sign-in-branding-guidelines-white-background-google-logo-sign-in-with-google-label",
+      "title": "Add a 'Sign in with Google' authentication option on the home page login flow, displayed prominently alongside the existing Internet Identity login button. The Google login button should follow standard Google Sign-In branding guidelines (white background, Google logo, 'Sign in with Google' label).",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-functional-google-oauth-login-flow-in-the-frontend-when-the-user-clicks-sign-in-with-google-initiate-a-real-oauth-2-0-authorization-flow-using-google-s-identity-services-gsi-popup-or-redirect-retrieve-the-user-s-google-id-token-and-establish-an-authenticated-session-store-the-google-identity-user-name-email-avatar-url-in-application-state-so-it-can-be-used-across-pages",
+      "title": "Implement a functional Google OAuth login flow in the frontend. When the user clicks 'Sign in with Google', initiate a real OAuth 2.0 authorization flow using Google's identity services (GSI/popup or redirect), retrieve the user's Google ID token, and establish an authenticated session. Store the Google identity (user name, email, avatar URL) in application state so it can be used across pages.",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-after-a-successful-google-login-prompt-the-user-to-complete-their-videohub-profile-channel-name-and-optional-description-using-the-existing-profilesetupmodal-if-no-profile-has-been-created-yet-associate-the-google-authenticated-user-s-session-with-their-profile-so-they-can-upload-videos-post-comments-and-subscribe-to-channels",
+      "title": "After a successful Google login, prompt the user to complete their VideoHub profile (channel name and optional description) using the existing ProfileSetupModal if no profile has been created yet. Associate the Google-authenticated user's session with their profile so they can upload videos, post comments, and subscribe to channels.",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-uploadvideopage-to-include-a-mark-as-short-toggle-checkbox-when-enabled-validate-that-the-selected-video-file-is-60-seconds-client-side-check-using-the-html5-video-element-s-duration-property-and-display-a-clear-warning-if-it-exceeds-the-limit-pass-the-isshort-flag-through-the-useuploadvideo-hook-to-the-backend",
+      "title": "Update the UploadVideoPage to include a 'Mark as Short' toggle/checkbox. When enabled, validate that the selected video file is ≤60 seconds (client-side check using the HTML5 video element's duration property) and display a clear warning if it exceeds the limit. Pass the `isShort` flag through the `useUploadVideo` hook to the backend.",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-profile-image-upload-control-to-the-profilepage-and-profilesetupmodal-users-authenticated-via-internet-identity-should-be-able-to-select-an-image-file-from-their-device-preview-it-as-a-circular-avatar-and-save-it-the-saved-avatar-should-replace-the-generic-placeholder-initials-avatar-throughout-the-app-header-videocard-uploader-comments-etc-google-authenticated-users-should-have-their-google-profile-picture-used-as-the-default-avatar-already-available-from-google-auth-state-with-the-option-to-override-it-with-a-custom-upload",
+      "title": "Add a profile image upload control to the ProfilePage and ProfileSetupModal. Users authenticated via Internet Identity should be able to select an image file from their device, preview it as a circular avatar, and save it. The saved avatar should replace the generic placeholder/initials avatar throughout the app (header, VideoCard uploader, comments, etc.). Google-authenticated users should have their Google profile picture used as the default avatar (already available from Google auth state), with the option to override it with a custom upload.",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-trending-videos-section-on-the-homepage-that-surfaces-the-most-popular-videos-based-on-view-count-and-recency-display-trending-videos-in-a-dedicated-horizontal-scroll-row-or-prominent-grid-section-above-the-main-video-listing-labeled-trending-sort-by-a-combined-score-of-view-count-and-upload-recency-e-g-videos-uploaded-within-the-last-7-days-weighted-by-views",
+      "title": "Add a Trending Videos section on the HomePage that surfaces the most popular videos based on view count and recency. Display trending videos in a dedicated horizontal scroll row or prominent grid section above the main video listing, labeled 'Trending'. Sort by a combined score of view count and upload recency (e.g., videos uploaded within the last 7 days weighted by views).",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-simple-advertisement-display-system-for-long-form-videos-isshort-false-show-a-skippable-pre-roll-ad-banner-overlay-at-the-start-of-long-video-playback-in-the-videoplayerpage-the-ad-should-display-for-a-fixed-duration-e-g-5-seconds-non-skippable-then-a-skip-ad-button-appears-after-5-seconds-ads-can-be-static-image-or-text-banners-sourced-from-a-configurable-ad-data-structure-in-the-frontend-no-external-ad-network-required",
+      "title": "Implement a simple advertisement display system for long-form videos (isShort = false). Show a skippable pre-roll ad banner/overlay at the start of long video playback in the VideoPlayerPage. The ad should display for a fixed duration (e.g., 5 seconds non-skippable, then a 'Skip Ad' button appears after 5 seconds). Ads can be static image or text banners sourced from a configurable ad data structure in the frontend (no external ad network required).",
+      "reqIds": [
+        "REQ-25"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-in-browser-camera-recording-option-to-the-uploadvideopage-provide-a-record-from-camera-button-that-opens-a-modal-or-inline-panel-using-the-browser-s-mediadevices-api-getusermedia-to-access-the-user-s-camera-and-microphone-allow-the-user-to-start-pause-and-stop-recording-after-stopping-display-a-preview-of-the-recorded-clip-the-recorded-video-blob-should-then-be-treated-as-the-selected-file-for-upload-populating-the-existing-upload-form-title-description-shorts-toggle-so-the-user-can-proceed-with-the-normal-upload-flow",
+      "title": "Add an in-browser camera recording option to the UploadVideoPage. Provide a 'Record from Camera' button that opens a modal or inline panel using the browser's MediaDevices API (getUserMedia) to access the user's camera and microphone. Allow the user to start, pause, and stop recording. After stopping, display a preview of the recorded clip. The recorded video blob should then be treated as the selected file for upload, populating the existing upload form (title, description, Shorts toggle) so the user can proceed with the normal upload flow.",
+      "reqIds": [
+        "REQ-26"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-a-reels-style-full-screen-vertical-scrolling-feed-page-at-route-reels-this-page-displays-short-form-videos-isshort-true-one-at-a-time-in-a-full-viewport-vertical-snap-scroll-layout-each-reel-card-fills-the-screen-and-shows-the-video-playing-autoplay-muted-by-default-loop-with-an-overlay-showing-the-video-title-uploader-name-avatar-view-count-like-share-button-and-a-subscribe-button-swiping-or-scrolling-snaps-to-the-next-previous-reel-add-a-reels-navigation-link-in-the-app-header",
+      "title": "Create a Reels-style full-screen vertical scrolling feed page at route '/reels'. This page displays short-form videos (isShort = true) one at a time in a full-viewport vertical snap-scroll layout. Each reel card fills the screen and shows the video playing (autoplay, muted by default, loop), with an overlay showing the video title, uploader name/avatar, view count, like/share button, and a 'Subscribe' button. Swiping or scrolling snaps to the next/previous reel. Add a 'Reels' navigation link in the app header.",
+      "reqIds": [
+        "REQ-28"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-a-dedicated-shorts-page-at-route-shorts-that-displays-all-short-form-videos-isshort-true-in-a-vertically-scrollable-grid-or-feed-layout-each-short-card-shows-a-thumbnail-title-view-count-and-uploader-clicking-a-short-opens-it-in-the-reels-full-screen-viewer-route-reels-scrolled-to-that-video-add-a-shorts-navigation-link-in-the-app-header",
+      "title": "Create a dedicated Shorts page at route '/shorts' that displays all short-form videos (isShort = true) in a vertically scrollable grid or feed layout. Each short card shows a thumbnail, title, view count, and uploader. Clicking a short opens it in the Reels full-screen viewer (route '/reels') scrolled to that video. Add a 'Shorts' navigation link in the app header.",
+      "reqIds": [
+        "REQ-29"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-a-playlists-management-page-at-route-playlists-authenticated-users-can-create-new-playlists-name-optional-description-view-their-existing-playlists-as-cards-showing-playlist-title-video-count-and-a-thumbnail-from-the-first-video-and-delete-playlists-each-playlist-card-links-to-a-playlist-detail-page-at-playlists-id-showing-all-videos-in-the-playlist-in-order-with-drag-to-reorder-support-and-controls-to-remove-individual-videos-from-the-playlist",
+      "title": "Create a Playlists management page at route '/playlists'. Authenticated users can create new playlists (name + optional description), view their existing playlists as cards showing playlist title, video count, and a thumbnail from the first video, and delete playlists. Each playlist card links to a Playlist Detail page at '/playlists/:id' showing all videos in the playlist in order with drag-to-reorder support, and controls to remove individual videos from the playlist.",
+      "reqIds": [
+        "REQ-30"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-on-the-videoplayerpage-add-an-add-to-playlist-button-near-the-video-title-actions-area-when-clicked-by-an-authenticated-user-show-a-dropdown-or-modal-listing-their-existing-playlists-with-checkboxes-to-add-remove-the-current-video-plus-an-option-to-create-a-new-playlist-inline-for-unauthenticated-users-show-a-sign-in-prompt",
+      "title": "On the VideoPlayerPage, add an 'Add to Playlist' button near the video title/actions area. When clicked by an authenticated user, show a dropdown or modal listing their existing playlists with checkboxes to add/remove the current video, plus an option to create a new playlist inline. For unauthenticated users, show a sign-in prompt.",
+      "reqIds": [
+        "REQ-31"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-on-the-apikeyspage-mask-all-api-keys-by-default-so-only-the-first-4-and-last-4-characters-are-visible-e-g-bpvl-oudl-with-the-middle-portion-replaced-by-asterisks-add-a-toggle-eye-icon-button-next-to-each-key-that-reveals-or-re-hides-the-full-key-value-on-click-the-copy-button-should-still-copy-the-full-key-value-regardless-of-visibility-state",
+      "title": "On the ApiKeysPage, mask all API keys by default so only the first 4 and last 4 characters are visible (e.g., 'BPvL...oUDl') with the middle portion replaced by asterisks. Add a toggle eye icon button next to each key that reveals or re-hides the full key value on click. The copy button should still copy the full key value regardless of visibility state.",
+      "reqIds": [
+        "REQ-32"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-change-the-subscribe-button-style-in-subscribebutton-tsx-from-red-background-to-a-white-background-with-dark-text-e-g-black-or-dark-gray-matching-a-clean-youtube-inspired-style-the-subscribed-already-subscribed-state-should-use-a-light-gray-background-with-dark-text-ensure-the-button-remains-visually-distinct-and-accessible",
+      "title": "Change the Subscribe button style in SubscribeButton.tsx from red background to a white background with dark text (e.g., black or dark gray), matching a clean YouTube-inspired style. The subscribed/already-subscribed state should use a light gray background with dark text. Ensure the button remains visually distinct and accessible.",
+      "reqIds": [
+        "REQ-33"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-youtube-style-persistent-bottom-navigation-bar-to-the-app-layout-on-mobile-viewports-the-bottom-bar-should-contain-five-items-matching-the-reference-image-home-house-icon-shorts-shorts-icon-upload-create-plus-icon-in-a-circle-center-subscriptions-subscription-icon-with-notification-badge-support-and-you-profile-user-avatar-each-item-should-be-tappable-and-navigate-to-the-corresponding-route-the-bar-should-only-be-visible-on-small-mobile-screens-hidden-on-desktop-where-the-top-nav-is-already-present",
+      "title": "Add a YouTube-style persistent bottom navigation bar to the app layout on mobile viewports. The bottom bar should contain five items matching the reference image: Home (house icon), Shorts (Shorts icon), Upload/Create (plus icon in a circle, center), Subscriptions (subscription icon with notification badge support), and You/Profile (user avatar). Each item should be tappable and navigate to the corresponding route. The bar should only be visible on small/mobile screens (hidden on desktop where the top nav is already present).",
+      "reqIds": [
+        "REQ-34"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-a-copyright-policy-page-at-route-copyright-that-outlines-the-platform-s-copyright-policy-dmca-takedown-process-and-content-ownership-rules-the-page-should-be-accessible-from-a-footer-or-legal-section-present-in-the-main-layout-component-content-should-be-well-structured-with-headings-and-paragraphs",
+      "title": "Create a Copyright Policy page at route '/copyright' that outlines the platform's copyright policy, DMCA takedown process, and content ownership rules. The page should be accessible from a footer or legal section present in the main Layout component. Content should be well-structured with headings and paragraphs.",
+      "reqIds": [
+        "REQ-35"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-search-bar-to-the-top-navigation-in-the-layout-component-when-the-user-types-and-submits-a-query-navigate-to-a-search-route-with-the-query-as-a-url-parameter-e-g-search-q-cats-create-a-search-results-page-at-route-search-that-calls-the-backend-search-function-with-the-query-parameter-and-displays-matching-videos-in-a-grid-using-the-existing-videocard-component-show-a-no-results-found-empty-state-when-there-are-no-matches",
+      "title": "Add a search bar to the top navigation in the Layout component. When the user types and submits a query, navigate to a '/search' route with the query as a URL parameter (e.g., '/search?q=cats'). Create a Search Results page at route '/search' that calls the backend search function with the query parameter and displays matching videos in a grid using the existing VideoCard component. Show a 'No results found' empty state when there are no matches.",
+      "reqIds": [
+        "REQ-37"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-language-selection-control-to-the-app-accessible-from-the-top-navigation-or-user-dropdown-menu-provide-at-least-the-following-language-options-english-spanish-french-german-arabic-hindi-and-japanese-persist-the-selected-language-to-localstorage-apply-the-selection-by-switching-a-language-context-that-wraps-the-app-and-translate-all-key-ui-labels-navigation-items-buttons-common-page-headings-using-a-simple-i18n-key-value-map-per-language-default-to-english-if-no-preference-is-stored",
+      "title": "Add a language selection control to the app (accessible from the top navigation or user dropdown menu). Provide at least the following language options: English, Spanish, French, German, Arabic, Hindi, and Japanese. Persist the selected language to localStorage. Apply the selection by switching a language context that wraps the app, and translate all key UI labels (navigation items, buttons, common page headings) using a simple i18n key-value map per language. Default to English if no preference is stored.",
+      "reqIds": [
+        "REQ-38"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-camera-recording-flow-on-the-reels-page-and-uploadvideopage-so-that-a-video-recorded-via-the-in-browser-camerarecordingmodal-is-correctly-carried-through-to-the-upload-form-after-the-user-stops-recording-and-confirms-the-clip-in-the-modal-the-recorded-blob-must-be-set-as-the-selected-file-in-the-upload-form-populating-title-description-and-shorts-toggle-fields-so-the-user-can-complete-and-submit-the-upload-without-the-recorded-video-being-silently-dropped-or-ignored",
+      "title": "Fix the camera recording flow on the Reels page and UploadVideoPage so that a video recorded via the in-browser CameraRecordingModal is correctly carried through to the upload form. After the user stops recording and confirms the clip in the modal, the recorded Blob must be set as the selected file in the upload form (populating title, description, and Shorts toggle fields) so the user can complete and submit the upload without the recorded video being silently dropped or ignored.",
+      "reqIds": [
+        "REQ-39"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-an-admin-dashboard-for-mediatube-accessible-at-route-admin-the-page-must-be-restricted-to-a-designated-admin-principal-hardcoded-or-stored-in-backend-the-dashboard-should-include-1-user-management-list-all-registered-user-profiles-with-their-principal-channel-name-and-avatar-2-video-moderation-list-all-uploaded-videos-with-title-uploader-upload-date-view-count-and-a-remove-action-to-delete-a-video-3-platform-analytics-display-aggregate-stats-including-total-videos-total-users-total-comments-and-total-views-4-a-navigation-link-or-entry-point-to-the-admin-panel-visible-only-to-the-admin-user-in-the-app-header-or-profile-dropdown",
+      "title": "Create an Admin Dashboard for Mediatube accessible at route '/admin'. The page must be restricted to a designated admin principal (hardcoded or stored in backend). The dashboard should include: (1) User Management — list all registered user profiles with their principal, channel name, and avatar; (2) Video Moderation — list all uploaded videos with title, uploader, upload date, view count, and a 'Remove' action to delete a video; (3) Platform Analytics — display aggregate stats including total videos, total users, total comments, and total views; (4) A navigation link or entry point to the admin panel visible only to the admin user in the app header or profile dropdown.",
+      "reqIds": [
+        "REQ-40"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-on-the-uploadvideopage-add-a-seamless-record-upload-short-flow-when-the-user-opens-the-camerarecordingmodal-and-completes-a-recording-automatically-set-the-mark-as-short-toggle-to-enabled-populate-the-upload-form-with-the-recorded-blob-as-the-selected-file-and-allow-the-user-to-immediately-submit-the-upload-all-within-a-single-continuous-ui-flow-without-leaving-the-page",
+      "title": "On the UploadVideoPage, add a seamless 'Record & Upload Short' flow: when the user opens the CameraRecordingModal and completes a recording, automatically set the 'Mark as Short' toggle to enabled, populate the upload form with the recorded Blob as the selected file, and allow the user to immediately submit the upload — all within a single continuous UI flow without leaving the page.",
+      "reqIds": [
+        "REQ-41"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -158,6 +341,148 @@
       "reqIds": [
         "REQ-10"
       ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-18",
+      "summary": "Add API key integration/management functionality",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-19",
+      "summary": "Implement an API key management system in the backend that allows authenticated users to generate, view, and revoke API keys associated with their account. Store API keys securely with metadata including creation date, label/name, and active status.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-20",
+      "summary": "Add Google account login (OAuth) as an authentication option alongside existing Internet Identity",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-21",
+      "summary": "Support short video uploads (e.g., Shorts-style short-form video content)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-22",
+      "summary": "Allow users to set/upload a profile image (avatar) for their account",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-23",
+      "summary": "Add a 'short video' category/flag to the backend video data model. When uploading a video, allow users to mark it as a 'Short' (short-form video, e.g. ≤60 seconds). Store this flag alongside existing video metadata. Enforce a maximum file size or duration hint so the upload page can warn users if the video exceeds the short-form threshold.",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-25",
+      "summary": "Add a profile image (avatar) field to the user profile data model in the backend. Allow authenticated users to upload a small profile image as a blob (stored inline, with a reasonable size cap, e.g. 512 KB). Expose a `setProfileImage` update call and include the image blob in the user profile query response.",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-26",
+      "summary": "Add a Trending videos section/page that surfaces popular or trending videos based on view counts, recency, or engagement",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-27",
+      "summary": "Add advertisement/ads support for long-form videos (e.g., pre-roll or mid-roll ads displayed during long video playback)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-28",
+      "summary": "Allow users to record and upload videos directly from their device camera (in-browser camera recording support)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-29",
+      "summary": "Add a Reels-style video feed page (vertical scrolling short videos, similar to Instagram Reels/TikTok)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-30",
+      "summary": "Add a dedicated Shorts page that displays short-form videos (≤60 seconds) in a scrollable feed",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-31",
+      "summary": "Add playlist functionality allowing users to create, manage, and view playlists of videos",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-32",
+      "summary": "Add a backend data model and API for playlists. A playlist has an ID, title, description, owner principal, ordered list of video IDs, and creation timestamp. Expose functions: createPlaylist, addVideoToPlaylist, removeVideoFromPlaylist, deletePlaylist, getPlaylistById, getPlaylistsByOwner, and getPlaylistVideos (returns full video metadata for all videos in the playlist in order).",
+      "reqIds": [
+        "REQ-27"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-33",
+      "summary": "Add a Premium membership/subscription system with plans (Free/Premium), exclusive features for premium users (ad-free, HD quality), and membership badge on profile",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-34",
+      "summary": "Change Subscribe button color from red to white, and add a settings permission/allow option (user will provide a reference photo to match the design)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-35",
+      "summary": "Add a Copyright Policy page accessible from the platform (e.g., footer or legal section)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-36",
+      "summary": "Add a search functionality allowing users to search for videos by title, description, or uploader",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-37",
+      "summary": "Add multi-language support / language selection option for the platform UI",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-39",
+      "summary": "Add a backend search function that accepts a query string and returns videos whose title, description, or uploader principal (as string) contain the query (case-insensitive match).",
+      "reqIds": [
+        "REQ-36"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-40",
+      "summary": "Add an Admin panel/dashboard for Mediatube with platform management capabilities (user management, video moderation, analytics, etc.)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-41",
+      "summary": "Channel subscription monetization: allow creators to earn money (dollar payouts) when their channel reaches 1000 subscribers on Mediatube",
+      "reqIds": [],
       "status": "pending"
     }
   ],

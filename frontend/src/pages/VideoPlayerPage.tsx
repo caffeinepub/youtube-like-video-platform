@@ -1,4 +1,4 @@
-import { useParams } from '@tanstack/react-router';
+import { useParams, Link } from '@tanstack/react-router';
 import { useGetVideo } from '../hooks/useGetVideo';
 import { useIncrementViewCount } from '../hooks/useIncrementViewCount';
 import { useGetUserProfile } from '../hooks/useGetUserProfile';
@@ -6,21 +6,22 @@ import VideoPlayer from '../components/VideoPlayer';
 import CommentsSection from '../components/CommentsSection';
 import RecommendedVideos from '../components/RecommendedVideos';
 import SubscribeButton from '../components/SubscribeButton';
+import AddToPlaylistButton from '../components/AddToPlaylistButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Eye, Calendar } from 'lucide-react';
 import { formatViewCount, formatTimeAgo } from '../utils/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Link } from '@tanstack/react-router';
+import type { Principal } from '@dfinity/principal';
 
 export default function VideoPlayerPage() {
-  const { id } = useParams({ from: '/video/$id' });
-  const { data: video, isLoading } = useGetVideo(id);
-  const { data: uploaderProfile } = useGetUserProfile(video?.uploader);
+  const { videoId } = useParams({ from: '/video/$videoId' });
+  const { data: video, isLoading } = useGetVideo(videoId);
+  const { data: uploaderProfile } = useGetUserProfile(video?.uploader as Principal | undefined);
   const { mutate: incrementView } = useIncrementViewCount();
 
   const handlePlay = () => {
-    incrementView(id);
+    incrementView(videoId);
   };
 
   if (isLoading) {
@@ -59,18 +60,17 @@ export default function VideoPlayerPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <VideoPlayer video={video} onPlay={handlePlay} />
-          
+
           <div>
             <h1 className="text-2xl font-bold mb-3">{video.title}</h1>
-            
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-border">
-              <Link 
-                to="/profile/$principalId" 
-                params={{ principalId: video.uploader.toString() }}
+
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-border flex-wrap gap-3">
+              <Link
+                to="/profile"
                 className="flex items-center gap-3 hover:opacity-80 transition-opacity"
               >
                 <Avatar className="w-12 h-12">
-                  <AvatarFallback className="bg-gradient-to-br from-[oklch(0.65_0.25_25)] to-[oklch(0.55_0.28_340)] text-white text-lg">
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-primary-foreground text-lg">
                     {uploaderName[0]?.toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
@@ -88,20 +88,23 @@ export default function VideoPlayerPage() {
                   </div>
                 </div>
               </Link>
-              
-              <SubscribeButton channelPrincipal={video.uploader} />
+
+              <div className="flex items-center gap-2">
+                <AddToPlaylistButton videoId={video.id} />
+                <SubscribeButton channelPrincipal={video.uploader as Principal} />
+              </div>
             </div>
-            
+
             <Card>
               <CardContent className="pt-6">
                 <p className="text-sm whitespace-pre-wrap">{video.description}</p>
               </CardContent>
             </Card>
           </div>
-          
+
           <CommentsSection videoId={video.id} />
         </div>
-        
+
         <div className="space-y-6">
           <RecommendedVideos currentVideoId={video.id} limit={6} />
         </div>

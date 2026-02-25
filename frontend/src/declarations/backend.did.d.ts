@@ -10,6 +10,24 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface AdminAnalytics {
+  'totalViews' : bigint,
+  'totalVideos' : bigint,
+  'totalUsers' : bigint,
+  'totalComments' : bigint,
+}
+export interface AdminDashboard {
+  'analytics' : AdminAnalytics,
+  'users' : Array<UserProfile>,
+  'videos' : Array<VideoMetadata>,
+}
+export interface ApiKey {
+  'key' : string,
+  'active' : boolean,
+  'owner' : Principal,
+  'createdAt' : Time,
+  'apiLabel' : string,
+}
 export interface Comment {
   'id' : string,
   'content' : string,
@@ -18,8 +36,20 @@ export interface Comment {
   'videoId' : string,
 }
 export type ExternalBlob = Uint8Array;
+export interface PlaylistView {
+  'id' : string,
+  'title' : string,
+  'owner' : Principal,
+  'createdAt' : Time,
+  'description' : string,
+  'videos' : Array<string>,
+}
 export type Time = bigint;
-export interface UserProfile { 'name' : string, 'channelDescription' : string }
+export interface UserProfile {
+  'name' : string,
+  'channelDescription' : string,
+  'avatar' : [] | [Uint8Array],
+}
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
@@ -27,6 +57,7 @@ export interface VideoMetadata {
   'id' : string,
   'title' : string,
   'duration' : bigint,
+  'isShort' : boolean,
   'description' : string,
   'videoFile' : ExternalBlob,
   'viewCount' : bigint,
@@ -62,20 +93,46 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addComment' : ActorMethod<[string, string], undefined>,
+  'addVideoToPlaylist' : ActorMethod<[string, string], undefined>,
+  'adminRemoveUserProfile' : ActorMethod<[Principal], undefined>,
+  'adminRemoveVideo' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'clearVideoComments' : ActorMethod<[string], undefined>,
+  'createApiKey' : ActorMethod<[string], string>,
+  'createPlaylist' : ActorMethod<[string, string], string>,
+  'deleteComment' : ActorMethod<[string, string], undefined>,
+  'deletePlaylist' : ActorMethod<[string], undefined>,
+  'getAdminDashboard' : ActorMethod<[], AdminDashboard>,
   'getAllVideos' : ActorMethod<[], Array<VideoMetadata>>,
+  'getApiKeys' : ActorMethod<[], Array<ApiKey>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getChannelVideoCount' : ActorMethod<[Principal], bigint>,
   'getChannelVideos' : ActorMethod<[Principal], Array<VideoMetadata>>,
+  'getCommentCount' : ActorMethod<[string], bigint>,
   'getComments' : ActorMethod<[string], Array<Comment>>,
+  'getPlaylistById' : ActorMethod<[string], [] | [PlaylistView]>,
+  'getPlaylistVideos' : ActorMethod<[string], Array<VideoMetadata>>,
+  'getPlaylistsByOwner' : ActorMethod<[Principal], Array<PlaylistView>>,
+  'getSubscriberCount' : ActorMethod<[Principal], bigint>,
   'getSubscribers' : ActorMethod<[Principal], Array<Principal>>,
+  'getTrendingVideos' : ActorMethod<[], Array<VideoMetadata>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'getUserSubscriptions' : ActorMethod<[Principal], Array<Principal>>,
   'getVideo' : ActorMethod<[string], [] | [VideoMetadata]>,
   'incrementViewCount' : ActorMethod<[string], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'removeVideoFromPlaylist' : ActorMethod<[string, string], undefined>,
+  'revokeApiKey' : ActorMethod<[string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'searchVideos' : ActorMethod<[string], Array<VideoMetadata>>,
   'subscribeToChannel' : ActorMethod<[Principal], undefined>,
-  'uploadVideo' : ActorMethod<[string, string, bigint, ExternalBlob], string>,
+  'unsubscribeFromChannel' : ActorMethod<[Principal], undefined>,
+  'uploadVideo' : ActorMethod<
+    [string, string, bigint, ExternalBlob, boolean],
+    string
+  >,
+  'validateApiKey' : ActorMethod<[string], boolean>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

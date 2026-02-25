@@ -1,18 +1,26 @@
 import { useGetAllVideos } from '../hooks/useGetAllVideos';
 import VideoCard from '../components/VideoCard';
 import RecommendedVideos from '../components/RecommendedVideos';
+import TrendingVideos from '../components/TrendingVideos';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 
 export default function HomePage() {
   const { data: videos, isLoading } = useGetAllVideos();
 
   return (
-    <div className="container py-8 space-y-12">
+    <div className="container py-8 space-y-10">
+      {/* Trending Section */}
+      <TrendingVideos />
+
+      <Separator className="opacity-40" />
+
+      {/* All Videos Section */}
       <section>
         <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-[oklch(0.65_0.25_25)] to-[oklch(0.55_0.28_340)] bg-clip-text text-transparent">
           All Videos
         </h1>
-        
+
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (

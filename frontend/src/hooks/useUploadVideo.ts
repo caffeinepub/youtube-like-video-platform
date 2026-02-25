@@ -7,6 +7,7 @@ interface UploadVideoParams {
   description: string;
   duration: number;
   file: File;
+  isShort?: boolean;
 }
 
 export function useUploadVideo(onProgress?: (percentage: number) => void) {
@@ -14,7 +15,7 @@ export function useUploadVideo(onProgress?: (percentage: number) => void) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ title, description, duration, file }: UploadVideoParams): Promise<string> => {
+    mutationFn: async ({ title, description, duration, file, isShort = false }: UploadVideoParams): Promise<string> => {
       if (!actor) throw new Error('Actor not available');
 
       const arrayBuffer = await file.arrayBuffer();
@@ -26,7 +27,7 @@ export function useUploadVideo(onProgress?: (percentage: number) => void) {
         videoBlob = videoBlob.withUploadProgress(onProgress);
       }
 
-      return actor.uploadVideo(title, description, BigInt(duration), videoBlob);
+      return actor.uploadVideo(title, description, BigInt(duration), videoBlob, isShort);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['videos'] });
