@@ -1,0 +1,167 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "A YouTube-like video platform with comprehensive features including video upload, viewing, and sharing capabilities",
+  "architectural_notes": [
+    "Video streaming platform architecture required",
+    "Need video storage and CDN integration",
+    "User authentication and authorization system",
+    "Video processing pipeline for different resolutions"
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- Modern video platform logo with play button element in vibrant colors (logo.dim_256x256.png)\n- Platform favicon icon with recognizable video symbol (favicon.dim_64x64.png)",
+  "existing_features": [
+    {
+      "id": "feature-implement-video-upload-functionality-allowing-users-to-upload-video-files-with-title-and-description",
+      "title": "Implement video upload functionality allowing users to upload video files with title and description",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-a-video-player-interface-with-playback-controls-including-play-pause-volume-and-fullscreen-options",
+      "title": "Build a video player interface with playback controls including play, pause, volume, and fullscreen options",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-a-video-listing-page-displaying-all-uploaded-videos-with-thumbnails-titles-view-counts-and-upload-dates",
+      "title": "Create a video listing page displaying all uploaded videos with thumbnails, titles, view counts, and upload dates",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-user-authentication-system-using-internet-identity-for-uploading-and-managing-videos",
+      "title": "Implement user authentication system using Internet Identity for uploading and managing videos",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-video-sharing-functionality-with-shareable-links-for-each-video",
+      "title": "Add video sharing functionality with shareable links for each video",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-comments-system-allowing-users-to-leave-comments-on-videos",
+      "title": "Implement a comments system allowing users to leave comments on videos",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-a-subscription-system-allowing-users-to-subscribe-to-other-users-channels",
+      "title": "Create a subscription system allowing users to subscribe to other users' channels",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-a-video-recommendation-system-showing-suggested-videos-based-on-viewing-history-or-popularity",
+      "title": "Build a video recommendation system showing suggested videos based on viewing history or popularity",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-user-profile-pages-showing-uploaded-videos-and-subscriber-count",
+      "title": "Create user profile pages showing uploaded videos and subscriber count",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-design-a-modern-engaging-video-platform-interface-with-a-bold-visual-theme-using-vibrant-colors-clean-typography-and-an-intuitive-layout-that-emphasizes-video-content-discovery",
+      "title": "Design a modern, engaging video platform interface with a bold visual theme using vibrant colors, clean typography, and an intuitive layout that emphasizes video content discovery",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-render-generated-platform-branding-images-and-icons-as-static-assets-in-frontend-public-assets-generated",
+      "title": "Render generated platform branding images and icons as static assets in frontend/public/assets/generated",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Video upload functionality",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Video playback/viewing interface",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Video sharing capabilities",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "User accounts and authentication",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Video recommendations and discovery",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Comments and engagement features",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Subscriptions and channel management",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Create a backend data model for storing video metadata including title, description, upload date, duration, view count, and uploader information",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-17",
+      "summary": "Implement view count tracking that increments when a video is watched",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "status": "pending"
+    }
+  ],
+  "projectName": "YouTube-like Video Platform",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

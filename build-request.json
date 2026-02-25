@@ -1,0 +1,228 @@
+{
+  "kind": "build_request",
+  "title": "Build YouTube-like video sharing platform",
+  "projectName": "Video Hub",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Create a backend data model for storing video metadata including title, description, upload date, duration, view count, and uploader information",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Video records can be created with all required metadata fields",
+        "Each video has a unique identifier",
+        "Uploader information is associated with each video"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Implement video upload functionality allowing users to upload video files with title and description",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Users can select and upload video files",
+        "Upload form includes fields for title and description",
+        "Uploaded videos are stored and retrievable",
+        "Upload progress is shown to the user"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Build a video player interface with playback controls including play, pause, volume, and fullscreen options",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Video player displays uploaded videos",
+        "Play and pause controls work correctly",
+        "Volume control is functional",
+        "Fullscreen mode can be toggled",
+        "Video progress bar shows current position"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Create a video listing page displaying all uploaded videos with thumbnails, titles, view counts, and upload dates",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "All videos are displayed in a grid or list layout",
+        "Each video shows thumbnail, title, views, and date",
+        "Clicking a video navigates to the video player page"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Implement user authentication system using Internet Identity for uploading and managing videos",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Users can authenticate using Internet Identity",
+        "Only authenticated users can upload videos",
+        "User identity is associated with uploaded videos"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Add video sharing functionality with shareable links for each video",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Each video has a unique shareable URL",
+        "Share button generates a copyable link",
+        "Shared links load the correct video player page"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Implement a comments system allowing users to leave comments on videos",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Authenticated users can post comments on videos",
+        "Comments display with username and timestamp",
+        "Comments are visible to all users viewing the video"
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Create a subscription system allowing users to subscribe to other users' channels",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Users can subscribe to content creators",
+        "Subscription count is displayed on user profiles",
+        "Users can view a list of their subscriptions"
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "text": "Build a video recommendation system showing suggested videos based on viewing history or popularity",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Recommended videos are shown on the home page",
+        "Recommendations update based on user activity",
+        "Popular videos are prioritized for new users"
+      ]
+    },
+    {
+      "id": "REQ-10",
+      "text": "Implement view count tracking that increments when a video is watched",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "View count increments when video playback starts",
+        "View counts persist across sessions",
+        "View counts are displayed on video listings and player"
+      ]
+    },
+    {
+      "id": "REQ-11",
+      "text": "Create user profile pages showing uploaded videos and subscriber count",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Each user has a profile page accessible via their username",
+        "Profile displays all videos uploaded by that user",
+        "Subscriber count is visible on the profile"
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "text": "Design a modern, engaging video platform interface with a bold visual theme using vibrant colors, clean typography, and an intuitive layout that emphasizes video content discovery",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Color scheme is vibrant and distinct from standard blue/purple",
+        "Typography is clear and readable across all components",
+        "Layout prioritizes video thumbnails and discovery",
+        "Visual style is consistent across all pages"
+      ]
+    },
+    {
+      "id": "REQ-13",
+      "text": "Render generated platform branding images and icons as static assets in frontend/public/assets/generated",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Generated logo is displayed in the navigation header",
+        "Platform icon is used as favicon",
+        "Images are served from the frontend public directory"
+      ]
+    }
+  ],
+  "constraints": [
+    "Video files must be stored and managed within the Internet Computer's storage capabilities",
+    "Authentication must use Internet Identity only",
+    "No external video hosting services or CDNs can be used",
+    "Real-time features like live streaming are not supported"
+  ],
+  "nonGoals": [
+    "Live streaming functionality",
+    "Video editing or processing features",
+    "Mobile app development",
+    "External social media integration",
+    "Monetization or payment processing",
+    "Advanced analytics or reporting dashboards"
+  ],
+  "imageRequirements": {
+    "required": [
+      "Modern video platform logo with play button element in vibrant colors (logo.dim_256x256.png)",
+      "Platform favicon icon with recognizable video symbol (favicon.dim_64x64.png)"
+    ],
+    "edits": []
+  }
+}

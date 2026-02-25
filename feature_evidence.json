@@ -1,0 +1,253 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-implement-video-upload-functionality-allowing-users-to-upload-video-files-with-title-and-description",
+      "featureTitle": "Implement video upload functionality allowing users to upload video files with title and description",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/hooks/useUploadVideo.ts",
+        "frontend/src/pages/UploadVideoPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-build-a-video-player-interface-with-playback-controls-including-play-pause-volume-and-fullscreen-options",
+      "featureTitle": "Build a video player interface with playback controls including play, pause, volume, and fullscreen options",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/VideoPlayer.tsx",
+        "frontend/src/hooks/useGetVideo.ts",
+        "frontend/src/hooks/useIncrementViewCount.ts",
+        "frontend/src/pages/VideoPlayerPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-a-video-listing-page-displaying-all-uploaded-videos-with-thumbnails-titles-view-counts-and-upload-dates",
+      "featureTitle": "Create a video listing page displaying all uploaded videos with thumbnails, titles, view counts, and upload dates",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/VideoCard.tsx",
+        "frontend/src/hooks/useGetAllVideos.ts",
+        "frontend/src/pages/HomePage.tsx",
+        "frontend/src/utils/formatters.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-user-authentication-system-using-internet-identity-for-uploading-and-managing-videos",
+      "featureTitle": "Implement user authentication system using Internet Identity for uploading and managing videos",
+      "files": [
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/components/ProfileSetupModal.tsx",
+        "frontend/src/hooks/useGetCallerUserProfile.ts",
+        "frontend/src/hooks/useSaveCallerUserProfile.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-video-sharing-functionality-with-shareable-links-for-each-video",
+      "featureTitle": "Add video sharing functionality with shareable links for each video",
+      "files": [
+        "frontend/src/components/ShareButton.tsx",
+        "frontend/src/components/VideoPlayer.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-a-comments-system-allowing-users-to-leave-comments-on-videos",
+      "featureTitle": "Implement a comments system allowing users to leave comments on videos",
+      "files": [
+        "frontend/src/components/CommentsSection.tsx",
+        "frontend/src/hooks/useAddComment.ts",
+        "frontend/src/hooks/useGetComments.ts",
+        "frontend/src/pages/VideoPlayerPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-a-subscription-system-allowing-users-to-subscribe-to-other-users-channels",
+      "featureTitle": "Create a subscription system allowing users to subscribe to other users' channels",
+      "files": [
+        "frontend/src/components/SubscribeButton.tsx",
+        "frontend/src/hooks/useGetSubscribers.ts",
+        "frontend/src/hooks/useSubscribeToChannel.ts",
+        "frontend/src/pages/ProfilePage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-build-a-video-recommendation-system-showing-suggested-videos-based-on-viewing-history-or-popularity",
+      "featureTitle": "Build a video recommendation system showing suggested videos based on viewing history or popularity",
+      "files": [
+        "frontend/src/components/RecommendedVideos.tsx",
+        "frontend/src/pages/HomePage.tsx",
+        "frontend/src/pages/VideoPlayerPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-9"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-user-profile-pages-showing-uploaded-videos-and-subscriber-count",
+      "featureTitle": "Create user profile pages showing uploaded videos and subscriber count",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/hooks/useGetChannelVideos.ts",
+        "frontend/src/hooks/useGetUserProfile.ts",
+        "frontend/src/pages/ProfilePage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-11"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-design-a-modern-engaging-video-platform-interface-with-a-bold-visual-theme-using-vibrant-colors-clean-typography-and-an-intuitive-layout-that-emphasizes-video-content-discovery",
+      "featureTitle": "Design a modern, engaging video platform interface with a bold visual theme using vibrant colors, clean typography, and an intuitive layout that emphasizes video content discovery",
+      "files": [
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/index.css",
+        "frontend/tailwind.config.js"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-12"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-render-generated-platform-branding-images-and-icons-as-static-assets-in-frontend-public-assets-generated",
+      "featureTitle": "Render generated platform branding images and icons as static assets in frontend/public/assets/generated",
+      "files": [
+        "frontend/index.html",
+        "frontend/src/components/Layout.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-13"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

@@ -1,0 +1,336 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Video Hub - YouTube-like Video Sharing Platform Frontend",
+  "requirements": [
+    {
+      "id": "REQ-2",
+      "summary": "Implement video upload UI with title, description, and progress tracking",
+      "acceptanceCriteria": [
+        "Users can select and upload video files",
+        "Upload form includes fields for title and description",
+        "Upload progress is shown to the user"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/UploadVideoPage.tsx",
+          "operation": "create",
+          "description": "Create video upload page with form fields for title, description, and file selection. Use the blob-storage component to handle video file uploads with progress tracking via ExternalBlob.fromBytes().withUploadProgress(). Integrate with backend uploadVideo method. Show upload progress bar and success/error messages. Only accessible to authenticated users."
+        },
+        {
+          "path": "frontend/src/hooks/useUploadVideo.ts",
+          "operation": "create",
+          "description": "Create mutation hook for uploading videos. Use ExternalBlob.fromBytes() to convert selected file to ExternalBlob with upload progress callback. Call backend uploadVideo method with title, description, duration, and videoFile. Return upload progress state and mutation status."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add route for /upload pointing to UploadVideoPage component. Ensure route is protected and only accessible to authenticated users."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Build video player interface with playback controls",
+      "acceptanceCriteria": [
+        "Video player displays uploaded videos",
+        "Play and pause controls work correctly",
+        "Volume control is functional",
+        "Fullscreen mode can be toggled",
+        "Video progress bar shows current position"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/VideoPlayer.tsx",
+          "operation": "create",
+          "description": "Create video player component using HTML5 video element. Retrieve video source URL using ExternalBlob.getDirectURL() to leverage streaming and caching. Implement custom controls for play/pause, volume slider, progress bar with seek functionality, and fullscreen toggle. Display video metadata (title, uploader, views, upload date). Show loading state while video loads."
+        },
+        {
+          "path": "frontend/src/pages/VideoPlayerPage.tsx",
+          "operation": "create",
+          "description": "Create video player page that fetches video by ID from URL params and renders VideoPlayer component. Display video metadata below player. Include comments section and recommended videos sidebar. Call incrementViewCount when video starts playing. Handle loading and error states."
+        },
+        {
+          "path": "frontend/src/hooks/useGetVideo.ts",
+          "operation": "create",
+          "description": "Create query hook to fetch single video metadata by ID using backend getVideo method. Return video data, loading, and error states."
+        },
+        {
+          "path": "frontend/src/hooks/useIncrementViewCount.ts",
+          "operation": "create",
+          "description": "Create mutation hook to increment view count using backend incrementViewCount method. Call when video playback starts."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add route for /video/:id pointing to VideoPlayerPage component. Route should be publicly accessible."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Create video listing page with thumbnails, titles, views, and dates",
+      "acceptanceCriteria": [
+        "All videos are displayed in a grid or list layout",
+        "Each video shows thumbnail, title, views, and date",
+        "Clicking a video navigates to the video player page"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/HomePage.tsx",
+          "operation": "create",
+          "description": "Create home page displaying all videos in a responsive grid layout. Fetch videos using getAllVideos backend method. Each video card shows video thumbnail (first frame or placeholder), title, uploader name, view count, and upload date. Clicking a card navigates to /video/:id route. Include recommended videos section if user is authenticated. Display loading skeleton while fetching."
+        },
+        {
+          "path": "frontend/src/components/VideoCard.tsx",
+          "operation": "create",
+          "description": "Create reusable video card component displaying video thumbnail, title, uploader name, view count, and formatted upload date. Accept VideoMetadata as prop. Use Link component to navigate to video player page on click. Format view count and date for display (e.g., '1.2K views', '2 days ago')."
+        },
+        {
+          "path": "frontend/src/hooks/useGetAllVideos.ts",
+          "operation": "create",
+          "description": "Create query hook to fetch all videos using backend getAllVideos method. Return videos array, loading, and error states. Enable automatic refetching on window focus."
+        },
+        {
+          "path": "frontend/src/utils/formatters.ts",
+          "operation": "create",
+          "description": "Create utility functions for formatting view counts (e.g., 1234 to '1.2K') and dates (e.g., timestamp to 'X days ago'). Include formatDuration for video duration display."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add route for / (root path) pointing to HomePage component as the default landing page. Route should be publicly accessible."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Implement Internet Identity authentication UI",
+      "acceptanceCriteria": [
+        "Users can authenticate using Internet Identity",
+        "Only authenticated users can upload videos",
+        "User identity is associated with uploaded videos"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/LoginButton.tsx",
+          "operation": "modify",
+          "description": "Update LoginButton component to use authorization component's Internet Identity integration. Ensure login/logout functionality clears queryClient cache on logout. Handle login errors gracefully. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/ProfileSetupModal.tsx",
+          "operation": "create",
+          "description": "Create modal for first-time user profile setup prompting for name and optional channel description. Use authorization component's getCallerUserProfile and saveCallerUserProfile methods. Show only when user is authenticated but has no profile (prevent flash by checking isFetched flag). Close modal after successful profile creation."
+        },
+        {
+          "path": "frontend/src/hooks/useGetCallerUserProfile.ts",
+          "operation": "create",
+          "description": "Create query hook using authorization component's getCallerUserProfile method. Return proper isLoading state that accounts for actor dependency to prevent profile setup modal flash. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useSaveCallerUserProfile.ts",
+          "operation": "create",
+          "description": "Create mutation hook using authorization component's saveCallerUserProfile method. Invalidate currentUserProfile query after successful save."
+        },
+        {
+          "path": "frontend/src/components/ProtectedRoute.tsx",
+          "operation": "create",
+          "description": "Create protected route wrapper component that checks authentication status using authorization component. Redirect unauthenticated users to home page or show login prompt. Use for upload and profile management routes."
+        },
+        {
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "modify",
+          "description": "Update layout to include LoginButton in header/navigation. Show ProfileSetupModal when needed using the authorization component's profile check logic. Display authenticated user's name from profile instead of principal ID."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Add video sharing functionality with shareable links",
+      "acceptanceCriteria": [
+        "Each video has a unique shareable URL",
+        "Share button generates a copyable link",
+        "Shared links load the correct video player page"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ShareButton.tsx",
+          "operation": "create",
+          "description": "Create share button component that generates shareable URL for current video (window.location.origin + /video/:id). Implement copy-to-clipboard functionality with visual feedback (tooltip or toast showing 'Link copied!'). Include social media share options if desired."
+        },
+        {
+          "path": "frontend/src/components/VideoPlayer.tsx",
+          "operation": "modify",
+          "description": "Add ShareButton component to video player controls area. Pass current video ID as prop."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Implement comments system UI for video discussions",
+      "acceptanceCriteria": [
+        "Authenticated users can post comments on videos",
+        "Comments display with username and timestamp",
+        "Comments are visible to all users viewing the video"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/CommentsSection.tsx",
+          "operation": "create",
+          "description": "Create comments section component displaying list of comments for a video. Fetch comments using getComments backend method. Each comment shows author name (from getUserProfile), content, and formatted timestamp. Include comment input form (only visible to authenticated users) calling addComment backend method. Show loading state while fetching comments. Automatically refetch after posting new comment."
+        },
+        {
+          "path": "frontend/src/hooks/useGetComments.ts",
+          "operation": "create",
+          "description": "Create query hook to fetch comments for a video using backend getComments method. Accept videoId parameter. Return comments array, loading, and error states."
+        },
+        {
+          "path": "frontend/src/hooks/useAddComment.ts",
+          "operation": "create",
+          "description": "Create mutation hook for adding comments using backend addComment method. Accept videoId and content. Invalidate comments query after successful post. Handle authorization errors."
+        },
+        {
+          "path": "frontend/src/pages/VideoPlayerPage.tsx",
+          "operation": "modify",
+          "description": "Add CommentsSection component below video player. Pass current video ID as prop."
+        }
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "summary": "Create subscription system UI allowing users to follow channels",
+      "acceptanceCriteria": [
+        "Users can subscribe to content creators",
+        "Subscription count is displayed on user profiles",
+        "Users can view a list of their subscriptions"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/SubscribeButton.tsx",
+          "operation": "create",
+          "description": "Create subscribe button component for subscribing to a channel. Use backend subscribeToChannel method. Show subscribed/unsubscribed state. Disable for own channel and unauthenticated users. Display subscriber count using getSubscribers method. Update count after subscription action."
+        },
+        {
+          "path": "frontend/src/hooks/useSubscribeToChannel.ts",
+          "operation": "create",
+          "description": "Create mutation hook for subscribing to a channel using backend subscribeToChannel method. Invalidate related queries (subscribers count, user subscriptions) after successful subscription."
+        },
+        {
+          "path": "frontend/src/hooks/useGetSubscribers.ts",
+          "operation": "create",
+          "description": "Create query hook to fetch subscriber list using backend getSubscribers method. Return subscribers array and count for display."
+        },
+        {
+          "path": "frontend/src/pages/ProfilePage.tsx",
+          "operation": "modify",
+          "description": "Add SubscribeButton component to user profile header. Show subscriber count prominently. Pass channel principal as prop."
+        }
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "summary": "Build video recommendation system UI showing suggested videos",
+      "acceptanceCriteria": [
+        "Recommended videos are shown on the home page",
+        "Recommendations update based on user activity",
+        "Popular videos are prioritized for new users"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/RecommendedVideos.tsx",
+          "operation": "create",
+          "description": "Create recommended videos component displaying suggested videos. For authenticated users, show personalized recommendations. For guests, show popular videos sorted by view count. Fetch all videos and implement client-side sorting/filtering logic. Display in horizontal scrollable layout or vertical list. Each video uses VideoCard component."
+        },
+        {
+          "path": "frontend/src/pages/HomePage.tsx",
+          "operation": "modify",
+          "description": "Add RecommendedVideos component to home page above or beside the main video grid. Show different sections for 'Recommended for you' (authenticated) and 'Popular videos' (guests)."
+        },
+        {
+          "path": "frontend/src/pages/VideoPlayerPage.tsx",
+          "operation": "modify",
+          "description": "Add RecommendedVideos component in sidebar next to video player showing related or suggested videos."
+        }
+      ]
+    },
+    {
+      "id": "REQ-11",
+      "summary": "Create user profile pages showing uploaded videos and subscriber count",
+      "acceptanceCriteria": [
+        "Each user has a profile page accessible via their username",
+        "Profile displays all videos uploaded by that user",
+        "Subscriber count is visible on the profile"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/ProfilePage.tsx",
+          "operation": "create",
+          "description": "Create user profile page displaying channel information, subscriber count, and uploaded videos. Fetch user profile using getUserProfile backend method with principal from URL params. Fetch channel videos using getChannelVideos method. Display profile name, channel description, and subscriber count in header. Show uploaded videos in grid layout using VideoCard components. Include SubscribeButton for other users' profiles."
+        },
+        {
+          "path": "frontend/src/hooks/useGetUserProfile.ts",
+          "operation": "create",
+          "description": "Create query hook to fetch user profile by principal using backend getUserProfile method. Return profile data, loading, and error states."
+        },
+        {
+          "path": "frontend/src/hooks/useGetChannelVideos.ts",
+          "operation": "create",
+          "description": "Create query hook to fetch videos uploaded by a specific channel using backend getChannelVideos method. Accept channel principal parameter. Return videos array, loading, and error states."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add route for /profile/:principalId pointing to ProfilePage component. Route should be publicly accessible to allow viewing any user's profile."
+        }
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "summary": "Design modern video platform interface with vibrant visual theme",
+      "acceptanceCriteria": [
+        "Color scheme is vibrant and distinct from standard blue/purple",
+        "Typography is clear and readable across all components",
+        "Layout prioritizes video thumbnails and discovery",
+        "Visual style is consistent across all pages"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Update global styles with vibrant color scheme using bright energetic colors (e.g., coral red, electric orange, vivid teal). Define CSS custom properties for primary, secondary, accent colors and semantic variants (success, warning, error). Set up clean, modern typography with readable font stack. Configure dark mode variants. Ensure high contrast for accessibility."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Extend Tailwind theme with custom vibrant color palette matching the design system. Add custom spacing, border radius, and shadow utilities for consistent spacing and depth. Configure typography plugin for heading and body text styles. Define custom breakpoints if needed for responsive video grid layouts."
+        },
+        {
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "modify",
+          "description": "Update layout component with modern navigation header featuring platform branding, search bar, and user controls. Use vibrant background colors and clean typography. Ensure header remains fixed during scroll. Add footer with platform information. Apply consistent spacing and visual hierarchy across all child pages."
+        }
+      ]
+    },
+    {
+      "id": "REQ-13",
+      "summary": "Render generated platform branding images as static assets",
+      "acceptanceCriteria": [
+        "Generated logo is displayed in the navigation header",
+        "Platform icon is used as favicon",
+        "Images are served from the frontend public directory"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "modify",
+          "description": "Add platform logo image to navigation header using the generated logo at frontend/public/assets/generated/logo.dim_256x256.png. Set appropriate width/height for header size (e.g., 40-48px height). Include alt text 'Video Hub logo'. Wrap in Link component to navigate to home page on click."
+        },
+        {
+          "path": "frontend/index.html",
+          "operation": "modify",
+          "description": "Update favicon link tag to reference the generated platform icon at frontend/public/assets/generated/favicon.dim_64x64.png. Replace existing favicon reference in the <head> section."
+        }
+      ]
+    }
+  ]
+}
