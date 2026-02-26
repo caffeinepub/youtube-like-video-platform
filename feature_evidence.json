@@ -2,10 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-on-the-uploadvideopage-add-a-seamless-record-upload-short-flow-when-the-user-opens-the-camerarecordingmodal-and-completes-a-recording-automatically-set-the-mark-as-short-toggle-to-enabled-populate-the-upload-form-with-the-recorded-blob-as-the-selected-file-and-allow-the-user-to-immediately-submit-the-upload-all-within-a-single-continuous-ui-flow-without-leaving-the-page",
-      "featureTitle": "On the UploadVideoPage, add a seamless 'Record & Upload Short' flow: when the user opens the CameraRecordingModal and completes a recording, automatically set the 'Mark as Short' toggle to enabled, populate the upload form with the recorded Blob as the selected file, and allow the user to immediately submit the upload — all within a single continuous UI flow without leaving the page.",
+      "featureId": "feature-redesign-the-homepage-to-closely-resemble-youtube-s-layout-a-sticky-top-navigation-bar-with-logo-search-bar-and-auth-controls-a-horizontal-category-filter-chip-row-below-the-nav-a-responsive-video-grid-1-column-on-mobile-2-on-tablet-3-4-on-desktop-showing-video-thumbnails-with-title-channel-name-view-count-and-relative-upload-time",
+      "featureTitle": "Redesign the HomePage to closely resemble YouTube's layout: a sticky top navigation bar with logo, search bar, and auth controls; a horizontal category filter chip row below the nav; a responsive video grid (1 column on mobile, 2 on tablet, 3–4 on desktop) showing video thumbnails with title, channel name, view count, and relative upload time.",
       "files": [
-        "frontend/src/pages/UploadVideoPage.tsx"
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/components/VideoCard.tsx",
+        "frontend/src/pages/HomePage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -18,7 +20,142 @@
         "camera@1.0.0"
       ],
       "testIds": [
-        "REQ-41"
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-a-youtube-style-video-watch-page-the-video-player-occupies-the-full-left-column-on-desktop-below-the-player-show-the-video-title-view-count-upload-date-action-buttons-like-share-save-to-playlist-and-the-channel-info-row-with-avatar-subscriber-count-and-subscribe-button-the-right-column-shows-an-up-next-recommended-videos-list",
+      "featureTitle": "Implement a YouTube-style video watch page: the video player occupies the full left column on desktop; below the player show the video title, view count, upload date, action buttons (Like, Share, Save to Playlist), and the channel info row with avatar, subscriber count, and Subscribe button. The right column shows an 'Up next' recommended videos list.",
+      "files": [
+        "frontend/src/components/RecommendedVideos.tsx",
+        "frontend/src/pages/VideoPlayerPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-youtube-style-left-sidebar-navigation-collapsible-on-desktop-hidden-on-mobile-replaced-by-bottom-nav-with-links-to-home-shorts-subscriptions-playlists-community-and-upload-show-icons-alongside-labels-collapse-to-icon-only-mode-when-toggled",
+      "featureTitle": "Add a YouTube-style left sidebar navigation (collapsible on desktop, hidden on mobile replaced by bottom nav) with links to: Home, Shorts, Subscriptions, Playlists, Community, and Upload. Show icons alongside labels. Collapse to icon-only mode when toggled.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/BottomNav.tsx",
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/pages/SubscriptionsPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-style-the-shorts-page-as-a-vertical-full-screen-reel-feed-tiktok-youtube-shorts-style-each-short-fills-the-viewport-height-videos-autoplay-when-scrolled-into-view-and-pause-when-out-of-view-with-overlaid-controls-for-like-comment-share-and-subscribe",
+      "featureTitle": "Style the Shorts page as a vertical full-screen reel feed (TikTok/YouTube Shorts style): each short fills the viewport height, videos autoplay when scrolled into view and pause when out of view, with overlaid controls for Like, Comment, Share, and Subscribe.",
+      "files": [
+        "frontend/src/pages/ReelsPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-apply-a-dark-first-visual-theme-across-the-entire-app-inspired-by-youtube-s-dark-mode-near-black-backgrounds-0f0f0f-for-the-main-surface-212121-for-cards-sidebar-white-primary-text-muted-gray-secondary-text-and-red-ff0000-as-the-primary-accent-color-for-subscribe-buttons-active-nav-indicators-and-the-logo-mark-ensure-consistent-typography-using-a-clean-sans-serif-font",
+      "featureTitle": "Apply a dark-first visual theme across the entire app inspired by YouTube's dark mode: near-black backgrounds (#0f0f0f for the main surface, #212121 for cards/sidebar), white primary text, muted gray secondary text, and red (#ff0000) as the primary accent color for subscribe buttons, active nav indicators, and the logo mark. Ensure consistent typography using a clean sans-serif font.",
+      "files": [
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/components/SubscribeButton.tsx",
+        "frontend/src/index.css",
+        "frontend/tailwind.config.js"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-search-results-page-that-displays-results-in-the-same-video-grid-format-as-the-home-page-with-a-search-results-for-query-heading-results-should-be-fetched-using-the-existing-usesearchvideos-hook-and-show-loading-skeletons-while-fetching",
+      "featureTitle": "Add a Search Results page that displays results in the same video grid format as the home page, with a 'Search results for \"<query>\"' heading. Results should be fetched using the existing useSearchVideos hook and show loading skeletons while fetching.",
+      "files": [
+        "frontend/src/pages/SearchResultsPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-implement-a-channel-page-accessible-at-channel-principalid-that-displays-the-channel-banner-avatar-channel-name-handle-subscriber-count-and-a-subscribe-button-below-show-tabs-for-videos-shorts-playlists-and-community-each-rendering-the-relevant-content-using-existing-hooks-usegetchannelvideos-usegetcommunitypostsbychannel-usegetplaylistbyid",
+      "featureTitle": "Implement a Channel page accessible at /channel/:principalId that displays the channel banner, avatar, channel name, handle, subscriber count, and a Subscribe button. Below, show tabs for Videos, Shorts, Playlists, and Community, each rendering the relevant content using existing hooks (useGetChannelVideos, useGetCommunityPostsByChannel, useGetPlaylistById).",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/VideoCard.tsx",
+        "frontend/src/pages/ChannelPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
       ],
       "confidence": "high"
     }

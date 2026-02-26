@@ -20,14 +20,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ListVideo, Plus, Lock, Loader2, PlaySquare } from 'lucide-react';
 import { formatTimeAgo } from '../utils/formatters';
 
-// Playlist card with first-video thumbnail
-function PlaylistCard({ playlist }: { playlist: { id: string; title: string; description: string; videos: string[]; createdAt: bigint } }) {
+function PlaylistCard({
+  playlist,
+}: {
+  playlist: { id: string; title: string; description: string; videos: string[]; createdAt: bigint };
+}) {
   const firstVideoId = playlist.videos[0];
   const { data: firstVideo } = useGetVideo(firstVideoId);
   const thumbnailUrl = firstVideo?.videoFile.getDirectURL();
 
   return (
-    <Link to="/playlists/$playlistId" params={{ playlistId: playlist.id }} className="group">
+    <Link
+      to="/playlist/$playlistId"
+      params={{ playlistId: playlist.id }}
+      className="group"
+    >
       <Card className="overflow-hidden border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
         {/* Thumbnail */}
         <div className="relative aspect-video bg-muted overflow-hidden">
@@ -42,7 +49,6 @@ function PlaylistCard({ playlist }: { playlist: { id: string; title: string; des
               <PlaySquare className="w-12 h-12 text-muted-foreground/40" />
             </div>
           )}
-          {/* Video count badge */}
           <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded font-medium">
             {playlist.videos.length} video{playlist.videos.length !== 1 ? 's' : ''}
           </div>
@@ -114,7 +120,9 @@ export default function PlaylistsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">My Playlists</h1>
-            <p className="text-sm text-muted-foreground">Organize your favorite videos</p>
+            <p className="text-sm text-muted-foreground">
+              {playlists.length} playlist{playlists.length !== 1 ? 's' : ''}
+            </p>
           </div>
         </div>
         <Button onClick={() => setShowCreateDialog(true)} className="flex items-center gap-2">
@@ -124,38 +132,34 @@ export default function PlaylistsPage() {
       </div>
 
       {/* Loading state */}
-      {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-3">
               <Skeleton className="aspect-video w-full rounded-xl" />
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
             </div>
           ))}
         </div>
-      )}
-
-      {/* Empty state */}
-      {!isLoading && playlists.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-            <ListVideo className="w-8 h-8 text-muted-foreground" />
+      ) : playlists.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-6 py-16">
+          <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center">
+            <ListVideo className="w-10 h-10 text-muted-foreground/50" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground">No Playlists Yet</h2>
-          <p className="text-muted-foreground text-sm text-center max-w-sm">
-            Create your first playlist to start organizing your favorite videos.
-          </p>
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-foreground mb-2">No playlists yet</h2>
+            <p className="text-muted-foreground text-sm max-w-sm">
+              Create your first playlist to organize your favourite videos.
+            </p>
+          </div>
           <Button onClick={() => setShowCreateDialog(true)} className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
             Create Playlist
           </Button>
         </div>
-      )}
-
-      {/* Playlists grid */}
-      {!isLoading && playlists.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {playlists.map((playlist) => (
             <PlaylistCard key={playlist.id} playlist={playlist} />
           ))}
@@ -164,7 +168,7 @@ export default function PlaylistsPage() {
 
       {/* Create Playlist Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Create New Playlist</DialogTitle>
             <DialogDescription>
@@ -172,24 +176,22 @@ export default function PlaylistsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Title *</label>
               <Input
                 placeholder="My Playlist"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                autoFocus
                 onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Description</label>
               <Textarea
-                placeholder="What's this playlist about?"
+                placeholder="Optional description..."
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
                 rows={3}
-                className="resize-none"
               />
             </div>
           </div>
@@ -197,7 +199,7 @@ export default function PlaylistsPage() {
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreate} disabled={creating || !newTitle.trim()}>
+            <Button onClick={handleCreate} disabled={!newTitle.trim() || creating}>
               {creating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

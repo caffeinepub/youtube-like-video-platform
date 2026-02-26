@@ -1,8 +1,9 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Eye, Volume2, VolumeX, Heart } from 'lucide-react';
+import { Eye, Volume2, VolumeX, Heart, MessageCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
+import ReelCommentsDrawer from './ReelCommentsDrawer';
 import { useIncrementViewCount } from '../hooks/useIncrementViewCount';
 import { useGetUserProfile } from '../hooks/useGetUserProfile';
 import { formatViewCount } from '../utils/formatters';
@@ -19,6 +20,7 @@ export default function ReelCard({ video, isActive }: ReelCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
   const [liked, setLiked] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const viewIncrementedRef = useRef(false);
 
   const { mutate: incrementView } = useIncrementViewCount();
@@ -54,8 +56,12 @@ export default function ReelCard({ video, isActive }: ReelCardProps) {
   const toggleMute = useCallback(() => {
     const videoEl = videoRef.current;
     if (!videoEl) return;
-    videoEl.muted = !videoEl.muted;
-    setMuted(videoEl.muted);
+    try {
+      videoEl.muted = !videoEl.muted;
+      setMuted(videoEl.muted);
+    } catch (err) {
+      console.error('Toggle mute error:', err);
+    }
   }, []);
 
   const videoUrl = video.videoFile.getDirectURL();
@@ -84,16 +90,32 @@ export default function ReelCard({ video, isActive }: ReelCardProps) {
           className="flex flex-col items-center gap-1 text-white"
           aria-label="Like"
         >
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-sm transition-colors ${liked ? 'bg-primary/30' : 'hover:bg-white/20'}`}>
+          <div
+            className={`w-12 h-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-sm transition-colors ${
+              liked ? 'bg-primary/30' : 'hover:bg-white/20'
+            }`}
+          >
             <Heart className={`w-6 h-6 ${liked ? 'fill-primary text-primary' : 'text-white'}`} />
           </div>
           <span className="text-xs font-medium">{liked ? 'Liked' : 'Like'}</span>
         </button>
 
+        {/* Comment button */}
+        <button
+          onClick={() => setShowComments(true)}
+          className="flex flex-col items-center gap-1 text-white"
+          aria-label="Comments"
+        >
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors">
+            <MessageCircle className="w-6 h-6 text-white" />
+          </div>
+          <span className="text-xs font-medium">Comment</span>
+        </button>
+
         {/* Share button */}
         <div className="flex flex-col items-center gap-1">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-sm hover:bg-white/20">
-            <ShareButton videoId={video.id} />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-sm hover:bg-white/20 cursor-pointer">
+            <ShareButton videoId={video.id} iconOnly />
           </div>
           <span className="text-xs font-medium text-white">Share</span>
         </div>
@@ -105,7 +127,11 @@ export default function ReelCard({ video, isActive }: ReelCardProps) {
           aria-label={muted ? 'Unmute' : 'Mute'}
         >
           <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-sm hover:bg-white/20">
-            {muted ? <VolumeX className="w-6 h-6 text-white" /> : <Volume2 className="w-6 h-6 text-white" />}
+            {muted ? (
+              <VolumeX className="w-6 h-6 text-white" />
+            ) : (
+              <Volume2 className="w-6 h-6 text-white" />
+            )}
           </div>
           <span className="text-xs font-medium">{muted ? 'Unmute' : 'Mute'}</span>
         </button>
@@ -138,6 +164,14 @@ export default function ReelCard({ video, isActive }: ReelCardProps) {
           <span>{formatViewCount(Number(video.viewCount))} views</span>
         </div>
       </div>
+
+      {/* Comments Drawer */}
+      {showComments && (
+        <ReelCommentsDrawer
+          videoId={video.id}
+          onClose={() => setShowComments(false)}
+        />
+      )}
     </div>
   );
 }

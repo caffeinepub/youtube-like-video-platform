@@ -1,79 +1,60 @@
-import React from 'react';
 import { useSearch } from '@tanstack/react-router';
 import { useSearchVideos } from '../hooks/useSearchVideos';
 import VideoCard from '../components/VideoCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SearchX, Search } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
-import { getTranslation } from '../i18n/translations';
+import { Search } from 'lucide-react';
 
 export default function SearchResultsPage() {
-  const { currentLanguage } = useLanguage();
-  const t = (key: string) => getTranslation(currentLanguage, key);
+  // Use strict: false to avoid route type issues with search params
+  const searchParams = useSearch({ strict: false }) as { q?: string };
+  const query = (searchParams.q ?? '').trim();
+  const { data: results = [], isLoading } = useSearchVideos(query);
 
-  // Read query param
-  const search = useSearch({ strict: false }) as { q?: string };
-  const query = (search.q ?? '').trim();
-
-  const { data: videos = [], isLoading } = useSearchVideos(query);
+  if (!query) {
+    return (
+      <div className="bg-yt-bg min-h-screen flex flex-col items-center justify-center gap-4 p-8">
+        <Search className="w-16 h-16 text-yt-text-secondary" />
+        <h2 className="text-xl font-semibold text-white">Search for videos</h2>
+        <p className="text-yt-text-secondary text-sm">Enter a search term to find videos</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Heading */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <Search className="w-5 h-5 text-muted-foreground" />
-          <h1 className="text-2xl font-bold text-foreground">{t('searchResults')}</h1>
-        </div>
-        {query && (
-          <p className="text-muted-foreground text-sm">
-            {t('searchResultsFor')}{' '}
-            <span className="font-semibold text-foreground">"{query}"</span>
-          </p>
-        )}
-      </div>
+    <div className="bg-yt-bg min-h-screen p-4 lg:p-6">
+      <h1 className="text-lg font-semibold text-white mb-6">
+        Search results for{' '}
+        <span className="text-yt-text-secondary">"{query}"</span>
+      </h1>
 
-      {/* Loading skeletons */}
-      {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="aspect-video w-full rounded-xl" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
+            <div key={i} className="space-y-3">
+              <Skeleton className="w-full aspect-video rounded-xl bg-yt-chip" />
+              <div className="flex gap-3">
+                <Skeleton className="w-9 h-9 rounded-full bg-yt-chip shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-full bg-yt-chip" />
+                  <Skeleton className="h-3 w-3/4 bg-yt-chip" />
+                </div>
+              </div>
             </div>
           ))}
         </div>
-      )}
-
-      {/* Results grid */}
-      {!isLoading && videos.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {videos.map((video) => (
+      ) : results.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <Search className="w-16 h-16 text-yt-text-secondary mb-4" />
+          <h2 className="text-xl font-semibold text-white mb-2">No results found</h2>
+          <p className="text-yt-text-secondary text-sm">
+            No results found for "{query}". Try different keywords.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+          {results.map((video) => (
             <VideoCard key={video.id} video={video} />
           ))}
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!isLoading && videos.length === 0 && query && (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-            <SearchX className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <h2 className="text-xl font-semibold text-foreground mb-2">{t('noResultsFound')}</h2>
-          <p className="text-muted-foreground max-w-sm">{t('noResultsMessage')}</p>
-        </div>
-      )}
-
-      {/* No query state */}
-      {!isLoading && !query && (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-            <Search className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <h2 className="text-xl font-semibold text-foreground mb-2">{t('search')}</h2>
-          <p className="text-muted-foreground max-w-sm">{t('searchPlaceholder')}</p>
         </div>
       )}
     </div>

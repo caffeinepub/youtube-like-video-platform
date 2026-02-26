@@ -1,54 +1,79 @@
+import { useState } from 'react';
 import { useGetAllVideos } from '../hooks/useGetAllVideos';
 import VideoCard from '../components/VideoCard';
-import RecommendedVideos from '../components/RecommendedVideos';
-import TrendingVideos from '../components/TrendingVideos';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
+
+const CATEGORIES = [
+  'All', 'Trending', 'Gaming', 'Music', 'Sports', 'News',
+  'Learning', 'Fashion', 'Comedy', 'Tech', 'Travel', 'Food',
+  'Fitness', 'Science', 'Movies', 'Live',
+];
 
 export default function HomePage() {
-  const { data: videos, isLoading } = useGetAllVideos();
+  const [activeCategory, setActiveCategory] = useState('All');
+  const { data: videos = [], isLoading } = useGetAllVideos();
+
+  const filteredVideos = activeCategory === 'All'
+    ? videos.filter((v) => !v.isShort)
+    : videos.filter((v) => !v.isShort);
 
   return (
-    <div className="container py-8 space-y-10">
-      {/* Trending Section */}
-      <TrendingVideos />
+    <div className="bg-yt-bg min-h-screen">
+      {/* Category Filter Chips */}
+      <div className="sticky top-14 z-30 bg-yt-bg border-b border-yt-border">
+        <div className="flex gap-3 px-4 py-3 overflow-x-auto scrollbar-hide snap-x">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`shrink-0 snap-start px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                activeCategory === cat
+                  ? 'bg-white text-black'
+                  : 'bg-yt-chip text-white hover:bg-yt-chip-hover'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <Separator className="opacity-40" />
-
-      {/* All Videos Section */}
-      <section>
-        <h1 className="text-3xl font-bold mb-6 bg-gradient-to-r from-[oklch(0.65_0.25_25)] to-[oklch(0.55_0.28_340)] bg-clip-text text-transparent">
-          All Videos
-        </h1>
-
+      {/* Video Grid */}
+      <div className="px-4 py-6">
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="space-y-3">
-                <Skeleton className="aspect-video w-full rounded-lg" />
-                <Skeleton className="h-5 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="w-full aspect-video rounded-xl bg-yt-chip" />
+                <div className="flex gap-3">
+                  <Skeleton className="w-9 h-9 rounded-full bg-yt-chip shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-full bg-yt-chip" />
+                    <Skeleton className="h-3 w-3/4 bg-yt-chip" />
+                    <Skeleton className="h-3 w-1/2 bg-yt-chip" />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-        ) : videos && videos.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {videos.map((video) => (
+        ) : filteredVideos.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-20 h-20 rounded-full bg-yt-chip flex items-center justify-center mb-4">
+              <span className="text-3xl">🎬</span>
+            </div>
+            <h2 className="text-xl font-semibold text-white mb-2">No videos yet</h2>
+            <p className="text-yt-text-secondary text-sm max-w-sm">
+              Be the first to upload a video and share it with the world!
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+            {filteredVideos.map((video) => (
               <VideoCard key={video.id} video={video} />
             ))}
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No videos yet. Be the first to upload!</p>
-          </div>
         )}
-      </section>
-
-      {videos && videos.length > 0 && (
-        <section>
-          <RecommendedVideos limit={4} />
-        </section>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,248 +1,372 @@
-import React, { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useGetCallerUserProfile } from '../hooks/useGetCallerUserProfile';
 import { useGetChannelVideos } from '../hooks/useGetChannelVideos';
 import { useGetSubscribers } from '../hooks/useGetSubscribers';
 import { useSetProfileImage } from '../hooks/useSetProfileImage';
-import VideoCard from '../components/VideoCard';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { User, Video, Users, AlertCircle, Camera, Loader2 } from 'lucide-react';
+import { useGetCommunityPostsByChannel } from '../hooks/useGetCommunityPostsByChannel';
+import { useNavigate } from '@tanstack/react-router';
+import { useRef } from 'react';
 import { Principal } from '@dfinity/principal';
-import { toast } from 'sonner';
+import VideoCard from '../components/VideoCard';
+import CommunityPostCard from '../components/CommunityPostCard';
+import ProfileSetupModal from '../components/ProfileSetupModal';
+import EditProfileModal from '../components/EditProfileModal';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Camera, Users, Video, LogIn, MessageSquare, Pencil } from 'lucide-react';
+import { SiGoogle } from 'react-icons/si';
 import { convertBlobToDataURL, getInitials } from '../utils/avatarHelpers';
-
-const MAX_IMAGE_SIZE = 512 * 1024; // 512 KB
+import { toast } from 'sonner';
+import { useLanguage } from '../contexts/LanguageContext';
+import { getTranslation } from '../i18n/translations';
 
 export default function ProfilePage() {
-  const { identity } = useInternetIdentity();
+  const { identity, login } = useInternetIdentity();
   const { googleUser } = useGoogleAuth();
+  const navigate = useNavigate();
+  const { currentLanguage } = useLanguage();
+  const t = (key: string) => getTranslation(currentLanguage, key);
 
   const isIIAuthenticated = !!identity;
   const isGoogleAuthenticated = !!googleUser;
+  const isAuthenticated = isIIAuthenticated || isGoogleAuthenticated;
 
-  const callerPrincipal: Principal | undefined = identity
-    ? identity.getPrincipal()
-    : undefined;
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
-  const { data: userProfile, isLoading: profileLoading } = useGetCallerUserProfile();
-  const { data: channelVideos = [], isLoading: videosLoading } = useGetChannelVideos(
-    callerPrincipal ?? Principal.anonymous()
-  );
-  const { data: subscribers = [], isLoading: subscribersLoading } = useGetSubscribers(
-    callerPrincipal ?? Principal.anonymous()
-  );
-
-  const { mutate: setProfileImage, isPending: imageUploading } = useSetProfileImage();
+  const { data: userProfile, isLoading: profileLoading, isFetched: profileFetched } = useGetCallerUserProfile();
+  const { mutate: setProfileImage, isPending: isUploadingAvatar } = useSetProfileImage();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // Determine if Google user needs profile setup
+  const googleProfileSetupKey = googleUser ? `google_profile_setup_${googleUser.sub}` : null;
+  const googleNeedsSetup =
+    isGoogleAuthenticated &&
+    !isIIAuthenticated &&
+    !!googleProfileSetupKey &&
+    !localStorage.getItem(googleProfileSetupKey);
+
+  // Resolve the caller's Principal for II users
+  const callerPrincipal: Principal | undefined = isIIAuthenticated
+    ? identity?.getPrincipal()
+    : undefined;
+
+  // Always call hooks at top level; pass anonymous principal as fallback (queries disabled when undefined)
+  const { data: channelVideos, isLoading: videosLoading } = useGetChannelVideos(
+    callerPrincipal ?? Principal.anonymous()
+  );
+  const { data: subscribers } = useGetSubscribers(
+    callerPrincipal ?? Principal.anonymous()
+  );
+  const { data: communityPosts, isLoading: postsLoading } = useGetCommunityPostsByChannel(
+    callerPrincipal
+  );
+
+  // Determine display info
+  const googleProfileName = googleUser
+    ? localStorage.getItem(`google_profile_name_${googleUser.sub}`) || googleUser.name
+    : null;
+  const googleProfileDesc = googleUser
+    ? localStorage.getItem(`google_profile_desc_${googleUser.sub}`) || ''
+    : null;
+
+  const displayName = isIIAuthenticated
+    ? userProfile?.name || 'User'
+    : googleProfileName || googleUser?.name || 'User';
+
+  const displayDescription = isIIAuthenticated
+    ? userProfile?.channelDescription || ''
+    : googleProfileDesc || '';
+
+  const displayHandle = isIIAuthenticated && userProfile?.handle
+    ? userProfile.handle
+    : null;
+
+  const avatarBytes = isIIAuthenticated && userProfile?.avatar ? userProfile.avatar : undefined;
+  const avatarDataUrl = avatarBytes ? convertBlobToDataURL(avatarBytes) : undefined;
+  const googleAvatarUrl = isGoogleAuthenticated ? googleUser?.picture : undefined;
+  const finalAvatarUrl = avatarDataUrl || googleAvatarUrl;
 
   const handleAvatarClick = () => {
-    fileInputRef.current?.click();
+    if (isIIAuthenticated) {
+      fileInputRef.current?.click();
+    }
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file');
+      toast.error('Please select an image file');
       return;
     }
-
-    if (file.size > MAX_IMAGE_SIZE) {
-      toast.error('Image must be 512 KB or smaller');
+    if (file.size > 512 * 1024) {
+      toast.error('Avatar must be under 512 KB');
       return;
     }
-
     const reader = new FileReader();
     reader.onload = (ev) => {
       const result = ev.target?.result;
       if (result instanceof ArrayBuffer) {
-        const bytes = new Uint8Array(result);
-        setPreviewUrl(URL.createObjectURL(file));
-        setProfileImage(bytes);
+        setProfileImage(new Uint8Array(result));
       }
     };
     reader.readAsArrayBuffer(file);
-
-    // Reset input so same file can be re-selected
-    e.target.value = '';
   };
 
-  // Not authenticated at all
-  if (!isIIAuthenticated && !isGoogleAuthenticated) {
+  if (!isAuthenticated) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
-          <User className="w-8 h-8 text-primary" />
-        </div>
-        <h1 className="text-2xl font-bold text-foreground mb-3">Sign in to view your profile</h1>
-        <p className="text-muted-foreground">
-          Connect your wallet or sign in with Google to access your profile.
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+        <LogIn className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+        <h2 className="text-2xl font-bold mb-2">Sign in to view your profile</h2>
+        <p className="text-muted-foreground mb-6">
+          Sign in with Google or Internet Identity to access your channel.
         </p>
-      </div>
-    );
-  }
-
-  // Google authenticated but no wallet - show Google profile info
-  if (!isIIAuthenticated && isGoogleAuthenticated) {
-    const storedProfile = (() => {
-      try {
-        const raw = localStorage.getItem(`google_profile_${googleUser?.sub}`);
-        return raw ? JSON.parse(raw) : null;
-      } catch {
-        return null;
-      }
-    })();
-
-    const displayName = storedProfile?.name || googleUser?.name || 'Google User';
-
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-10">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-10">
-          <Avatar className="w-20 h-20">
-            <AvatarImage src={googleUser?.picture} alt={displayName} />
-            <AvatarFallback className="text-2xl bg-primary/20 text-primary">
-              {getInitials(displayName)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-foreground mb-1">{displayName}</h1>
-            <p className="text-muted-foreground text-sm mb-3">{googleUser?.email}</p>
-            <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>Connect your wallet to upload videos and manage your channel</span>
-            </div>
-          </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button
+            variant="outline"
+            onClick={() => navigate({ to: '/' })}
+            className="flex items-center gap-2"
+          >
+            <SiGoogle className="h-4 w-4" /> Sign in with Google
+          </Button>
+          <Button onClick={() => login()}>Sign in with Internet Identity</Button>
         </div>
       </div>
     );
   }
 
-  // II authenticated - full profile
-  if (profileLoading) {
+  if (isIIAuthenticated && profileLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-10">
-        <div className="flex items-center gap-6 mb-10">
-          <Skeleton className="w-20 h-20 rounded-full" />
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="flex items-center gap-6 mb-8">
+          <Skeleton className="h-24 w-24 rounded-full" />
           <div className="space-y-2">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-32" />
           </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-48 rounded-xl" />
-          ))}
         </div>
       </div>
     );
   }
 
-  const displayName = userProfile?.name || 'My Channel';
+  // Show profile setup for II users without a profile
+  if (isIIAuthenticated && profileFetched && userProfile === null) {
+    return <ProfileSetupModal onComplete={() => {}} />;
+  }
 
-  // Determine avatar source: preview > stored avatar > google picture > initials
-  const avatarSrc = previewUrl
-    ? previewUrl
-    : userProfile?.avatar && userProfile.avatar.length > 0
-    ? convertBlobToDataURL(userProfile.avatar)
-    : googleUser?.picture || undefined;
+  // Show profile setup for Google users who haven't completed setup
+  if (googleNeedsSetup) {
+    return (
+      <ProfileSetupModal
+        onComplete={() => {
+          if (googleProfileSetupKey) {
+            localStorage.setItem(googleProfileSetupKey, 'true');
+          }
+        }}
+      />
+    );
+  }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
-      {/* Profile header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-10">
-        {/* Avatar with upload control */}
-        <div className="relative group/avatar">
-          <Avatar className="w-20 h-20">
-            {avatarSrc && <AvatarImage src={avatarSrc} alt={displayName} />}
-            <AvatarFallback className="text-2xl bg-primary/20 text-primary">
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Profile Header */}
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8">
+        {/* Avatar */}
+        <div className="relative group shrink-0">
+          <Avatar className="h-24 w-24">
+            {finalAvatarUrl && <AvatarImage src={finalAvatarUrl} alt={displayName} />}
+            <AvatarFallback className="bg-primary text-primary-foreground text-3xl font-bold">
               {getInitials(displayName)}
             </AvatarFallback>
           </Avatar>
-          {/* Upload overlay */}
-          <button
-            type="button"
-            onClick={handleAvatarClick}
-            disabled={imageUploading}
-            className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer disabled:cursor-not-allowed"
-            title="Change profile photo"
-          >
-            {imageUploading ? (
-              <Loader2 className="w-6 h-6 text-white animate-spin" />
-            ) : (
-              <Camera className="w-6 h-6 text-white" />
-            )}
-          </button>
+          {isIIAuthenticated && (
+            <button
+              onClick={handleAvatarClick}
+              disabled={isUploadingAvatar}
+              className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              {isUploadingAvatar ? (
+                <div className="h-6 w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Camera className="h-6 w-6 text-white" />
+              )}
+            </button>
+          )}
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/png,image/jpeg,image/gif,image/webp"
-            onChange={handleAvatarChange}
+            accept="image/*"
             className="hidden"
+            onChange={handleAvatarChange}
           />
         </div>
 
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-foreground mb-1">{displayName}</h1>
-          {userProfile?.channelDescription && (
-            <p className="text-muted-foreground text-sm mb-3">{userProfile.channelDescription}</p>
-          )}
-          <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Users className="w-4 h-4" />
-              {subscribersLoading ? (
-                <Skeleton className="h-4 w-16" />
-              ) : (
-                <span>
-                  {subscribers.length} subscriber{subscribers.length !== 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Video className="w-4 h-4" />
-              {videosLoading ? (
-                <Skeleton className="h-4 w-16" />
-              ) : (
-                <span>
-                  {channelVideos.length} video{channelVideos.length !== 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
+        {/* Info */}
+        <div className="text-center sm:text-left flex-1">
+          <div className="flex items-center gap-2 justify-center sm:justify-start mb-1 flex-wrap">
+            <h1 className="text-2xl font-bold">{displayName}</h1>
+            {isGoogleAuthenticated && !isIIAuthenticated && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                <SiGoogle className="h-3 w-3" /> Google
+              </span>
+            )}
+            {/* Edit Profile button — only for II users */}
+            {isIIAuthenticated && userProfile && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-1.5 ml-1"
+                onClick={() => setEditModalOpen(true)}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Edit Profile
+              </Button>
+            )}
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            <Camera className="w-3 h-3 inline mr-1" />
-            Hover over your avatar to change your profile photo (max 512 KB)
-          </p>
+
+          {/* Handle */}
+          {isIIAuthenticated && displayHandle && (
+            <p className="text-sm text-muted-foreground mb-1">@{displayHandle}</p>
+          )}
+          {isIIAuthenticated && !displayHandle && (
+            <p className="text-sm text-muted-foreground mb-1">
+              @{(userProfile?.name || 'user').toLowerCase().replace(/\s+/g, '')}
+            </p>
+          )}
+
+          {displayDescription && (
+            <p className="text-muted-foreground text-sm mb-3 max-w-lg">{displayDescription}</p>
+          )}
+
+          {isIIAuthenticated && (
+            <div className="flex items-center gap-4 justify-center sm:justify-start text-sm text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                {subscribers?.length ?? 0} subscribers
+              </span>
+              <span className="flex items-center gap-1">
+                <Video className="h-4 w-4" />
+                {channelVideos?.length ?? 0} videos
+              </span>
+              <span className="flex items-center gap-1">
+                <MessageSquare className="h-4 w-4" />
+                {communityPosts?.length ?? 0} posts
+              </span>
+            </div>
+          )}
+
+          {isGoogleAuthenticated && !isIIAuthenticated && (
+            <div className="mt-3 p-3 bg-muted rounded-lg text-sm max-w-md">
+              <p className="font-medium mb-1">Want full channel features?</p>
+              <p className="text-muted-foreground text-xs mb-2">
+                Connect with Internet Identity to upload videos, manage playlists, and track
+                subscribers.
+              </p>
+              <Button size="sm" onClick={() => login()}>
+                Connect Internet Identity
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Videos section */}
-      <div>
-        <h2 className="text-xl font-semibold text-foreground mb-4">Uploaded Videos</h2>
-        {videosLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-48 rounded-xl" />
-            ))}
-          </div>
-        ) : channelVideos.length === 0 ? (
-          <div className="text-center py-12 border border-dashed border-border rounded-xl">
-            <Video className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="text-muted-foreground">No videos uploaded yet</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {channelVideos.map((video) => (
-              <VideoCard key={video.id} video={video} />
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Edit Profile Modal */}
+      {isIIAuthenticated && userProfile && (
+        <EditProfileModal
+          open={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          currentProfile={userProfile}
+        />
+      )}
+
+      {/* Tabs — only for II users */}
+      {isIIAuthenticated && (
+        <Tabs defaultValue="videos">
+          <TabsList className="mb-6">
+            <TabsTrigger value="videos" className="flex items-center gap-1.5">
+              <Video className="h-4 w-4" />
+              {t('videos') || 'Videos'}
+            </TabsTrigger>
+            <TabsTrigger value="community" className="flex items-center gap-1.5">
+              <MessageSquare className="h-4 w-4" />
+              {t('community')}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Videos Tab */}
+          <TabsContent value="videos">
+            {videosLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="aspect-video rounded-lg" />
+                ))}
+              </div>
+            ) : channelVideos && channelVideos.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {channelVideos.map((video) => (
+                  <VideoCard key={video.id} video={video} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <Video className="h-12 w-12 mx-auto mb-3 opacity-40" />
+                <p>No videos uploaded yet.</p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => navigate({ to: '/upload' })}
+                >
+                  Upload your first video
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Community Tab */}
+          <TabsContent value="community">
+            {postsLoading ? (
+              <div className="space-y-4">
+                {[...Array(2)].map((_, i) => (
+                  <div key={i} className="bg-card border border-border rounded-xl p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                ))}
+              </div>
+            ) : communityPosts && communityPosts.length > 0 ? (
+              <div className="space-y-4 max-w-2xl">
+                {communityPosts.map((post) => (
+                  <CommunityPostCard key={post.id} post={post} showDelete={true} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-40" />
+                <p>{t('noCommunityPosts')}</p>
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => navigate({ to: '/community' })}
+                >
+                  Create your first post
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 }

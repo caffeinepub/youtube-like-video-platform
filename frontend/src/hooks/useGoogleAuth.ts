@@ -1,26 +1,30 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export interface GoogleUser {
+  sub: string;
   name: string;
   email: string;
   picture: string;
-  sub: string; // Google user ID
+  given_name?: string;
+  family_name?: string;
 }
 
-interface GoogleAuthContextValue {
+interface GoogleAuthContextType {
   googleUser: GoogleUser | null;
-  loginStatus: 'idle' | 'logging-in' | 'success' | 'error';
+  isLoading: boolean;
   login: () => void;
   logout: () => void;
-  isLoggingIn: boolean;
-  isLoginSuccess: boolean;
-  isLoginError: boolean;
 }
 
-const GoogleAuthContext = createContext<GoogleAuthContextValue | null>(null);
+const GoogleAuthContext = createContext<GoogleAuthContextType>({
+  googleUser: null,
+  isLoading: true,
+  login: () => {},
+  logout: () => {},
+});
 
-const STORAGE_KEY = 'google_auth_user';
-const CLIENT_ID = '1098765432100-example.apps.googleusercontent.com'; // Will be replaced by GSI prompt
+const STORAGE_KEY = 'google_user_session';
+const CLIENT_ID = ''; // Will be populated from index.html GSI script
 
 function parseJwt(token: string): GoogleUser | null {
   try {
@@ -32,149 +36,79 @@ function parseJwt(token: string): GoogleUser | null {
         .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
-    const payload = JSON.parse(jsonPayload);
-    return {
-      name: payload.name || '',
-      email: payload.email || '',
-      picture: payload.picture || '',
-      sub: payload.sub || '',
-    };
+    return JSON.parse(jsonPayload) as GoogleUser;
   } catch {
     return null;
   }
 }
 
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (config: {
-            client_id: string;
-            callback: (response: { credential: string }) => void;
-            auto_select?: boolean;
-            cancel_on_tap_outside?: boolean;
-          }) => void;
-          prompt: (notification?: (n: { isNotDisplayed: () => boolean; isSkippedMoment: () => boolean }) => void) => void;
-          renderButton: (element: HTMLElement, config: object) => void;
-          disableAutoSelect: () => void;
-          revoke: (hint: string, done: () => void) => void;
-        };
-      };
-    };
-    __googleAuthCallback?: (response: { credential: string }) => void;
-  }
-}
+export function GoogleAuthProvider({ children }: { children: React.ReactNode }) {
+  const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-export function GoogleAuthProvider({ children }: { children: ReactNode }) {
-  const [googleUser, setGoogleUser] = useState<GoogleUser | null>(() => {
+  useEffect(() => {
+    // Restore session from localStorage
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [loginStatus, setLoginStatus] = useState<'idle' | 'logging-in' | 'success' | 'error'>(
-    () => {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        return stored ? 'success' : 'idle';
-      } catch {
-        return 'idle';
+      if (stored) {
+        const parsed = JSON.parse(stored) as GoogleUser;
+        setGoogleUser(parsed);
       }
+    } catch {
+      localStorage.removeItem(STORAGE_KEY);
     }
-  );
-  const [gsiReady, setGsiReady] = useState(false);
+    setIsLoading(false);
+  }, []);
 
   const handleCredentialResponse = useCallback((response: { credential: string }) => {
     const user = parseJwt(response.credential);
     if (user) {
       setGoogleUser(user);
-      setLoginStatus('success');
       localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    } else {
-      setLoginStatus('error');
     }
   }, []);
 
   useEffect(() => {
-    window.__googleAuthCallback = handleCredentialResponse;
-
-    const checkGsi = () => {
-      if (window.google?.accounts?.id) {
-        setGsiReady(true);
-        window.google.accounts.id.initialize({
-          client_id: CLIENT_ID,
+    // Initialize Google Identity Services
+    const initGSI = () => {
+      if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
+        const metaClientId = document.querySelector('meta[name="google-signin-client_id"]')?.getAttribute('content') || CLIENT_ID;
+        if (!metaClientId) return;
+        (window as any).google.accounts.id.initialize({
+          client_id: metaClientId,
           callback: handleCredentialResponse,
           auto_select: false,
-          cancel_on_tap_outside: true,
         });
       }
     };
 
-    // Check immediately
-    checkGsi();
-
-    // Poll until GSI is loaded
-    const interval = setInterval(() => {
-      if (window.google?.accounts?.id) {
-        clearInterval(interval);
-        checkGsi();
-      }
-    }, 100);
-
-    const timeout = setTimeout(() => clearInterval(interval), 10000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
+    // Try immediately, then wait for script load
+    initGSI();
+    const timer = setTimeout(initGSI, 1000);
+    return () => clearTimeout(timer);
   }, [handleCredentialResponse]);
 
   const login = useCallback(() => {
-    if (!gsiReady || !window.google?.accounts?.id) {
-      // GSI not loaded - show a fallback
-      setLoginStatus('error');
-      setTimeout(() => setLoginStatus('idle'), 2000);
-      return;
+    if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
+      (window as any).google.accounts.id.prompt();
     }
-    setLoginStatus('logging-in');
-    window.google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        // Popup was blocked or skipped - try rendering button flow
-        setLoginStatus('idle');
-      }
-    });
-  }, [gsiReady]);
+  }, []);
 
   const logout = useCallback(() => {
-    if (googleUser && window.google?.accounts?.id) {
-      window.google.accounts.id.disableAutoSelect();
-      window.google.accounts.id.revoke(googleUser.email, () => {});
-    }
     setGoogleUser(null);
-    setLoginStatus('idle');
     localStorage.removeItem(STORAGE_KEY);
-  }, [googleUser]);
+    if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
+      (window as any).google.accounts.id.disableAutoSelect();
+    }
+  }, []);
 
-  const value: GoogleAuthContextValue = {
-    googleUser,
-    loginStatus,
-    login,
-    logout,
-    isLoggingIn: loginStatus === 'logging-in',
-    isLoginSuccess: loginStatus === 'success',
-    isLoginError: loginStatus === 'error',
-  };
-
-  return React.createElement(GoogleAuthContext.Provider, { value }, children);
+  return React.createElement(
+    GoogleAuthContext.Provider,
+    { value: { googleUser, isLoading, login, logout } },
+    children
+  );
 }
 
-export function useGoogleAuth(): GoogleAuthContextValue {
-  const ctx = useContext(GoogleAuthContext);
-  if (!ctx) {
-    throw new Error('useGoogleAuth must be used within GoogleAuthProvider');
-  }
-  return ctx;
+export function useGoogleAuth() {
+  return useContext(GoogleAuthContext);
 }

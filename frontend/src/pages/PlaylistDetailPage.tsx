@@ -44,14 +44,13 @@ function PlaylistVideoItem({
         params={{ videoId: video.id }}
         className="shrink-0 w-40 aspect-video rounded-lg overflow-hidden bg-muted relative"
       >
-        <video
-          src={videoUrl}
-          className="w-full h-full object-cover"
-          preload="metadata"
-        />
+        <video src={videoUrl} className="w-full h-full object-cover" preload="metadata" />
         {video.isShort && (
           <div className="absolute top-1 left-1">
-            <Badge variant="default" className="flex items-center gap-0.5 text-xs px-1 py-0 bg-primary text-primary-foreground">
+            <Badge
+              variant="default"
+              className="flex items-center gap-0.5 text-xs px-1 py-0 bg-primary text-primary-foreground"
+            >
               <Zap className="w-2.5 h-2.5 fill-current" />
               Short
             </Badge>
@@ -107,7 +106,8 @@ function PlaylistVideoItem({
 }
 
 export default function PlaylistDetailPage() {
-  const { playlistId } = useParams({ from: '/playlists/$playlistId' });
+  // Route is registered as /playlist/$playlistId (not /playlists/$playlistId)
+  const { playlistId } = useParams({ from: '/playlist/$playlistId' });
   const navigate = useNavigate();
   const { identity } = useInternetIdentity();
   const isAuthenticated = !!identity;
@@ -117,8 +117,7 @@ export default function PlaylistDetailPage() {
   const { mutate: deletePlaylist, isPending: deleting } = useDeletePlaylist();
 
   const isOwner =
-    isAuthenticated &&
-    playlist?.owner.toString() === identity?.getPrincipal().toString();
+    isAuthenticated && playlist?.owner.toString() === identity?.getPrincipal().toString();
 
   const handleDelete = () => {
     deletePlaylist(playlistId, {
@@ -172,7 +171,11 @@ export default function PlaylistDetailPage() {
           <CardContent className="py-12 text-center">
             <ListVideo className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">Playlist not found</p>
-            <Button variant="outline" className="mt-4" onClick={() => navigate({ to: '/playlists' })}>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => navigate({ to: '/playlists' })}
+            >
               Back to Playlists
             </Button>
           </CardContent>
@@ -206,7 +209,8 @@ export default function PlaylistDetailPage() {
               <p className="text-muted-foreground text-sm mb-2">{playlist.description}</p>
             )}
             <p className="text-sm text-muted-foreground">
-              {videos.length} video{videos.length !== 1 ? 's' : ''} • Created {formatTimeAgo(Number(playlist.createdAt))}
+              {videos.length} video{videos.length !== 1 ? 's' : ''} • Created{' '}
+              {formatTimeAgo(Number(playlist.createdAt))}
             </p>
           </div>
         </div>
@@ -215,7 +219,11 @@ export default function PlaylistDetailPage() {
         {isOwner && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10 shrink-0"
+              >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete
               </Button>

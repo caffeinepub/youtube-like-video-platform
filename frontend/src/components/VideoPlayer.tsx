@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -32,120 +32,179 @@ export default function VideoPlayer({ video, onPlay }: VideoPlayerProps) {
     if (!vid) return;
 
     const updateTime = () => setCurrentTime(vid.currentTime);
-    const updateDuration = () => setDuration(vid.duration);
+    const updateDuration = () => {
+      if (isFinite(vid.duration)) {
+        setDuration(vid.duration);
+      }
+    };
 
     vid.addEventListener('timeupdate', updateTime);
     vid.addEventListener('loadedmetadata', updateDuration);
+    vid.addEventListener('durationchange', updateDuration);
 
     return () => {
       vid.removeEventListener('timeupdate', updateTime);
       vid.removeEventListener('loadedmetadata', updateDuration);
+      vid.removeEventListener('durationchange', updateDuration);
     };
   }, []);
 
-  const startPlayback = () => {
+  // Listen for actual fullscreen change events to keep state in sync
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
+  const startPlayback = useCallback(() => {
     const vid = videoRef.current;
     if (!vid) return;
-    vid.play();
+    vid.play().catch((err) => {
+      console.error('Playback error:', err);
+    });
     setIsPlaying(true);
     if (!hasStartedPlaying) {
       setHasStartedPlaying(true);
       onPlay?.();
     }
-  };
+  }, [hasStartedPlaying, onPlay]);
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     const vid = videoRef.current;
     if (!vid) return;
 
-    if (isPlaying) {
-      vid.pause();
-      setIsPlaying(false);
-    } else {
-      // Show ad for long-form videos on first play
-      if (isLongForm && !adDismissed && !hasStartedPlaying) {
-        setShowAd(true);
-        // Pause the video while ad is showing
+    try {
+      if (isPlaying) {
         vid.pause();
         setIsPlaying(false);
-        if (!hasStartedPlaying) {
-          setHasStartedPlaying(true);
-          onPlay?.();
-        }
       } else {
-        startPlayback();
+        // Show ad for long-form videos on first play
+        if (isLongForm && !adDismissed && !hasStartedPlaying) {
+          setShowAd(true);
+          vid.pause();
+          setIsPlaying(false);
+          if (!hasStartedPlaying) {
+            setHasStartedPlaying(true);
+            onPlay?.();
+          }
+        } else {
+          startPlayback();
+        }
       }
+    } catch (err) {
+      console.error('Toggle play error:', err);
     }
-  };
+  }, [isPlaying, isLongForm, adDismissed, hasStartedPlaying, onPlay, startPlayback]);
 
-  const handleAdSkip = () => {
+  const handleAdSkip = useCallback(() => {
     setShowAd(false);
     setAdDismissed(true);
-    // Restart video from beginning
     const vid = videoRef.current;
     if (vid) {
       vid.currentTime = 0;
     }
     startPlayback();
-  };
+  }, [startPlayback]);
 
-  const handleAdComplete = () => {
+  const handleAdComplete = useCallback(() => {
     setShowAd(false);
     setAdDismissed(true);
-    // Start video from beginning
     const vid = videoRef.current;
     if (vid) {
       vid.currentTime = 0;
     }
     startPlayback();
-  };
+  }, [startPlayback]);
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     const vid = videoRef.current;
     if (!vid) return;
-    vid.muted = !isMuted;
-    setIsMuted(!isMuted);
-  };
-
-  const handleVolumeChange = (value: number[]) => {
-    const vid = videoRef.current;
-    if (!vid) return;
-    const newVolume = value[0];
-    setVolume(newVolume);
-    vid.volume = newVolume / 100;
-    if (newVolume === 0) {
-      setIsMuted(true);
-      vid.muted = true;
-    } else if (isMuted) {
-      setIsMuted(false);
-      vid.muted = false;
+    try {
+      vid.muted = !isMuted;
+      setIsMuted(!isMuted);
+    } catch (err) {
+      console.error('Toggle mute error:', err);
     }
-  };
+  }, [isMuted]);
 
-  const handleSeek = (value: number[]) => {
+  const handleVolumeChange = useCallback((value: number[]) => {
     const vid = videoRef.current;
     if (!vid) return;
-    vid.currentTime = value[0];
-    setCurrentTime(value[0]);
-  };
+    try {
+      const newVolume = value[0];
+      setVolume(newVolume);
+      vid.volume = newVolume / 100;
+      if (newVolume === 0) {
+        setIsMuted(true);
+        vid.muted = true;
+      } else if (isMuted) {
+        setIsMuted(false);
+        vid.muted = false;
+      }
+    } catch (err) {
+      console.error('Volume change error:', err);
+    }
+  }, [isMuted]);
 
-  const toggleFullscreen = () => {
+  const handleSeek = useCallback((value: number[]) => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    try {
+      vid.currentTime = value[0];
+      setCurrentTime(value[0]);
+    } catch (err) {
+      console.error('Seek error:', err);
+    }
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
     const container = containerRef.current;
     if (!container) return;
 
-    if (!isFullscreen) {
-      if (container.requestFullscreen) {
-        container.requestFullscreen();
+    try {
+      if (!isFullscreen) {
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+        } else if ((container as any).webkitRequestFullscreen) {
+          await (container as any).webkitRequestFullscreen();
+        } else if ((container as any).mozRequestFullScreen) {
+          await (container as any).mozRequestFullScreen();
+        } else if ((container as any).msRequestFullscreen) {
+          await (container as any).msRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          await (document as any).webkitExitFullscreen();
+        } else if ((document as any).mozCancelFullScreen) {
+          await (document as any).mozCancelFullScreen();
+        } else if ((document as any).msExitFullscreen) {
+          await (document as any).msExitFullscreen();
+        }
       }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
+      // State is updated via the fullscreenchange event listener
+    } catch (err) {
+      console.error('Fullscreen toggle error:', err);
+      // Fallback: toggle state manually if API fails
+      setIsFullscreen((prev) => !prev);
     }
-    setIsFullscreen(!isFullscreen);
-  };
+  }, [isFullscreen]);
 
   const formatTime = (seconds: number) => {
+    if (!isFinite(seconds) || isNaN(seconds)) return '0:00';
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;

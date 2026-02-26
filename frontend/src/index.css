@@ -3,65 +3,81 @@
 @tailwind utilities;
 
 @layer base {
-    :root {
-        --radius: 0.75rem;
-        --background: 0.99 0 0;
-        --foreground: 0.15 0 0;
-        --card: 1 0 0;
-        --card-foreground: 0.15 0 0;
-        --popover: 1 0 0;
-        --popover-foreground: 0.15 0 0;
-        --primary: 0.65 0.25 25;
-        --primary-foreground: 1 0 0;
-        --secondary: 0.96 0.02 60;
-        --secondary-foreground: 0.15 0 0;
-        --muted: 0.96 0.01 60;
-        --muted-foreground: 0.50 0.02 60;
-        --accent: 0.55 0.28 340;
-        --accent-foreground: 1 0 0;
-        --destructive: 0.55 0.22 25;
-        --destructive-foreground: 1 0 0;
-        --border: 0.92 0.01 60;
-        --input: 0.92 0.01 60;
-        --ring: 0.65 0.25 25;
-        --chart-1: 0.65 0.25 25;
-        --chart-2: 0.55 0.28 340;
-        --chart-3: 0.60 0.20 180;
-        --chart-4: 0.70 0.18 120;
-        --chart-5: 0.50 0.25 280;
-    }
+  :root {
+    /* YouTube-style dark theme (default) */
+    --background: oklch(0.09 0 0);
+    --foreground: oklch(0.98 0 0);
+    --card: oklch(0.13 0 0);
+    --card-foreground: oklch(0.98 0 0);
+    --popover: oklch(0.13 0 0);
+    --popover-foreground: oklch(0.98 0 0);
+    --primary: oklch(0.55 0.22 27);
+    --primary-foreground: oklch(0.98 0 0);
+    --secondary: oklch(0.18 0 0);
+    --secondary-foreground: oklch(0.98 0 0);
+    --muted: oklch(0.18 0 0);
+    --muted-foreground: oklch(0.65 0 0);
+    --accent: oklch(0.18 0 0);
+    --accent-foreground: oklch(0.98 0 0);
+    --destructive: oklch(0.55 0.22 27);
+    --destructive-foreground: oklch(0.98 0 0);
+    --border: oklch(0.22 0 0);
+    --input: oklch(0.22 0 0);
+    --ring: oklch(0.55 0.22 27);
+    --radius: 0.5rem;
 
-    .dark {
-        --background: 0.12 0.01 260;
-        --foreground: 0.98 0.01 60;
-        --card: 0.16 0.02 260;
-        --card-foreground: 0.98 0.01 60;
-        --popover: 0.14 0.02 260;
-        --popover-foreground: 0.98 0.01 60;
-        --primary: 0.70 0.25 25;
-        --primary-foreground: 0.12 0.01 260;
-        --secondary: 0.20 0.03 260;
-        --secondary-foreground: 0.98 0.01 60;
-        --muted: 0.20 0.03 260;
-        --muted-foreground: 0.65 0.02 260;
-        --accent: 0.60 0.28 340;
-        --accent-foreground: 0.98 0.01 60;
-        --destructive: 0.60 0.22 25;
-        --destructive-foreground: 0.98 0.01 60;
-        --border: 0.25 0.03 260;
-        --input: 0.25 0.03 260;
-        --ring: 0.70 0.25 25;
-        --chart-1: 0.70 0.25 25;
-        --chart-2: 0.60 0.28 340;
-        --chart-3: 0.65 0.20 180;
-        --chart-4: 0.75 0.18 120;
-        --chart-5: 0.55 0.25 280;
-    }
+    /* YouTube-specific tokens */
+    --yt-bg: #0f0f0f;
+    --yt-surface: #212121;
+    --yt-chip: #272727;
+    --yt-chip-hover: #3f3f3f;
+    --yt-border: #3f3f3f;
+    --yt-text-primary: #ffffff;
+    --yt-text-secondary: #aaaaaa;
+    --yt-red: #ff0000;
+  }
 
-    * {
-        @apply border-border;
-    }
-    body {
-        @apply bg-background text-foreground;
-    }
+  .dark {
+    --background: oklch(0.09 0 0);
+    --foreground: oklch(0.98 0 0);
+    --card: oklch(0.13 0 0);
+    --card-foreground: oklch(0.98 0 0);
+    --popover: oklch(0.13 0 0);
+    --popover-foreground: oklch(0.98 0 0);
+    --primary: oklch(0.55 0.22 27);
+    --primary-foreground: oklch(0.98 0 0);
+    --secondary: oklch(0.18 0 0);
+    --secondary-foreground: oklch(0.98 0 0);
+    --muted: oklch(0.18 0 0);
+    --muted-foreground: oklch(0.65 0 0);
+    --accent: oklch(0.18 0 0);
+    --accent-foreground: oklch(0.98 0 0);
+    --destructive: oklch(0.55 0.22 27);
+    --destructive-foreground: oklch(0.98 0 0);
+    --border: oklch(0.22 0 0);
+    --input: oklch(0.22 0 0);
+    --ring: oklch(0.55 0.22 27);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-color: var(--yt-bg);
+    color: var(--yt-text-primary);
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

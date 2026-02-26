@@ -6,23 +6,70 @@ import { useState } from 'react';
 
 interface ShareButtonProps {
   videoId: string;
+  /** When true, renders as a plain icon without the ghost button wrapper (for use inside custom containers) */
+  iconOnly?: boolean;
 }
 
-export default function ShareButton({ videoId }: ShareButtonProps) {
+async function copyToClipboard(text: string): Promise<boolean> {
+  // Modern clipboard API
+  if (navigator?.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fall through to legacy method
+    }
+  }
+
+  // Legacy fallback using execCommand
+  try {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.top = '-9999px';
+    textArea.style.left = '-9999px';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    const success = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    return success;
+  } catch {
+    return false;
+  }
+}
+
+export default function ShareButton({ videoId, iconOnly = false }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
-  const handleShare = async () => {
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     const shareUrl = `${window.location.origin}/video/${videoId}`;
-    
-    try {
-      await navigator.clipboard.writeText(shareUrl);
+
+    const success = await copyToClipboard(shareUrl);
+
+    if (success) {
       setCopied(true);
-      toast.success('Link copied to clipboard!');
+      toast.success('Link copied!');
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      toast.error('Failed to copy link');
+    } else {
+      // Last resort: show the URL in a toast so user can copy manually
+      toast.info(`Copy this link: ${shareUrl}`, { duration: 6000 });
     }
   };
+
+  if (iconOnly) {
+    return (
+      <button
+        onClick={handleShare}
+        className="flex items-center justify-center w-full h-full text-white"
+        aria-label="Share video"
+      >
+        {copied ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+      </button>
+    );
+  }
 
   return (
     <TooltipProvider>
@@ -38,7 +85,7 @@ export default function ShareButton({ videoId }: ShareButtonProps) {
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Share video</p>
+          <p>{copied ? 'Copied!' : 'Share video'}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

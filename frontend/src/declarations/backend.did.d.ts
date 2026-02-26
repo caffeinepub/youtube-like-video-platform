@@ -35,6 +35,13 @@ export interface Comment {
   'timestamp' : Time,
   'videoId' : string,
 }
+export interface CommunityPost {
+  'id' : string,
+  'body' : string,
+  'author' : Principal,
+  'timestamp' : Time,
+  'attachment' : [] | [ExternalBlob],
+}
 export type ExternalBlob = Uint8Array;
 export interface PlaylistView {
   'id' : string,
@@ -47,6 +54,7 @@ export interface PlaylistView {
 export type Time = bigint;
 export interface UserProfile {
   'name' : string,
+  'handle' : string,
   'channelDescription' : string,
   'avatar' : [] | [Uint8Array],
 }
@@ -99,8 +107,10 @@ export interface _SERVICE {
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'clearVideoComments' : ActorMethod<[string], undefined>,
   'createApiKey' : ActorMethod<[string], string>,
+  'createCommunityPost' : ActorMethod<[string, [] | [ExternalBlob]], string>,
   'createPlaylist' : ActorMethod<[string, string], string>,
   'deleteComment' : ActorMethod<[string, string], undefined>,
+  'deleteCommunityPost' : ActorMethod<[string], undefined>,
   'deletePlaylist' : ActorMethod<[string], undefined>,
   'getAdminDashboard' : ActorMethod<[], AdminDashboard>,
   'getAllVideos' : ActorMethod<[], Array<VideoMetadata>>,
@@ -111,6 +121,8 @@ export interface _SERVICE {
   'getChannelVideos' : ActorMethod<[Principal], Array<VideoMetadata>>,
   'getCommentCount' : ActorMethod<[string], bigint>,
   'getComments' : ActorMethod<[string], Array<Comment>>,
+  'getCommunityPosts' : ActorMethod<[], Array<CommunityPost>>,
+  'getCommunityPostsByChannel' : ActorMethod<[Principal], Array<CommunityPost>>,
   'getPlaylistById' : ActorMethod<[string], [] | [PlaylistView]>,
   'getPlaylistVideos' : ActorMethod<[string], Array<VideoMetadata>>,
   'getPlaylistsByOwner' : ActorMethod<[Principal], Array<PlaylistView>>,
@@ -128,6 +140,10 @@ export interface _SERVICE {
   'searchVideos' : ActorMethod<[string], Array<VideoMetadata>>,
   'subscribeToChannel' : ActorMethod<[Principal], undefined>,
   'unsubscribeFromChannel' : ActorMethod<[Principal], undefined>,
+  'updateUserProfile' : ActorMethod<
+    [string, string, string, [] | [Uint8Array]],
+    undefined
+  >,
   'uploadVideo' : ActorMethod<
     [string, string, bigint, ExternalBlob, boolean],
     string

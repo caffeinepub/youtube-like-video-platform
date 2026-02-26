@@ -24,6 +24,7 @@ actor {
     name : Text;
     channelDescription : Text;
     avatar : ?[Nat8];
+    handle : Text;
   };
 
   let userProfiles = Map.empty<Principal, UserProfile>();
@@ -48,6 +49,22 @@ actor {
       Runtime.trap("Unauthorized: Only users can save profiles");
     };
     userProfiles.add(caller, profile);
+  };
+
+  // Update User Profile Function
+  public shared ({ caller }) func updateUserProfile(name : Text, channelDescription : Text, handle : Text, avatar : ?[Nat8]) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can update profiles");
+    };
+
+    let updatedProfile : UserProfile = {
+      name;
+      channelDescription;
+      handle;
+      avatar;
+    };
+
+    userProfiles.add(caller, updatedProfile);
   };
 
   // Video Data Types
@@ -136,6 +153,10 @@ actor {
 
   // Delete a specific comment (for video owner or comment author)
   public shared ({ caller }) func deleteComment(videoId : Text, commentId : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can delete comments");
+    };
+
     let currentComments = switch (comments.get(videoId)) {
       case (null) { Runtime.trap("No comments found for this video") };
       case (?c) { c };
@@ -168,6 +189,10 @@ actor {
 
   // Delete all comments for a video (only allowed by video owner or admin)
   public shared ({ caller }) func clearVideoComments(videoId : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can clear video comments");
+    };
+
     switch (videos.get(videoId)) {
       case (null) { Runtime.trap("Video not found") };
       case (?video) {
@@ -181,6 +206,7 @@ actor {
 
   // Count comments for a video
   public query ({ caller }) func getCommentCount(videoId : Text) : async Nat {
+    // Public access - anyone can view comment counts
     switch (comments.get(videoId)) {
       case (null) { 0 };
       case (?c) { c.size() };
@@ -232,6 +258,7 @@ actor {
   };
 
   public query ({ caller }) func getSubscribers(channel : Principal) : async [Principal] {
+    // Public access - anyone can view subscribers
     switch (subscribers.get(channel)) {
       case (null) { [] };
       case (?subs) { subs.toArray() };
@@ -240,6 +267,7 @@ actor {
 
   // Count subscribers for a channel
   public query ({ caller }) func getSubscriberCount(channel : Principal) : async Nat {
+    // Public access - anyone can view subscriber counts
     switch (subscribers.get(channel)) {
       case (null) { 0 };
       case (?subs) { subs.size() };
@@ -248,6 +276,7 @@ actor {
 
   // Get all channels a user is subscribed to
   public query ({ caller }) func getUserSubscriptions(user : Principal) : async [Principal] {
+    // Public access - anyone can view subscriptions
     let channels = List.empty<Principal>();
     subscribers.keys().forEach(
       func(channel) {
@@ -263,7 +292,7 @@ actor {
     channels.toArray();
   };
 
-  // View Count
+  // View Count - public action, anyone can increment (e.g. anonymous viewers)
   public shared ({ caller }) func incrementViewCount(videoId : Text) : async () {
     switch (videos.get(videoId)) {
       case (null) { Runtime.trap("Video not found") };
@@ -277,7 +306,7 @@ actor {
     };
   };
 
-  // Get Videos
+  // Get Videos - public access
   public query ({ caller }) func getVideo(videoId : Text) : async ?VideoMetadata {
     videos.get(videoId);
   };
@@ -296,6 +325,7 @@ actor {
 
   // Count total videos of a specific channel
   public query ({ caller }) func getChannelVideoCount(channel : Principal) : async Nat {
+    // Public access - anyone can view channel video counts
     var count = 0;
     videos.values().forEach(
       func(video) {
@@ -305,7 +335,7 @@ actor {
     count;
   };
 
-  // Trending Videos
+  // Trending Videos - public access
   public query ({ caller }) func getTrendingVideos() : async [VideoMetadata] {
     let now = Time.now();
     let weekInNanos : Int = 7 * 24 * 60 * 60 * 1_000_000_000; // 7 days in nanoseconds
@@ -351,7 +381,7 @@ actor {
 
   let apiKeys = Map.empty<Text, ApiKey>();
 
-  // Generate Simple API Key (previously used random generation)
+  // Generate Simple API Key
   func generateSimpleKey(principal : Principal) : Text {
     let timeText = Time.now().toText();
     principal.toText().concat(timeText);
@@ -391,6 +421,10 @@ actor {
 
   // Revoke API Key
   public shared ({ caller }) func revokeApiKey(key : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can revoke API keys");
+    };
+
     switch (apiKeys.get(key)) {
       case (null) { Runtime.trap("API key not found") };
       case (?apiKey) {
@@ -404,7 +438,7 @@ actor {
     };
   };
 
-  // Validate API Key
+  // Validate API Key - public access
   public query ({ caller }) func validateApiKey(key : Text) : async Bool {
     switch (apiKeys.get(key)) {
       case (null) { false };
@@ -521,26 +555,23 @@ actor {
     playlists.remove(playlistId);
   };
 
-  // Get Playlist by ID
+  // Get Playlist by ID - public access
   public query ({ caller }) func getPlaylistById(playlistId : Text) : async ?PlaylistView {
-    // Public access - anyone can view playlists
     switch (playlists.get(playlistId)) {
       case (null) { null };
       case (?p) { ?getPlaylistView(p) };
     };
   };
 
-  // Get Playlists by Owner
+  // Get Playlists by Owner - public access
   public query ({ caller }) func getPlaylistsByOwner(owner : Principal) : async [PlaylistView] {
-    // Public access - anyone can view playlists by owner
     playlists.values().toArray().map(getPlaylistView).filter(
       func(p) { p.owner == owner }
     );
   };
 
-  // Get All Videos in Playlist (with metadata)
+  // Get All Videos in Playlist (with metadata) - public access
   public query ({ caller }) func getPlaylistVideos(playlistId : Text) : async [VideoMetadata] {
-    // Public access - anyone can view playlist videos
     let playlist = switch (playlists.get(playlistId)) {
       case (null) { Runtime.trap("Playlist not found") };
       case (?p) { p };
@@ -569,7 +600,7 @@ actor {
     finalVideos;
   };
 
-  // Search Videos (New Function)
+  // Search Videos - public access
   public query ({ caller }) func searchVideos(searchTerm : Text) : async [VideoMetadata] {
     let lowerTerm = searchTerm.toLower();
 
@@ -675,5 +706,65 @@ actor {
         );
       };
     };
+  };
+
+  // Community Post Types and Storage
+
+  type CommunityPost = {
+    id : Text;
+    author : Principal;
+    body : Text;
+    attachment : ?Storage.ExternalBlob;
+    timestamp : Time.Time;
+  };
+
+  let communityPosts = Map.empty<Text, CommunityPost>();
+
+  // Create Community Post
+  public shared ({ caller }) func createCommunityPost(body : Text, attachment : ?Storage.ExternalBlob) : async Text {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can create posts");
+    };
+
+    let postId = Time.now().toText();
+    let post : CommunityPost = {
+      id = postId;
+      author = caller;
+      body;
+      attachment;
+      timestamp = Time.now();
+    };
+    communityPosts.add(postId, post);
+    postId;
+  };
+
+  // Get All Community Posts - public access
+  public query ({ caller }) func getCommunityPosts() : async [CommunityPost] {
+    communityPosts.values().toArray();
+  };
+
+  // Get Community Posts by Channel (author) - public access
+  public query ({ caller }) func getCommunityPostsByChannel(channel : Principal) : async [CommunityPost] {
+    communityPosts.values().toArray().filter(
+      func(post) { post.author == channel }
+    );
+  };
+
+  // Delete Community Post (author or admin only)
+  public shared ({ caller }) func deleteCommunityPost(postId : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can delete posts");
+    };
+
+    let post = switch (communityPosts.get(postId)) {
+      case (null) { Runtime.trap("Community post not found") };
+      case (?p) { p };
+    };
+
+    if (caller != post.author and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only post author or admin can delete post");
+    };
+
+    communityPosts.remove(postId);
   };
 };

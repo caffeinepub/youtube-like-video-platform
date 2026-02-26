@@ -24,6 +24,7 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const AdminAnalytics = IDL.Record({
   'totalViews' : IDL.Nat,
   'totalVideos' : IDL.Nat,
@@ -32,10 +33,10 @@ export const AdminAnalytics = IDL.Record({
 });
 export const UserProfile = IDL.Record({
   'name' : IDL.Text,
+  'handle' : IDL.Text,
   'channelDescription' : IDL.Text,
   'avatar' : IDL.Opt(IDL.Vec(IDL.Nat8)),
 });
-export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const Time = IDL.Int;
 export const VideoMetadata = IDL.Record({
   'id' : IDL.Text,
@@ -66,6 +67,13 @@ export const Comment = IDL.Record({
   'author' : IDL.Principal,
   'timestamp' : Time,
   'videoId' : IDL.Text,
+});
+export const CommunityPost = IDL.Record({
+  'id' : IDL.Text,
+  'body' : IDL.Text,
+  'author' : IDL.Principal,
+  'timestamp' : Time,
+  'attachment' : IDL.Opt(ExternalBlob),
 });
 export const PlaylistView = IDL.Record({
   'id' : IDL.Text,
@@ -111,8 +119,14 @@ export const idlService = IDL.Service({
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'clearVideoComments' : IDL.Func([IDL.Text], [], []),
   'createApiKey' : IDL.Func([IDL.Text], [IDL.Text], []),
+  'createCommunityPost' : IDL.Func(
+      [IDL.Text, IDL.Opt(ExternalBlob)],
+      [IDL.Text],
+      [],
+    ),
   'createPlaylist' : IDL.Func([IDL.Text, IDL.Text], [IDL.Text], []),
   'deleteComment' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'deleteCommunityPost' : IDL.Func([IDL.Text], [], []),
   'deletePlaylist' : IDL.Func([IDL.Text], [], []),
   'getAdminDashboard' : IDL.Func([], [AdminDashboard], ['query']),
   'getAllVideos' : IDL.Func([], [IDL.Vec(VideoMetadata)], ['query']),
@@ -127,6 +141,12 @@ export const idlService = IDL.Service({
     ),
   'getCommentCount' : IDL.Func([IDL.Text], [IDL.Nat], ['query']),
   'getComments' : IDL.Func([IDL.Text], [IDL.Vec(Comment)], ['query']),
+  'getCommunityPosts' : IDL.Func([], [IDL.Vec(CommunityPost)], ['query']),
+  'getCommunityPostsByChannel' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Vec(CommunityPost)],
+      ['query'],
+    ),
   'getPlaylistById' : IDL.Func([IDL.Text], [IDL.Opt(PlaylistView)], ['query']),
   'getPlaylistVideos' : IDL.Func(
       [IDL.Text],
@@ -164,6 +184,11 @@ export const idlService = IDL.Service({
   'searchVideos' : IDL.Func([IDL.Text], [IDL.Vec(VideoMetadata)], ['query']),
   'subscribeToChannel' : IDL.Func([IDL.Principal], [], []),
   'unsubscribeFromChannel' : IDL.Func([IDL.Principal], [], []),
+  'updateUserProfile' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text, IDL.Opt(IDL.Vec(IDL.Nat8))],
+      [],
+      [],
+    ),
   'uploadVideo' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Nat, ExternalBlob, IDL.Bool],
       [IDL.Text],
@@ -191,6 +216,7 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
+  const ExternalBlob = IDL.Vec(IDL.Nat8);
   const AdminAnalytics = IDL.Record({
     'totalViews' : IDL.Nat,
     'totalVideos' : IDL.Nat,
@@ -199,10 +225,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const UserProfile = IDL.Record({
     'name' : IDL.Text,
+    'handle' : IDL.Text,
     'channelDescription' : IDL.Text,
     'avatar' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
-  const ExternalBlob = IDL.Vec(IDL.Nat8);
   const Time = IDL.Int;
   const VideoMetadata = IDL.Record({
     'id' : IDL.Text,
@@ -233,6 +259,13 @@ export const idlFactory = ({ IDL }) => {
     'author' : IDL.Principal,
     'timestamp' : Time,
     'videoId' : IDL.Text,
+  });
+  const CommunityPost = IDL.Record({
+    'id' : IDL.Text,
+    'body' : IDL.Text,
+    'author' : IDL.Principal,
+    'timestamp' : Time,
+    'attachment' : IDL.Opt(ExternalBlob),
   });
   const PlaylistView = IDL.Record({
     'id' : IDL.Text,
@@ -278,8 +311,14 @@ export const idlFactory = ({ IDL }) => {
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'clearVideoComments' : IDL.Func([IDL.Text], [], []),
     'createApiKey' : IDL.Func([IDL.Text], [IDL.Text], []),
+    'createCommunityPost' : IDL.Func(
+        [IDL.Text, IDL.Opt(ExternalBlob)],
+        [IDL.Text],
+        [],
+      ),
     'createPlaylist' : IDL.Func([IDL.Text, IDL.Text], [IDL.Text], []),
     'deleteComment' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'deleteCommunityPost' : IDL.Func([IDL.Text], [], []),
     'deletePlaylist' : IDL.Func([IDL.Text], [], []),
     'getAdminDashboard' : IDL.Func([], [AdminDashboard], ['query']),
     'getAllVideos' : IDL.Func([], [IDL.Vec(VideoMetadata)], ['query']),
@@ -294,6 +333,12 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getCommentCount' : IDL.Func([IDL.Text], [IDL.Nat], ['query']),
     'getComments' : IDL.Func([IDL.Text], [IDL.Vec(Comment)], ['query']),
+    'getCommunityPosts' : IDL.Func([], [IDL.Vec(CommunityPost)], ['query']),
+    'getCommunityPostsByChannel' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(CommunityPost)],
+        ['query'],
+      ),
     'getPlaylistById' : IDL.Func(
         [IDL.Text],
         [IDL.Opt(PlaylistView)],
@@ -335,6 +380,11 @@ export const idlFactory = ({ IDL }) => {
     'searchVideos' : IDL.Func([IDL.Text], [IDL.Vec(VideoMetadata)], ['query']),
     'subscribeToChannel' : IDL.Func([IDL.Principal], [], []),
     'unsubscribeFromChannel' : IDL.Func([IDL.Principal], [], []),
+    'updateUserProfile' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text, IDL.Opt(IDL.Vec(IDL.Nat8))],
+        [],
+        [],
+      ),
     'uploadVideo' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Nat, ExternalBlob, IDL.Bool],
         [IDL.Text],
