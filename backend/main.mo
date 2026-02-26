@@ -767,4 +767,28 @@ actor {
 
     communityPosts.remove(postId);
   };
+
+  // Monetization Types and Storage
+  type MonetizationStats = {
+    totalEarnings : Nat;
+    estimatedRevenue : Nat;
+    monetizationStatus : Text;
+  };
+
+  // Function to get Monetization Stats (not public)
+  public query ({ caller }) func getMonetizationStats() : async MonetizationStats {
+    // Only authorized users can access monetization stats
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view monetization stats");
+    };
+
+    // Since no tracking occurs, hardcode placeholder data
+    let stats : MonetizationStats = {
+      totalEarnings = 9000000;
+      estimatedRevenue = 40;
+      monetizationStatus = "Enabled";
+    };
+
+    stats;
+  };
 };

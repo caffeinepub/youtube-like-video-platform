@@ -75,6 +75,11 @@ export const CommunityPost = IDL.Record({
   'timestamp' : Time,
   'attachment' : IDL.Opt(ExternalBlob),
 });
+export const MonetizationStats = IDL.Record({
+  'monetizationStatus' : IDL.Text,
+  'totalEarnings' : IDL.Nat,
+  'estimatedRevenue' : IDL.Nat,
+});
 export const PlaylistView = IDL.Record({
   'id' : IDL.Text,
   'title' : IDL.Text,
@@ -147,6 +152,7 @@ export const idlService = IDL.Service({
       [IDL.Vec(CommunityPost)],
       ['query'],
     ),
+  'getMonetizationStats' : IDL.Func([], [MonetizationStats], ['query']),
   'getPlaylistById' : IDL.Func([IDL.Text], [IDL.Opt(PlaylistView)], ['query']),
   'getPlaylistVideos' : IDL.Func(
       [IDL.Text],
@@ -267,6 +273,11 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : Time,
     'attachment' : IDL.Opt(ExternalBlob),
   });
+  const MonetizationStats = IDL.Record({
+    'monetizationStatus' : IDL.Text,
+    'totalEarnings' : IDL.Nat,
+    'estimatedRevenue' : IDL.Nat,
+  });
   const PlaylistView = IDL.Record({
     'id' : IDL.Text,
     'title' : IDL.Text,
@@ -339,6 +350,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(CommunityPost)],
         ['query'],
       ),
+    'getMonetizationStats' : IDL.Func([], [MonetizationStats], ['query']),
     'getPlaylistById' : IDL.Func(
         [IDL.Text],
         [IDL.Opt(PlaylistView)],

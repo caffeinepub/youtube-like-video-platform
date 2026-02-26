@@ -1,181 +1,63 @@
 {
   "kind": "build_request",
-  "title": "YouTube-style video platform — full feature polish",
+  "title": "Enhance search results page and add voice search",
   "projectName": "Mediatube",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Redesign the HomePage to closely resemble YouTube's layout: a sticky top navigation bar with logo, search bar, and auth controls; a horizontal category filter chip row below the nav; a responsive video grid (1 column on mobile, 2 on tablet, 3–4 on desktop) showing video thumbnails with title, channel name, view count, and relative upload time.",
+      "text": "Improve the SearchResultsPage to display richer search result cards: show video thumbnail, title, channel name, view count, upload date, and duration for each result. Add a results count indicator (e.g., 'X results for \"query\"') at the top of the results list.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-3"
         ],
         "quotes": [
-          "YouTube jaisa app kare du"
+          "Search result and voice"
         ]
       },
       "acceptanceCriteria": [
-        "Home page grid renders at least 3 columns on desktop screens (≥1280px)",
-        "Each video card shows thumbnail, title, channel name, view count, and relative time",
-        "Category filter chips are horizontally scrollable on mobile",
-        "Top nav is sticky and contains logo, search, and auth controls"
+        "Search results page shows each video's thumbnail, title, channel name, view count, upload date, and duration",
+        "A results count label is displayed above the results grid (e.g., '12 results for \"cats\"')",
+        "Loading skeleton states are preserved while results are being fetched",
+        "Empty state is shown when no results match the query"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Implement a YouTube-style video watch page: the video player occupies the full left column on desktop; below the player show the video title, view count, upload date, action buttons (Like, Share, Save to Playlist), and the channel info row with avatar, subscriber count, and Subscribe button. The right column shows an 'Up next' recommended videos list.",
+      "text": "Add a voice search button to the search bar in the Layout navigation header. When clicked, it activates the browser's Web Speech API (SpeechRecognition) to capture spoken input, converts it to text, and automatically triggers a search by navigating to the search results page with the transcribed query.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-3"
         ],
         "quotes": [
-          "YouTube jaisa app kare du"
+          "Search result and voice"
         ]
       },
       "acceptanceCriteria": [
-        "Video player is displayed in a large left column (≥65% width on desktop)",
-        "Title, view count, and upload date are shown below the player",
-        "Channel avatar, name, subscriber count, and Subscribe button are present below the video info",
-        "Recommended videos list is shown in a right sidebar on desktop",
-        "Layout stacks vertically on mobile"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Add a YouTube-style left sidebar navigation (collapsible on desktop, hidden on mobile replaced by bottom nav) with links to: Home, Shorts, Subscriptions, Playlists, Community, and Upload. Show icons alongside labels. Collapse to icon-only mode when toggled.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "YouTube jaisa app kare du"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Sidebar is visible on desktop (≥1024px) with icons and labels",
-        "Sidebar can be collapsed to icon-only mode via a hamburger/menu toggle",
-        "All listed navigation links are present and functional",
-        "On mobile, sidebar is hidden and bottom navigation handles routing"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Style the Shorts page as a vertical full-screen reel feed (TikTok/YouTube Shorts style): each short fills the viewport height, videos autoplay when scrolled into view and pause when out of view, with overlaid controls for Like, Comment, Share, and Subscribe.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "YouTube jaisa app kare du"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Each short video occupies 100vh",
-        "Videos autoplay on scroll into view and pause when scrolled out",
-        "Like, Comment, Share, and Subscribe action buttons are overlaid on the video",
-        "Page is accessible via /shorts route"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Apply a dark-first visual theme across the entire app inspired by YouTube's dark mode: near-black backgrounds (#0f0f0f for the main surface, #212121 for cards/sidebar), white primary text, muted gray secondary text, and red (#ff0000) as the primary accent color for subscribe buttons, active nav indicators, and the logo mark. Ensure consistent typography using a clean sans-serif font.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "YouTube jaisa app kare du"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Background color is near-black (#0f0f0f or equivalent dark token)",
-        "Subscribe button and active nav indicators use red accent",
-        "Card backgrounds use a slightly lighter dark tone for visual separation",
-        "Text contrast meets readability standards (white on dark)"
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Add a Search Results page that displays results in the same video grid format as the home page, with a 'Search results for \"<query>\"' heading. Results should be fetched using the existing useSearchVideos hook and show loading skeletons while fetching.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "YouTube jaisa app kare du"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Navigating to /search?q=<term> shows results matching the query",
-        "A heading displays the search term",
-        "Loading skeletons appear while results are loading",
-        "Empty state message shown when no results found"
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Implement a Channel page accessible at /channel/:principalId that displays the channel banner, avatar, channel name, handle, subscriber count, and a Subscribe button. Below, show tabs for Videos, Shorts, Playlists, and Community, each rendering the relevant content using existing hooks (useGetChannelVideos, useGetCommunityPostsByChannel, useGetPlaylistById).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "YouTube jaisa app kare du"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Channel page is accessible at /channel/:principalId",
-        "Channel banner, avatar, name, handle, subscriber count, and Subscribe button are displayed",
-        "Tabs for Videos, Shorts, Playlists, and Community are present and switch content",
-        "Videos tab shows the channel's uploaded videos in a grid"
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "text": "Ensure the backend supports all data required by the redesigned frontend: video metadata (title, description, thumbnail, duration, view count, upload timestamp, uploader principal), user profile (avatar, channel name, handle, subscriber count), comments, subscriptions, and playlists. Verify existing Motoko actor methods cover all these data shapes and add any missing query or update methods.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "YouTube jaisa app kare du"
-        ]
-      },
-      "acceptanceCriteria": [
-        "All existing query methods return complete video metadata including duration and thumbnail",
-        "User profile query returns avatar bytes, channel name, handle, and subscriber count",
-        "Subscription, comment, and playlist CRUD methods are all present",
-        "No frontend data fetch fails due to missing backend method"
+        "A microphone icon button appears inside or adjacent to the search bar in the top navigation",
+        "Clicking the microphone button starts voice recognition using the browser's SpeechRecognition API",
+        "While listening, a visual indicator (e.g., animated mic icon or pulsing state) is shown",
+        "On speech recognition result, the transcribed text is placed in the search input and a search is triggered automatically",
+        "If the browser does not support SpeechRecognition, the microphone button is hidden or disabled gracefully",
+        "Errors during recognition (e.g., no speech detected) show a brief toast notification"
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
-    "All Motoko logic must remain in the single backend/main.mo actor",
-    "Preserve all existing routes and functionality; only add or enhance"
+    "Do not modify any files in frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
+    "Voice search must use the native browser Web Speech API only — no external speech/AI service integrations",
+    "Backend changes are not required; search functionality already exists via useSearchVideos hook"
   ],
   "nonGoals": [
-    "Real-time live streaming",
-    "Monetization or ad revenue sharing",
-    "External CDN or video hosting integration",
-    "Mobile native app",
-    "Third-party OAuth beyond Internet Identity and existing Google auth"
+    "Server-side or backend voice processing",
+    "Multi-language voice recognition configuration",
+    "Saving voice search history",
+    "Changes to the backend search logic or Motoko actor"
   ],
   "imageRequirements": {
-    "required": [
-      "YouTube-style red play button logo mark icon on dark background (mediatube-logo-icon.dim_128x128.png)",
-      "Mediatube full horizontal logo with red icon and white wordmark on transparent background (mediatube-logo-full.dim_320x80.png)",
-      "Generic channel banner gradient in dark red and charcoal tones (default-channel-banner.dim_1280x200.png)"
-    ],
+    "required": [],
     "edits": []
   }
 }

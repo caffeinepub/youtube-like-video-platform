@@ -117,11 +117,12 @@ export interface _CaffeineStorageCreateCertificateResult {
     method: string;
     blob_hash: string;
 }
-export interface AdminAnalytics {
-    totalViews: bigint;
-    totalVideos: bigint;
-    totalUsers: bigint;
-    totalComments: bigint;
+export interface ApiKey {
+    key: string;
+    active: boolean;
+    owner: Principal;
+    createdAt: Time;
+    apiLabel: string;
 }
 export interface CommunityPost {
     id: string;
@@ -130,12 +131,16 @@ export interface CommunityPost {
     timestamp: Time;
     attachment?: ExternalBlob;
 }
-export interface ApiKey {
-    key: string;
-    active: boolean;
-    owner: Principal;
-    createdAt: Time;
-    apiLabel: string;
+export interface MonetizationStats {
+    monetizationStatus: string;
+    totalEarnings: bigint;
+    estimatedRevenue: bigint;
+}
+export interface AdminAnalytics {
+    totalViews: bigint;
+    totalVideos: bigint;
+    totalUsers: bigint;
+    totalComments: bigint;
 }
 export interface VideoMetadata {
     id: string;
@@ -194,6 +199,7 @@ export interface backendInterface {
     getComments(videoId: string): Promise<Array<Comment>>;
     getCommunityPosts(): Promise<Array<CommunityPost>>;
     getCommunityPostsByChannel(channel: Principal): Promise<Array<CommunityPost>>;
+    getMonetizationStats(): Promise<MonetizationStats>;
     getPlaylistById(playlistId: string): Promise<PlaylistView | null>;
     getPlaylistVideos(playlistId: string): Promise<Array<VideoMetadata>>;
     getPlaylistsByOwner(owner: Principal): Promise<Array<PlaylistView>>;
@@ -636,6 +642,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getCommunityPostsByChannel(arg0);
             return from_candid_vec_n25(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getMonetizationStats(): Promise<MonetizationStats> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getMonetizationStats();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getMonetizationStats();
+            return result;
         }
     }
     async getPlaylistById(arg0: string): Promise<PlaylistView | null> {

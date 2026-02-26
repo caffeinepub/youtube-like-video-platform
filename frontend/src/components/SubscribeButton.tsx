@@ -61,7 +61,7 @@ export default function SubscribeButton({ channelPrincipal, compact = false }: S
         className={`text-xs px-3 py-1 rounded-full font-medium transition-colors disabled:opacity-50 ${
           isSubscribed
             ? 'bg-yt-chip text-white hover:bg-yt-chip-hover'
-            : 'bg-white text-black hover:bg-gray-200'
+            : 'bg-mt-magenta text-white hover:bg-mt-purple'
         }`}
       >
         {isPending ? (
@@ -82,7 +82,7 @@ export default function SubscribeButton({ channelPrincipal, compact = false }: S
       className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm transition-colors disabled:opacity-50 ${
         isSubscribed
           ? 'bg-yt-chip text-white hover:bg-yt-chip-hover'
-          : 'bg-white text-black hover:bg-gray-200'
+          : 'bg-mt-magenta text-white hover:bg-mt-purple'
       }`}
     >
       {isPending && <Loader2 className="w-4 h-4 animate-spin" />}

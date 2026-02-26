@@ -34,7 +34,7 @@ export default function FilterSelector({
                 'min-w-[72px] py-2 px-2 rounded-xl transition-all duration-200',
                 'text-xs font-medium select-none touch-manipulation',
                 isSelected
-                  ? 'bg-primary text-primary-foreground shadow-md scale-105'
+                  ? 'bg-mt-magenta text-white shadow-md scale-105'
                   : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
               aria-pressed={isSelected}

@@ -20,7 +20,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Key, Copy, Check, Plus, Trash2, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Key, Copy, Check, Plus, Trash2, Lock, AlertCircle, Eye, EyeOff, BookOpen } from 'lucide-react';
 import type { ApiKey } from '../backend';
 
 function maskKey(key: string): string {
@@ -157,6 +157,134 @@ function NewKeyDisplay({ generatedKey, onDismiss }: { generatedKey: string; onDi
         I've saved my key, dismiss
       </Button>
     </div>
+  );
+}
+
+function UsageGuide() {
+  const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
+
+  const snippets = {
+    curl: `curl -X GET "https://your-api-endpoint.com/api/videos" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json"`,
+    js: `// JavaScript / TypeScript
+const response = await fetch('https://your-api-endpoint.com/api/videos', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json',
+  },
+});
+const data = await response.json();`,
+    python: `# Python
+import requests
+
+headers = {
+    "Authorization": "Bearer YOUR_API_KEY",
+    "Content-Type": "application/json",
+}
+response = requests.get("https://your-api-endpoint.com/api/videos", headers=headers)
+data = response.json()`,
+  };
+
+  const [activeTab, setActiveTab] = useState<'curl' | 'js' | 'python'>('curl');
+
+  const handleCopySnippet = async () => {
+    await navigator.clipboard.writeText(snippets[activeTab]);
+    setCopiedSnippet(activeTab);
+    setTimeout(() => setCopiedSnippet(null), 2000);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <BookOpen className="w-4 h-4" />
+          How to use your API key
+        </CardTitle>
+        <CardDescription>
+          Include your API key in the <code className="text-xs bg-muted px-1 py-0.5 rounded">Authorization</code> header
+          of every request to authenticate with the Mediatube API.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Security note */}
+        <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+          <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">Keep your API key secret.</span>{' '}
+            Never expose it in client-side code, public repositories, or logs. Revoke and regenerate
+            any key you believe has been compromised.
+          </p>
+        </div>
+
+        {/* Tab selector */}
+        <div className="flex gap-1 border-b border-border">
+          {(['curl', 'js', 'python'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-t transition-colors ${
+                activeTab === tab
+                  ? 'border-b-2 border-primary text-primary bg-primary/5'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {tab === 'curl' ? 'cURL' : tab === 'js' ? 'JavaScript' : 'Python'}
+            </button>
+          ))}
+        </div>
+
+        {/* Code block */}
+        <div className="relative">
+          <pre className="rounded-lg bg-muted/60 border border-border p-4 text-xs font-mono text-foreground overflow-x-auto whitespace-pre leading-relaxed">
+            <code>{snippets[activeTab]}</code>
+          </pre>
+          <button
+            onClick={handleCopySnippet}
+            className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-background border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+          >
+            {copiedSnippet === activeTab ? (
+              <>
+                <Check className="w-3 h-3 text-green-500" />
+                Copied
+              </>
+            ) : (
+              <>
+                <Copy className="w-3 h-3" />
+                Copy
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Steps */}
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-foreground">Quick start:</p>
+          <ol className="space-y-1.5 text-xs text-muted-foreground list-none">
+            <li className="flex items-start gap-2">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold mt-0.5">1</span>
+              <span>Generate a new API key using the form above and copy it immediately.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold mt-0.5">2</span>
+              <span>
+                Add the key to your request headers:{' '}
+                <code className="bg-muted px-1 py-0.5 rounded">Authorization: Bearer YOUR_API_KEY</code>
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold mt-0.5">3</span>
+              <span>
+                The server validates your key via the{' '}
+                <code className="bg-muted px-1 py-0.5 rounded">validateApiKey</code> method. Revoked keys
+                will return <code className="bg-muted px-1 py-0.5 rounded">false</code> and be rejected.
+              </span>
+            </li>
+          </ol>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -334,6 +462,9 @@ export default function ApiKeysPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Usage Guide */}
+      <UsageGuide />
     </div>
   );
 }

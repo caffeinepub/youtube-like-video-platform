@@ -27,10 +27,10 @@ export default function BottomNav() {
               key={path}
               to={path}
               className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors ${
-                isActive ? 'text-white' : 'text-yt-text-secondary'
+                isActive ? 'text-mt-magenta' : 'text-yt-text-secondary'
               }`}
             >
-              <Icon className={`w-5 h-5 ${isActive ? 'text-yt-red' : ''}`} />
+              <Icon className={`w-5 h-5 ${isActive ? 'text-mt-magenta' : ''}`} />
               <span className="text-[10px]">{label}</span>
             </Link>
           );

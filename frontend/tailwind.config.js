@@ -14,6 +14,12 @@ export default {
         'yt-text-primary': 'var(--yt-text-primary)',
         'yt-text-secondary': 'var(--yt-text-secondary)',
         'yt-red': 'var(--yt-red)',
+        // Mediatube and Photo brand tokens
+        'mt-magenta': 'var(--mt-magenta)',
+        'mt-pink': 'var(--mt-pink)',
+        'mt-purple': 'var(--mt-purple)',
+        'mt-blue': 'var(--mt-blue)',
+        'mt-cyan': 'var(--mt-cyan)',
         // Shadcn semantic tokens
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
@@ -59,6 +65,7 @@ export default {
       },
       boxShadow: {
         glow: '0 0 20px rgba(255, 0, 0, 0.3)',
+        'glow-magenta': '0 0 20px rgba(224, 64, 251, 0.4)',
       },
       keyframes: {
         'accordion-down': {

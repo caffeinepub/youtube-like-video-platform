@@ -43,6 +43,11 @@ export interface CommunityPost {
   'attachment' : [] | [ExternalBlob],
 }
 export type ExternalBlob = Uint8Array;
+export interface MonetizationStats {
+  'monetizationStatus' : string,
+  'totalEarnings' : bigint,
+  'estimatedRevenue' : bigint,
+}
 export interface PlaylistView {
   'id' : string,
   'title' : string,
@@ -123,6 +128,7 @@ export interface _SERVICE {
   'getComments' : ActorMethod<[string], Array<Comment>>,
   'getCommunityPosts' : ActorMethod<[], Array<CommunityPost>>,
   'getCommunityPostsByChannel' : ActorMethod<[Principal], Array<CommunityPost>>,
+  'getMonetizationStats' : ActorMethod<[], MonetizationStats>,
   'getPlaylistById' : ActorMethod<[string], [] | [PlaylistView]>,
   'getPlaylistVideos' : ActorMethod<[string], Array<VideoMetadata>>,
   'getPlaylistsByOwner' : ActorMethod<[Principal], Array<PlaylistView>>,

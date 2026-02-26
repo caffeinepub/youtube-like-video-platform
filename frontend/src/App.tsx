@@ -18,6 +18,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 import CopyrightPolicyPage from './pages/CopyrightPolicyPage';
 import SubscriptionsPage from './pages/SubscriptionsPage';
 import ChannelPage from './pages/ChannelPage';
+import MonetizationPage from './pages/MonetizationPage';
 import { GoogleAuthProvider } from './hooks/useGoogleAuth';
 import { LanguageProvider } from './contexts/LanguageContext';
 import React from 'react';
@@ -129,6 +130,12 @@ const channelRoute = createRoute({
   component: ChannelPage,
 });
 
+const monetizationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/monetization',
+  component: MonetizationPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   videoRoute,
@@ -145,6 +152,7 @@ const routeTree = rootRoute.addChildren([
   copyrightRoute,
   subscriptionsRoute,
   channelRoute,
+  monetizationRoute,
 ]);
 
 const router = createRouter({ routeTree });

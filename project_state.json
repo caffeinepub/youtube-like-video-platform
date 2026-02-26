@@ -1,65 +1,24 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Build a YouTube-like app",
+  "summary": "Project with search result and voice features",
   "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
-  "imageRequirements": "## Required Images\n- YouTube-style red play button logo mark icon on dark background (mediatube-logo-icon.dim_128x128.png)\n- Mediatube full horizontal logo with red icon and white wordmark on transparent background (mediatube-logo-full.dim_320x80.png)\n- Generic channel banner gradient in dark red and charcoal tones (default-channel-banner.dim_1280x200.png)",
   "existing_features": [
     {
-      "id": "feature-redesign-the-homepage-to-closely-resemble-youtube-s-layout-a-sticky-top-navigation-bar-with-logo-search-bar-and-auth-controls-a-horizontal-category-filter-chip-row-below-the-nav-a-responsive-video-grid-1-column-on-mobile-2-on-tablet-3-4-on-desktop-showing-video-thumbnails-with-title-channel-name-view-count-and-relative-upload-time",
-      "title": "Redesign the HomePage to closely resemble YouTube's layout: a sticky top navigation bar with logo, search bar, and auth controls; a horizontal category filter chip row below the nav; a responsive video grid (1 column on mobile, 2 on tablet, 3–4 on desktop) showing video thumbnails with title, channel name, view count, and relative upload time.",
+      "id": "feature-improve-the-searchresultspage-to-display-richer-search-result-cards-show-video-thumbnail-title-channel-name-view-count-upload-date-and-duration-for-each-result-add-a-results-count-indicator-e-g-x-results-for-query-at-the-top-of-the-results-list",
+      "title": "Improve the SearchResultsPage to display richer search result cards: show video thumbnail, title, channel name, view count, upload date, and duration for each result. Add a results count indicator (e.g., 'X results for \"query\"') at the top of the results list.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-implement-a-youtube-style-video-watch-page-the-video-player-occupies-the-full-left-column-on-desktop-below-the-player-show-the-video-title-view-count-upload-date-action-buttons-like-share-save-to-playlist-and-the-channel-info-row-with-avatar-subscriber-count-and-subscribe-button-the-right-column-shows-an-up-next-recommended-videos-list",
-      "title": "Implement a YouTube-style video watch page: the video player occupies the full left column on desktop; below the player show the video title, view count, upload date, action buttons (Like, Share, Save to Playlist), and the channel info row with avatar, subscriber count, and Subscribe button. The right column shows an 'Up next' recommended videos list.",
+      "id": "feature-add-a-voice-search-button-to-the-search-bar-in-the-layout-navigation-header-when-clicked-it-activates-the-browser-s-web-speech-api-speechrecognition-to-capture-spoken-input-converts-it-to-text-and-automatically-triggers-a-search-by-navigating-to-the-search-results-page-with-the-transcribed-query",
+      "title": "Add a voice search button to the search bar in the Layout navigation header. When clicked, it activates the browser's Web Speech API (SpeechRecognition) to capture spoken input, converts it to text, and automatically triggers a search by navigating to the search results page with the transcribed query.",
       "reqIds": [
         "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-youtube-style-left-sidebar-navigation-collapsible-on-desktop-hidden-on-mobile-replaced-by-bottom-nav-with-links-to-home-shorts-subscriptions-playlists-community-and-upload-show-icons-alongside-labels-collapse-to-icon-only-mode-when-toggled",
-      "title": "Add a YouTube-style left sidebar navigation (collapsible on desktop, hidden on mobile replaced by bottom nav) with links to: Home, Shorts, Subscriptions, Playlists, Community, and Upload. Show icons alongside labels. Collapse to icon-only mode when toggled.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-style-the-shorts-page-as-a-vertical-full-screen-reel-feed-tiktok-youtube-shorts-style-each-short-fills-the-viewport-height-videos-autoplay-when-scrolled-into-view-and-pause-when-out-of-view-with-overlaid-controls-for-like-comment-share-and-subscribe",
-      "title": "Style the Shorts page as a vertical full-screen reel feed (TikTok/YouTube Shorts style): each short fills the viewport height, videos autoplay when scrolled into view and pause when out of view, with overlaid controls for Like, Comment, Share, and Subscribe.",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-apply-a-dark-first-visual-theme-across-the-entire-app-inspired-by-youtube-s-dark-mode-near-black-backgrounds-0f0f0f-for-the-main-surface-212121-for-cards-sidebar-white-primary-text-muted-gray-secondary-text-and-red-ff0000-as-the-primary-accent-color-for-subscribe-buttons-active-nav-indicators-and-the-logo-mark-ensure-consistent-typography-using-a-clean-sans-serif-font",
-      "title": "Apply a dark-first visual theme across the entire app inspired by YouTube's dark mode: near-black backgrounds (#0f0f0f for the main surface, #212121 for cards/sidebar), white primary text, muted gray secondary text, and red (#ff0000) as the primary accent color for subscribe buttons, active nav indicators, and the logo mark. Ensure consistent typography using a clean sans-serif font.",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-search-results-page-that-displays-results-in-the-same-video-grid-format-as-the-home-page-with-a-search-results-for-query-heading-results-should-be-fetched-using-the-existing-usesearchvideos-hook-and-show-loading-skeletons-while-fetching",
-      "title": "Add a Search Results page that displays results in the same video grid format as the home page, with a 'Search results for \"<query>\"' heading. Results should be fetched using the existing useSearchVideos hook and show loading skeletons while fetching.",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-implement-a-channel-page-accessible-at-channel-principalid-that-displays-the-channel-banner-avatar-channel-name-handle-subscriber-count-and-a-subscribe-button-below-show-tabs-for-videos-shorts-playlists-and-community-each-rendering-the-relevant-content-using-existing-hooks-usegetchannelvideos-usegetcommunitypostsbychannel-usegetplaylistbyid",
-      "title": "Implement a Channel page accessible at /channel/:principalId that displays the channel banner, avatar, channel name, handle, subscriber count, and a Subscribe button. Below, show tabs for Videos, Shorts, Playlists, and Community, each rendering the relevant content using existing hooks (useGetChannelVideos, useGetCommunityPostsByChannel, useGetPlaylistById).",
-      "reqIds": [
-        "REQ-7"
       ],
       "version": 1
     }
@@ -67,21 +26,18 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "YouTube-like app with video browsing, playback, and subscription features",
+      "summary": "Search result functionality",
       "reqIds": [],
       "status": "pending"
     },
     {
-      "id": "AR-9",
-      "summary": "Ensure the backend supports all data required by the redesigned frontend: video metadata (title, description, thumbnail, duration, view count, upload timestamp, uploader principal), user profile (avatar, channel name, handle, subscriber count), comments, subscriptions, and playlists. Verify existing Motoko actor methods cover all these data shapes and add any missing query or update methods.",
-      "reqIds": [
-        "REQ-8"
-      ],
+      "id": "AR-2",
+      "summary": "Voice feature",
+      "reqIds": [],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
-  "projectName": "YouTube-like App",
+  "projectName": "Mediatube",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

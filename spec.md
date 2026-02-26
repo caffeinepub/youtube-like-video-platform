@@ -1,16 +1,16 @@
 # Specification
 
 ## Summary
-**Goal:** Redesign Mediatube into a full YouTube-style video platform with polished UI, dark theme, and complete page set.
+**Goal:** Enhance the search results page with richer video cards and add voice search capability to the navigation search bar.
 
 **Planned changes:**
-- Redesign HomePage with sticky top nav (logo, search, auth), horizontal category filter chips, and responsive video grid (1/2/3–4 columns)
-- Build YouTube-style watch page with large video player, video info/action buttons, channel info row, and right-column recommended videos sidebar
-- Add collapsible left sidebar nav (Home, Shorts, Subscriptions, Playlists, Community, Upload) with icon+label; collapse to icon-only; replace with bottom nav on mobile
-- Style Shorts page as full-screen vertical reel feed with autoplay-on-scroll and overlaid Like, Comment, Share, Subscribe controls at `/shorts`
-- Apply dark-first theme: `#0f0f0f` background, `#212121` cards/sidebar, white text, red (`#ff0000`) accent for subscribe buttons and active nav indicators
-- Add Search Results page at `/search?q=<term>` with query heading, video grid, loading skeletons, and empty state
-- Add Channel page at `/channel/:principalId` with banner, avatar, channel info, Subscribe button, and tabs for Videos, Shorts, Playlists, Community
-- Verify and extend backend Motoko actor to cover all required data: full video metadata (duration, thumbnail, view count, timestamp), user profile (avatar, channel name, handle, subscriber count), comments, subscriptions, and playlists
+- Update the SearchResultsPage to display video cards showing thumbnail, title, channel name, view count, upload date, and duration for each result
+- Add a results count label at the top of the results list (e.g., '12 results for "cats"')
+- Preserve loading skeleton states and show an empty state when no results are found
+- Add a microphone icon button to the search bar in the navigation header
+- Implement voice search using the browser's Web Speech API (SpeechRecognition) that transcribes spoken input and automatically triggers a search
+- Show a visual indicator (pulsing/animated mic) while voice recognition is active
+- Gracefully hide or disable the mic button if the browser does not support SpeechRecognition
+- Show a brief toast notification on recognition errors (e.g., no speech detected)
 
-**User-visible outcome:** Users get a fully YouTube-like experience: browse a dark-themed video grid home page, watch videos with recommended sidebar, scroll Shorts as full-screen reels, search for videos, view channel pages with tabs, and navigate via a collapsible sidebar or mobile bottom nav.
+**User-visible outcome:** Users can see richer search result cards with video details and a results count, and can initiate searches by speaking into the microphone button in the navigation bar.

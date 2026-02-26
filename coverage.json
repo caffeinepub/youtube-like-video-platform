@@ -1,152 +1,49 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-26T15:55:31.613Z",
+  "generatedAt": "2026-02-26T17:48:26.569Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 8,
-    "implemented": 7,
+    "total": 2,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Redesign the HomePage to closely resemble YouTube's layout: a sticky top navigation bar with logo, search bar, and auth controls; a horizontal category filter chip row below the nav; a responsive video grid (1 column on mobile, 2 on tablet, 3–4 on desktop) showing video thumbnails with title, channel name, view count, and relative upload time.",
+        "summary": "Improve the SearchResultsPage to display richer search result cards: show video thumbnail, title, channel name, view count, upload date, and duration for each result. Add a results count indicator (e.g., 'X results for \"query\"') at the top of the results list.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/HomePage.tsx",
-          "frontend/src/components/FilterSelector.tsx",
-          "frontend/src/components/VideoCard.tsx",
-          "frontend/src/components/Layout.tsx"
+          "frontend/src/pages/SearchResultsPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/HomePage.tsx",
-          "frontend/src/components/VideoCard.tsx",
-          "frontend/src/components/Layout.tsx"
+          "frontend/src/pages/SearchResultsPage.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Implement a YouTube-style video watch page: the video player occupies the full left column on desktop; below the player show the video title, view count, upload date, action buttons (Like, Share, Save to Playlist), and the channel info row with avatar, subscriber count, and Subscribe button. The right column shows an 'Up next' recommended videos list.",
+        "summary": "Add a voice search button to the search bar in the Layout navigation header. When clicked, it activates the browser's Web Speech API (SpeechRecognition) to capture spoken input, converts it to text, and automatically triggers a search by navigating to the search results page with the transcribed query.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/VideoPlayerPage.tsx",
-          "frontend/src/components/RecommendedVideos.tsx",
-          "frontend/src/components/VideoPlayer.tsx"
+          "frontend/src/hooks/useVoiceSearch.ts",
+          "frontend/src/components/Layout.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/VideoPlayerPage.tsx",
-          "frontend/src/components/RecommendedVideos.tsx"
+          "frontend/src/hooks/useVoiceSearch.ts",
+          "frontend/src/components/Layout.tsx"
         ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Add a YouTube-style left sidebar navigation (collapsible on desktop, hidden on mobile replaced by bottom nav) with links to: Home, Shorts, Subscriptions, Playlists, Community, and Upload. Show icons alongside labels. Collapse to icon-only mode when toggled.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/Sidebar.tsx",
-          "frontend/src/components/Layout.tsx",
-          "frontend/src/components/BottomNav.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/pages/SubscriptionsPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/Layout.tsx",
-          "frontend/src/components/BottomNav.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/pages/SubscriptionsPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Style the Shorts page as a vertical full-screen reel feed (TikTok/YouTube Shorts style): each short fills the viewport height, videos autoplay when scrolled into view and pause when out of view, with overlaid controls for Like, Comment, Share, and Subscribe.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/ReelsPage.tsx",
-          "frontend/src/components/ReelCard.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/ReelsPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Apply a dark-first visual theme across the entire app inspired by YouTube's dark mode: near-black backgrounds (#0f0f0f for the main surface, #212121 for cards/sidebar), white primary text, muted gray secondary text, and red (#ff0000) as the primary accent color for subscribe buttons, active nav indicators, and the logo mark. Ensure consistent typography using a clean sans-serif font.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/index.css",
-          "frontend/tailwind.config.js",
-          "frontend/src/components/Layout.tsx",
-          "frontend/src/components/SubscribeButton.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/index.css",
-          "frontend/tailwind.config.js",
-          "frontend/src/components/Layout.tsx",
-          "frontend/src/components/SubscribeButton.tsx"
-        ]
-      },
-      {
-        "id": "REQ-6",
-        "summary": "Add a Search Results page that displays results in the same video grid format as the home page, with a 'Search results for \"<query>\"' heading. Results should be fetched using the existing useSearchVideos hook and show loading skeletons while fetching.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/SearchResultsPage.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/SearchResultsPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-7",
-        "summary": "Implement a Channel page accessible at /channel/:principalId that displays the channel banner, avatar, channel name, handle, subscriber count, and a Subscribe button. Below, show tabs for Videos, Shorts, Playlists, and Community, each rendering the relevant content using existing hooks (useGetChannelVideos, useGetCommunityPostsByChannel, useGetPlaylistById).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/ChannelPage.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/components/VideoCard.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/ChannelPage.tsx",
-          "frontend/src/App.tsx",
-          "frontend/src/components/VideoCard.tsx"
-        ]
-      },
-      {
-        "id": "REQ-8",
-        "summary": "Ensure the backend supports all data required by the redesigned frontend: video metadata (title, description, thumbnail, duration, view count, upload timestamp, uploader principal), user profile (avatar, channel name, handle, subscriber count), comments, subscriptions, and playlists. Verify existing Motoko actor methods cover all these data shapes and add any missing query or update methods.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/public/assets/generated/default-channel-banner.dim_1280x200.png",
-    "frontend/public/assets/generated/mediatube-logo-full.dim_320x80.png",
-    "frontend/public/assets/generated/mediatube-logo-icon.dim_128x128.png",
-    "frontend/src/App.tsx",
-    "frontend/src/components/BottomNav.tsx",
     "frontend/src/components/Layout.tsx",
-    "frontend/src/components/RecommendedVideos.tsx",
-    "frontend/src/components/SubscribeButton.tsx",
-    "frontend/src/components/VideoCard.tsx",
-    "frontend/src/index.css",
-    "frontend/src/pages/ChannelPage.tsx",
-    "frontend/src/pages/HomePage.tsx",
-    "frontend/src/pages/PlaylistDetailPage.tsx",
-    "frontend/src/pages/PlaylistsPage.tsx",
-    "frontend/src/pages/ReelsPage.tsx",
+    "frontend/src/hooks/useVoiceSearch.ts",
     "frontend/src/pages/SearchResultsPage.tsx",
-    "frontend/src/pages/SubscriptionsPage.tsx",
-    "frontend/src/pages/VideoPlayerPage.tsx",
-    "frontend/tailwind.config.js",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

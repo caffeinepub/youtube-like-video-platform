@@ -1,16 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useMatchRoute } from '@tanstack/react-router';
 import {
   Search, Bell, Upload, User, Menu,
   Home, Flame, ListVideo, Key, BookOpen, Rss, Tv2,
+  DollarSign, Shield, Mic, MicOff,
 } from 'lucide-react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { useGetCallerUserProfile } from '../hooks/useGetCallerUserProfile';
+import { useIsCallerAdmin } from '../hooks/useIsCallerAdmin';
+import { useVoiceSearch } from '../hooks/useVoiceSearch';
 import ProfileSetupModal from './ProfileSetupModal';
 import BottomNav from './BottomNav';
 import { getInitials, convertBlobToDataURL } from '../utils/avatarHelpers';
+import { toast } from 'sonner';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -31,6 +35,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const matchRoute = useMatchRoute();
   const queryClient = useQueryClient();
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { login, clear, loginStatus, identity } = useInternetIdentity();
   const { googleUser, logout: googleLogout } = useGoogleAuth();
@@ -38,12 +43,45 @@ export default function Layout({ children }: LayoutProps) {
   const isLoggingIn = loginStatus === 'logging-in';
 
   const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
+  const { data: isCallerAdmin } = useIsCallerAdmin();
   const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
+
+  const {
+    isListening,
+    isSupported: voiceSupported,
+    startListening,
+    stopListening,
+    transcript,
+    error: voiceError,
+  } = useVoiceSearch();
+
+  // When transcript arrives, populate search and navigate
+  useEffect(() => {
+    if (transcript) {
+      setSearchQuery(transcript);
+      navigate({ to: '/search', search: { q: transcript } });
+    }
+  }, [transcript, navigate]);
+
+  // Show voice error as toast
+  useEffect(() => {
+    if (voiceError) {
+      toast.error(voiceError);
+    }
+  }, [voiceError]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate({ to: '/search', search: { q: searchQuery.trim() } });
+    }
+  };
+
+  const handleVoiceSearch = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
     }
   };
 
@@ -89,37 +127,59 @@ export default function Layout({ children }: LayoutProps) {
           >
             <Menu className="w-5 h-5 text-white" />
           </button>
-          <Link to="/" className="flex items-center gap-1 shrink-0">
+          <Link to="/" className="flex items-center gap-2 shrink-0">
             <img
-              src="/assets/generated/mediatube-logo-icon.dim_128x128.png"
-              alt="Mediatube"
-              className="h-8 w-8 object-contain"
+              src="/assets/generated/mediatube-logo.dim_512x512.png"
+              alt="Mediatube and Photo"
+              className="h-9 w-9 object-contain rounded-lg"
             />
-            <img
-              src="/assets/generated/mediatube-logo-full.dim_320x80.png"
-              alt="Mediatube"
-              className="hidden sm:block h-5 object-contain"
-            />
+            <span className="hidden sm:block font-bold text-base tracking-tight brand-gradient-text">
+              Mediatube and Photo
+            </span>
           </Link>
         </div>
 
         {/* Center: Search */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-xl mx-auto hidden sm:flex">
+        <form onSubmit={handleSearch} className="flex-1 max-w-xl mx-auto hidden sm:flex items-center gap-1">
           <div className="flex w-full">
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search"
-              className="flex-1 bg-yt-bg border border-yt-border rounded-l-full px-4 py-2 text-sm text-white placeholder-yt-text-secondary focus:outline-none focus:border-blue-500"
+              placeholder={isListening ? 'Listening...' : 'Search'}
+              className={`flex-1 bg-yt-bg border border-yt-border rounded-l-full px-4 py-2 text-sm text-white placeholder-yt-text-secondary focus:outline-none focus:border-mt-magenta transition-colors ${
+                isListening ? 'border-mt-magenta placeholder-mt-magenta' : ''
+              }`}
             />
             <button
               type="submit"
               className="px-5 py-2 bg-yt-chip border border-yt-border border-l-0 rounded-r-full hover:bg-yt-chip-hover transition-colors"
+              aria-label="Search"
             >
               <Search className="w-4 h-4 text-yt-text-secondary" />
             </button>
           </div>
+
+          {/* Voice Search Button */}
+          {voiceSupported && (
+            <button
+              type="button"
+              onClick={handleVoiceSearch}
+              aria-label={isListening ? 'Stop listening' : 'Search by voice'}
+              className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 shrink-0 ${
+                isListening
+                  ? 'bg-mt-magenta text-white animate-pulse shadow-lg shadow-mt-magenta/40'
+                  : 'bg-yt-chip hover:bg-yt-chip-hover text-yt-text-secondary hover:text-white'
+              }`}
+            >
+              {isListening ? (
+                <MicOff className="w-4 h-4" />
+              ) : (
+                <Mic className="w-4 h-4" />
+              )}
+            </button>
+          )}
         </form>
 
         {/* Right: Actions */}
@@ -149,7 +209,7 @@ export default function Layout({ children }: LayoutProps) {
           {isAuthenticated ? (
             <button
               onClick={handleAuth}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-yt-red text-white text-sm font-bold hover:opacity-90 transition-opacity overflow-hidden"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-mt-magenta text-white text-sm font-bold hover:opacity-90 transition-opacity overflow-hidden"
             >
               {avatarUrl ? (
                 <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
@@ -161,7 +221,7 @@ export default function Layout({ children }: LayoutProps) {
             <button
               onClick={handleAuth}
               disabled={isLoggingIn}
-              className="flex items-center gap-2 px-3 py-1.5 border border-blue-500 text-blue-400 rounded-full text-sm hover:bg-blue-500/10 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-1.5 border border-mt-magenta text-mt-magenta rounded-full text-sm hover:bg-mt-magenta/10 transition-colors disabled:opacity-50"
             >
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">{isLoggingIn ? 'Signing in...' : 'Sign in'}</span>
@@ -185,14 +245,14 @@ export default function Layout({ children }: LayoutProps) {
                   key={path}
                   to={path}
                   className={`flex items-center gap-4 px-3 py-2.5 mx-2 rounded-xl transition-colors ${
-                    isActive ? 'bg-yt-chip font-semibold' : 'hover:bg-yt-chip'
+                    isActive ? 'bg-mt-magenta/20 font-semibold' : 'hover:bg-yt-chip'
                   } ${sidebarCollapsed ? 'justify-center px-0 mx-0 rounded-none py-4' : ''}`}
                 >
                   <Icon
-                    className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-yt-text-secondary'}`}
+                    className={`w-5 h-5 shrink-0 ${isActive ? 'text-mt-magenta' : 'text-yt-text-secondary'}`}
                   />
                   {!sidebarCollapsed && (
-                    <span className={`text-sm ${isActive ? 'text-white' : 'text-yt-text-secondary'}`}>
+                    <span className={`text-sm ${isActive ? 'text-mt-magenta' : 'text-yt-text-secondary'}`}>
                       {label}
                     </span>
                   )}
@@ -212,22 +272,82 @@ export default function Layout({ children }: LayoutProps) {
                   <span className="text-sm text-yt-text-secondary">Your Channel</span>
                 </Link>
                 <Link
+                  to="/monetization"
+                  className={`flex items-center gap-4 px-3 py-2.5 mx-2 rounded-xl transition-colors ${
+                    !!matchRoute({ to: '/monetization' }) ? 'bg-mt-magenta/20 font-semibold' : 'hover:bg-yt-chip'
+                  }`}
+                >
+                  <DollarSign
+                    className={`w-5 h-5 shrink-0 ${
+                      !!matchRoute({ to: '/monetization' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
+                    }`}
+                  />
+                  <span
+                    className={`text-sm ${
+                      !!matchRoute({ to: '/monetization' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
+                    }`}
+                  >
+                    Monetization
+                  </span>
+                </Link>
+                <Link
                   to="/api-keys"
                   className="flex items-center gap-4 px-3 py-2.5 mx-2 rounded-xl hover:bg-yt-chip transition-colors"
                 >
                   <Key className="w-5 h-5 text-yt-text-secondary shrink-0" />
                   <span className="text-sm text-yt-text-secondary">API Keys</span>
                 </Link>
+                {isCallerAdmin && (
+                  <Link
+                    to="/admin"
+                    className={`flex items-center gap-4 px-3 py-2.5 mx-2 rounded-xl transition-colors ${
+                      !!matchRoute({ to: '/admin' }) ? 'bg-mt-magenta/20 font-semibold' : 'hover:bg-yt-chip'
+                    }`}
+                  >
+                    <Shield
+                      className={`w-5 h-5 shrink-0 ${
+                        !!matchRoute({ to: '/admin' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
+                      }`}
+                    />
+                    <span
+                      className={`text-sm ${
+                        !!matchRoute({ to: '/admin' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
+                      }`}
+                    >
+                      Admin
+                    </span>
+                  </Link>
+                )}
               </>
             )}
 
             {isAuthenticated && sidebarCollapsed && (
-              <Link
-                to="/profile"
-                className="flex items-center justify-center py-4 hover:bg-yt-chip transition-colors"
-              >
-                <User className="w-5 h-5 text-yt-text-secondary" />
-              </Link>
+              <>
+                <Link
+                  to="/profile"
+                  className="flex items-center justify-center py-4 hover:bg-yt-chip transition-colors"
+                >
+                  <User className="w-5 h-5 text-yt-text-secondary" />
+                </Link>
+                <Link
+                  to="/monetization"
+                  className={`flex items-center justify-center py-4 transition-colors ${
+                    !!matchRoute({ to: '/monetization' }) ? 'text-mt-magenta' : 'hover:bg-yt-chip text-yt-text-secondary'
+                  }`}
+                >
+                  <DollarSign className="w-5 h-5" />
+                </Link>
+                {isCallerAdmin && (
+                  <Link
+                    to="/admin"
+                    className={`flex items-center justify-center py-4 transition-colors ${
+                      !!matchRoute({ to: '/admin' }) ? 'text-mt-magenta' : 'hover:bg-yt-chip text-yt-text-secondary'
+                    }`}
+                  >
+                    <Shield className="w-5 h-5" />
+                  </Link>
+                )}
+              </>
             )}
 
             {!sidebarCollapsed && (
@@ -235,17 +355,17 @@ export default function Layout({ children }: LayoutProps) {
                 <div className="border-t border-yt-border my-3 mx-3" />
                 <div className="px-5 py-2">
                   <p className="text-xs text-yt-text-secondary">
-                    © {new Date().getFullYear()} Mediatube
+                    © {new Date().getFullYear()} Mediatube and Photo
                   </p>
                   <p className="text-xs text-yt-text-secondary mt-1">
                     Built with ❤️ using{' '}
                     <a
                       href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
-                        typeof window !== 'undefined' ? window.location.hostname : 'mediatube'
+                        typeof window !== 'undefined' ? window.location.hostname : 'mediatube-and-photo'
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-400 hover:underline"
+                      className="text-mt-pink hover:underline"
                     >
                       caffeine.ai
                     </a>

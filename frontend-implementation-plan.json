@@ -1,200 +1,46 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "YouTube-style video platform — full feature polish",
+  "title": "Enhance search results page and add voice search",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Redesign the HomePage to closely resemble YouTube's layout with sticky navigation, category filter chips, and responsive video grid",
+      "summary": "Improve SearchResultsPage to display richer video cards with thumbnail, title, channel name, view count, upload date, duration, and results count indicator",
       "acceptanceCriteria": [
-        "Home page grid renders at least 3 columns on desktop screens (≥1280px)",
-        "Each video card shows thumbnail, title, channel name, view count, and relative time",
-        "Category filter chips are horizontally scrollable on mobile",
-        "Top nav is sticky and contains logo, search, and auth controls"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/HomePage.tsx",
-          "operation": "modify",
-          "description": "Restructure HomePage to include a horizontal category filter chip row below the sticky top nav. Add responsive Tailwind grid classes (grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4) to achieve 1 column on mobile, 2 on tablet, 3–4 on desktop. Ensure the page layout closely matches YouTube's visual hierarchy with proper spacing and alignment. Wire the generated logo images (mediatube-logo-icon.dim_128x128.png, mediatube-logo-full.dim_320x80.png) into the Layout/navigation bar as static assets using the workspace path frontend/public/assets/generated/<filename>."
-        },
-        {
-          "path": "frontend/src/components/FilterSelector.tsx",
-          "operation": "modify",
-          "description": "Enhance FilterSelector to render category filter chips (e.g., All, Music, Gaming, Sports, News, Learning) in a horizontally scrollable container. Apply YouTube-style chip styling with rounded pills, subtle hover states, and active highlight using the red accent color. Ensure the chip row is horizontally scrollable on mobile with overflow-x-auto and snap-scroll behavior."
-        },
-        {
-          "path": "frontend/src/components/VideoCard.tsx",
-          "operation": "modify",
-          "description": "Enhance VideoCard to display channel name (fetched via useGetUserProfile hook for the uploader Principal), view count, and relative upload time in addition to thumbnail and title. Add hover effects (scale/shadow) matching YouTube's card interaction patterns. Ensure the card design matches YouTube's aesthetic with proper text hierarchy and spacing. Use the formatters utility for view count and relative time display."
-        },
-        {
-          "path": "frontend/src/components/Layout.tsx",
-          "operation": "modify",
-          "description": "Ensure the top navigation bar is sticky (sticky top-0 z-50) and contains the Mediatube logo (using frontend/public/assets/generated/mediatube-logo-full.dim_320x80.png), search bar, and auth controls (Internet Identity/Google login buttons). Apply YouTube-style dark background (#212121) to the nav bar. Verify the layout integrates seamlessly with the HomePage's filter chip row and video grid."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Implement a YouTube-style video watch page with large video player, metadata section, and recommended videos sidebar",
-      "acceptanceCriteria": [
-        "Video player is displayed in a large left column (≥65% width on desktop)",
-        "Title, view count, and upload date are shown below the player",
-        "Channel avatar, name, subscriber count, and Subscribe button are present below the video info",
-        "Recommended videos list is shown in a right sidebar on desktop",
-        "Layout stacks vertically on mobile"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/VideoPlayerPage.tsx",
-          "operation": "modify",
-          "description": "Redesign VideoPlayerPage to use a two-column layout on desktop (≥1024px): left column (65–70% width) contains the video player, title, view count, upload date, action buttons (Like, Share, Save to Playlist), and channel info row (avatar, name, subscriber count, Subscribe button); right column (30–35% width) shows the 'Up next' recommended videos list using the RecommendedVideos component. Stack columns vertically on mobile. Ensure channel info is fetched using useGetUserProfile for the uploader Principal. Apply YouTube-style spacing, typography, and dark theme styling."
-        },
-        {
-          "path": "frontend/src/components/RecommendedVideos.tsx",
-          "operation": "modify",
-          "description": "Refactor RecommendedVideos to render a vertical list of compact video cards suitable for the sidebar layout. Each card should show a thumbnail, title, channel name, view count, and relative upload time in a horizontal layout (thumbnail left, metadata right). Apply YouTube-style sidebar video card design with hover states and proper spacing."
-        },
-        {
-          "path": "frontend/src/components/VideoPlayer.tsx",
-          "operation": "modify",
-          "description": "Ensure VideoPlayer component integrates seamlessly into the redesigned VideoPlayerPage layout. Verify the player occupies the full width of the left column and maintains a proper 16:9 aspect ratio. Apply YouTube-style video player controls styling if not already present."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Add a YouTube-style left sidebar navigation with collapsible icon-only mode and mobile bottom nav integration",
-      "acceptanceCriteria": [
-        "Sidebar is visible on desktop (≥1024px) with icons and labels",
-        "Sidebar can be collapsed to icon-only mode via a hamburger/menu toggle",
-        "All listed navigation links are present and functional",
-        "On mobile, sidebar is hidden and bottom navigation handles routing"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/Sidebar.tsx",
-          "operation": "create",
-          "description": "Create a new Sidebar component that renders a collapsible left navigation panel visible on desktop (≥1024px). Include navigation links to: Home, Shorts, Subscriptions, Playlists, Community, and Upload. Each link should have an icon (from lucide-react) alongside its label. Implement a toggle button (hamburger icon) that collapses the sidebar to icon-only mode (reducing width from ~240px to ~72px). Apply YouTube-style sidebar styling with dark background (#212121), white text, and red accent for active links. Hide the sidebar on mobile (<1024px) where BottomNav handles navigation."
-        },
-        {
-          "path": "frontend/src/components/Layout.tsx",
-          "operation": "modify",
-          "description": "Integrate the new Sidebar component into the Layout, positioning it as a fixed left column on desktop. Ensure the main content area adjusts its left margin/padding based on the sidebar's collapsed/expanded state. Maintain the existing BottomNav for mobile routing. Coordinate the sidebar toggle state using React state or context."
-        },
-        {
-          "path": "frontend/src/components/BottomNav.tsx",
-          "operation": "modify",
-          "description": "Verify BottomNav includes links to Home, Shorts, Upload, and Profile routes with appropriate icons. Ensure it is hidden on desktop (≥1024px) where the Sidebar handles navigation. Apply YouTube-style bottom nav styling with dark background and red accent for active route."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Ensure routing for all sidebar navigation links (Home, Shorts, Subscriptions, Playlists, Community, Upload) is properly configured in the TanStack Router setup. Verify that the Subscriptions route exists or create a placeholder page if not already present."
-        },
-        {
-          "path": "frontend/src/pages/SubscriptionsPage.tsx",
-          "operation": "create",
-          "description": "Create a new SubscriptionsPage component that displays videos from channels the user is subscribed to. Fetch the user's subscriptions using the useGetUserSubscriptions hook (requires authentication), then fetch videos for each subscribed channel using useGetChannelVideos. Render the videos in the same responsive grid as HomePage. Apply YouTube-style layout and dark theme. Show a login prompt if the user is not authenticated, and an empty state if they have no subscriptions."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Style the Shorts page as a vertical full-screen reel feed with autoplay, pause on scroll, and overlaid controls",
-      "acceptanceCriteria": [
-        "Each short video occupies 100vh",
-        "Videos autoplay on scroll into view and pause when scrolled out",
-        "Like, Comment, Share, and Subscribe action buttons are overlaid on the video",
-        "Page is accessible via /shorts route"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/ReelsPage.tsx",
-          "operation": "modify",
-          "description": "Refactor ReelsPage to render each short video as a full-screen (100vh) vertical reel. Ensure videos autoplay when scrolled into view and pause when scrolled out using IntersectionObserver (already present). Overlay Like, Comment, Share, and Subscribe action buttons on the right side of the video (TikTok/YouTube Shorts style). Apply YouTube-style dark theme with white icons and red accent for active states. Ensure the page is accessible via /shorts route (already configured)."
-        },
-        {
-          "path": "frontend/src/components/ReelCard.tsx",
-          "operation": "modify",
-          "description": "Enhance ReelCard to render action buttons (Like, Comment, Share, Subscribe) as an overlaid vertical stack on the right side of the video. Position the buttons absolutely with proper z-index. Ensure the Subscribe button fetches and displays the uploader's subscriber count and uses the useSubscribeToChannel hook. Apply YouTube Shorts-style button design with circular backgrounds, white icons, and count labels below each button."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Apply a dark-first visual theme across the entire app inspired by YouTube's dark mode",
-      "acceptanceCriteria": [
-        "Background color is near-black (#0f0f0f or equivalent dark token)",
-        "Subscribe button and active nav indicators use red accent",
-        "Card backgrounds use a slightly lighter dark tone for visual separation",
-        "Text contrast meets readability standards (white on dark)"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Update the global CSS custom properties to use YouTube-style dark theme colors: main background #0f0f0f, card/sidebar background #212121, primary text white, secondary text muted gray, and red accent (#ff0000) for subscribe buttons and active nav indicators. Ensure all OKLCH color tokens are updated to match these YouTube-inspired values. Verify text contrast meets WCAG AA standards."
-        },
-        {
-          "path": "frontend/tailwind.config.js",
-          "operation": "modify",
-          "description": "Update the Tailwind theme configuration to use YouTube-style dark theme colors. Set background to #0f0f0f, card/foreground to #212121, primary/foreground to white, muted to gray, and destructive/primary accent to #ff0000. Ensure all color tokens align with the updated CSS custom properties in index.css. Add any missing YouTube-style utility classes if needed."
-        },
-        {
-          "path": "frontend/src/components/Layout.tsx",
-          "operation": "modify",
-          "description": "Apply YouTube-style dark theme styling to the Layout component: top nav background #212121, main content background #0f0f0f, white text for primary elements, muted gray for secondary text. Ensure the layout's visual hierarchy and spacing match YouTube's design patterns."
-        },
-        {
-          "path": "frontend/src/components/SubscribeButton.tsx",
-          "operation": "modify",
-          "description": "Update SubscribeButton to use the red accent color (#ff0000) for the subscribe state and white text. Apply YouTube-style button design with rounded corners, proper padding, and hover states. Ensure the button integrates seamlessly with the updated dark theme."
-        }
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "summary": "Add a Search Results page that displays results in the same video grid format as the home page",
-      "acceptanceCriteria": [
-        "Navigating to /search?q=<term> shows results matching the query",
-        "A heading displays the search term",
-        "Loading skeletons appear while results are loading",
-        "Empty state message shown when no results found"
+        "Search results page shows each video's thumbnail, title, channel name, view count, upload date, and duration",
+        "A results count label is displayed above the results grid (e.g., '12 results for \"cats\"')",
+        "Loading skeleton states are preserved while results are being fetched",
+        "Empty state is shown when no results match the query"
       ],
       "file_operations": [
         {
           "path": "frontend/src/pages/SearchResultsPage.tsx",
           "operation": "modify",
-          "description": "Enhance SearchResultsPage to render search results in the same responsive video grid as HomePage (grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4). Add a 'Search results for \"<query>\"' heading above the grid. Show loading skeletons while the useSearchVideos query is fetching. Display an empty state message ('No results found for \"<query>\"') when the results array is empty. Apply YouTube-style layout, typography, and dark theme styling."
+          "description": "Enhance the search results page to display richer video cards. Add a results count indicator at the top showing 'X results for \"query\"'. Ensure each video card displays thumbnail, title, channel name (fetched via useGetUserProfile hook for the uploader principal), view count (formatted using formatViewCount from utils/formatters), upload date (formatted using formatTimeAgo from utils/formatters), and duration (formatted using formatDuration from utils/formatters). Preserve existing loading skeleton states while results are being fetched. Maintain the empty state when no results match the query. Use the existing VideoCard component if it supports all required metadata display, or enhance it inline within this page to show the additional fields."
         }
       ]
     },
     {
-      "id": "REQ-7",
-      "summary": "Implement a Channel page with banner, avatar, tabs for Videos/Shorts/Playlists/Community, and Subscribe button",
+      "id": "REQ-2",
+      "summary": "Add voice search button to the Layout navigation header using Web Speech API to capture spoken input and trigger search",
       "acceptanceCriteria": [
-        "Channel page is accessible at /channel/:principalId",
-        "Channel banner, avatar, name, handle, subscriber count, and Subscribe button are displayed",
-        "Tabs for Videos, Shorts, Playlists, and Community are present and switch content",
-        "Videos tab shows the channel's uploaded videos in a grid"
+        "A microphone icon button appears inside or adjacent to the search bar in the top navigation",
+        "Clicking the microphone button starts voice recognition using the browser's SpeechRecognition API",
+        "While listening, a visual indicator (e.g., animated mic icon or pulsing state) is shown",
+        "On speech recognition result, the transcribed text is placed in the search input and a search is triggered automatically",
+        "If the browser does not support SpeechRecognition, the microphone button is hidden or disabled gracefully",
+        "Errors during recognition (e.g., no speech detected) show a brief toast notification"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/ChannelPage.tsx",
+          "path": "frontend/src/hooks/useVoiceSearch.ts",
           "operation": "create",
-          "description": "Create a new ChannelPage component accessible at /channel/:principalId. Display the channel banner (use frontend/public/assets/generated/default-channel-banner.dim_1280x200.png as a placeholder if the user has no custom banner), avatar, channel name, handle, subscriber count (via useGetSubscribers), and Subscribe button (via SubscribeButton component). Below, render tabs for Videos, Shorts, Playlists, and Community. Fetch channel videos using useGetChannelVideos, filter shorts vs. long-form videos, fetch playlists using useGetPlaylistsByOwner, and fetch community posts using useGetCommunityPostsByChannel. Render each tab's content in the same responsive grid as HomePage. Apply YouTube-style channel page layout and dark theme styling."
+          "description": "Create a custom React hook that encapsulates voice search functionality using the browser's native Web Speech API (SpeechRecognition or webkitSpeechRecognition). The hook should return: isListening (boolean), isSupported (boolean), startListening (function), stopListening (function), transcript (string), and error (string | null). Implement feature detection to check if SpeechRecognition is available in the browser. Handle the following SpeechRecognition events: onstart (set isListening to true), onresult (extract transcript from event.results), onerror (capture error message), and onend (set isListening to false). Use continuous: false and interimResults: false for cleaner single-phrase capture. Return the final transcript when recognition completes successfully. Handle common errors gracefully (no-speech, aborted, not-allowed) and map them to user-friendly error messages."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/components/Layout.tsx",
           "operation": "modify",
-          "description": "Add a route for /channel/:principalId that renders the new ChannelPage component. Ensure the route is properly registered in the TanStack Router configuration."
-        },
-        {
-          "path": "frontend/src/components/VideoCard.tsx",
-          "operation": "modify",
-          "description": "Ensure VideoCard supports an optional 'hideChannelInfo' prop that hides the channel name and avatar when displaying videos on a channel page (since the channel info is already shown in the page header). Use this prop when rendering video cards in the ChannelPage Videos tab."
+          "description": "Add a voice search button to the search bar in the top navigation header. Import and use the useVoiceSearch hook from frontend/src/hooks/useVoiceSearch.ts. Place a microphone icon button inside or adjacent to the existing search input field. When the microphone button is clicked, call startListening() from the hook. While isListening is true, show a visual indicator (e.g., pulsing animation or color change on the mic icon). When a transcript is returned by the hook, programmatically set it as the value of the search input field and trigger a navigation to the search results page with the transcribed query (e.g., navigate to /search?q=<transcript>). If isSupported is false, hide or disable the microphone button gracefully. If an error occurs during recognition, display a brief toast notification using an appropriate toast library or inline message. Ensure the button is accessible and properly labeled for screen readers."
         }
       ]
     }
