@@ -3,7 +3,7 @@ import { Link, useNavigate, useMatchRoute } from '@tanstack/react-router';
 import {
   Search, Bell, Upload, User, Menu,
   Home, Flame, ListVideo, Key, BookOpen, Rss, Tv2,
-  DollarSign, Shield, Mic, MicOff,
+  DollarSign, Shield, Mic, MicOff, Smartphone,
 } from 'lucide-react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
@@ -314,73 +314,87 @@ export default function Layout({ children }: LayoutProps) {
                         !!matchRoute({ to: '/admin' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
                       }`}
                     >
-                      Admin
+                      Admin Dashboard
                     </span>
                   </Link>
                 )}
               </>
             )}
 
-            {isAuthenticated && sidebarCollapsed && (
-              <>
-                <Link
-                  to="/profile"
-                  className="flex items-center justify-center py-4 hover:bg-yt-chip transition-colors"
-                >
-                  <User className="w-5 h-5 text-yt-text-secondary" />
-                </Link>
-                <Link
-                  to="/monetization"
-                  className={`flex items-center justify-center py-4 transition-colors ${
-                    !!matchRoute({ to: '/monetization' }) ? 'text-mt-magenta' : 'hover:bg-yt-chip text-yt-text-secondary'
-                  }`}
-                >
-                  <DollarSign className="w-5 h-5" />
-                </Link>
-                {isCallerAdmin && (
-                  <Link
-                    to="/admin"
-                    className={`flex items-center justify-center py-4 transition-colors ${
-                      !!matchRoute({ to: '/admin' }) ? 'text-mt-magenta' : 'hover:bg-yt-chip text-yt-text-secondary'
-                    }`}
-                  >
-                    <Shield className="w-5 h-5" />
-                  </Link>
-                )}
-              </>
-            )}
-
+            {/* Download App Link */}
             {!sidebarCollapsed && (
               <>
                 <div className="border-t border-yt-border my-3 mx-3" />
-                <div className="px-5 py-2">
-                  <p className="text-xs text-yt-text-secondary">
-                    © {new Date().getFullYear()} Mediatube and Photo
-                  </p>
-                  <p className="text-xs text-yt-text-secondary mt-1">
-                    Built with ❤️ using{' '}
-                    <a
-                      href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
-                        typeof window !== 'undefined' ? window.location.hostname : 'mediatube-and-photo'
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-mt-pink hover:underline"
-                    >
-                      caffeine.ai
-                    </a>
-                  </p>
-                </div>
+                <Link
+                  to="/download"
+                  className={`flex items-center gap-4 px-3 py-2.5 mx-2 rounded-xl transition-colors ${
+                    !!matchRoute({ to: '/download' }) ? 'bg-mt-magenta/20 font-semibold' : 'hover:bg-yt-chip'
+                  }`}
+                >
+                  <Smartphone
+                    className={`w-5 h-5 shrink-0 ${
+                      !!matchRoute({ to: '/download' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
+                    }`}
+                  />
+                  <span
+                    className={`text-sm ${
+                      !!matchRoute({ to: '/download' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
+                    }`}
+                  >
+                    Download App
+                  </span>
+                </Link>
               </>
+            )}
+
+            {/* Collapsed sidebar: Download App icon */}
+            {sidebarCollapsed && (
+              <Link
+                to="/download"
+                className={`flex items-center justify-center px-0 mx-0 rounded-none py-4 transition-colors hover:bg-yt-chip`}
+              >
+                <Smartphone
+                  className={`w-5 h-5 shrink-0 ${
+                    !!matchRoute({ to: '/download' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
+                  }`}
+                />
+              </Link>
+            )}
+
+            {!sidebarCollapsed && (
+              <div className="px-3 py-4">
+                <Link
+                  to="/copyright-policy"
+                  className="text-xs text-yt-text-secondary hover:text-white transition-colors block mb-1"
+                >
+                  Copyright Policy
+                </Link>
+                <p className="text-xs text-yt-text-secondary/60">
+                  © {new Date().getFullYear()} Mediatube and Photo
+                </p>
+                <p className="text-xs text-yt-text-secondary/60 mt-1">
+                  Built with ❤️ using{' '}
+                  <a
+                    href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
+                      typeof window !== 'undefined' ? window.location.hostname : 'mediatube-app'
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-mt-magenta hover:underline"
+                  >
+                    caffeine.ai
+                  </a>
+                </p>
+              </div>
             )}
           </nav>
         </aside>
 
         {/* Main Content */}
         <main
-          className={`flex-1 min-h-0 transition-all duration-200 pb-16 lg:pb-0 ${
+          className={`flex-1 overflow-y-auto transition-all duration-200 ${
             sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-60'
-          }`}
+          } pb-14 lg:pb-0`}
         >
           {children}
         </main>

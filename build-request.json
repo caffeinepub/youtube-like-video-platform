@@ -1,63 +1,42 @@
 {
   "kind": "build_request",
-  "title": "Enhance search results page and add voice search",
+  "title": "Add App Download Feature",
   "projectName": "Mediatube",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Improve the SearchResultsPage to display richer search result cards: show video thumbnail, title, channel name, view count, upload date, and duration for each result. Add a results count indicator (e.g., 'X results for \"query\"') at the top of the results list.",
+      "text": "Add an app download page or section that allows users to download the Mediatube app. Include download buttons/links for major platforms (e.g., Android APK, iOS) with appropriate platform icons and a visually appealing layout consistent with the existing dark theme.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-6"
         ],
         "quotes": [
-          "Search result and voice"
+          "App download kar hai"
         ]
       },
       "acceptanceCriteria": [
-        "Search results page shows each video's thumbnail, title, channel name, view count, upload date, and duration",
-        "A results count label is displayed above the results grid (e.g., '12 results for \"cats\"')",
-        "Loading skeleton states are preserved while results are being fetched",
-        "Empty state is shown when no results match the query"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Add a voice search button to the search bar in the Layout navigation header. When clicked, it activates the browser's Web Speech API (SpeechRecognition) to capture spoken input, converts it to text, and automatically triggers a search by navigating to the search results page with the transcribed query.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-3"
-        ],
-        "quotes": [
-          "Search result and voice"
-        ]
-      },
-      "acceptanceCriteria": [
-        "A microphone icon button appears inside or adjacent to the search bar in the top navigation",
-        "Clicking the microphone button starts voice recognition using the browser's SpeechRecognition API",
-        "While listening, a visual indicator (e.g., animated mic icon or pulsing state) is shown",
-        "On speech recognition result, the transcribed text is placed in the search input and a search is triggered automatically",
-        "If the browser does not support SpeechRecognition, the microphone button is hidden or disabled gracefully",
-        "Errors during recognition (e.g., no speech detected) show a brief toast notification"
+        "A dedicated download page or modal is accessible from the main navigation or landing area",
+        "Download buttons are clearly labeled by platform (e.g., Android, iOS)",
+        "The page/section matches the existing Mediatube dark theme and design language",
+        "The download section is responsive and renders correctly on both mobile and desktop"
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files in frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
-    "Voice search must use the native browser Web Speech API only — no external speech/AI service integrations",
-    "Backend changes are not required; search functionality already exists via useSearchVideos hook"
+    "Do not modify any files listed in frontend.immutablePaths",
+    "Maintain the existing dark YouTube-style theme defined in frontend/src/index.css and tailwind.config.js"
   ],
   "nonGoals": [
-    "Server-side or backend voice processing",
-    "Multi-language voice recognition configuration",
-    "Saving voice search history",
-    "Changes to the backend search logic or Motoko actor"
+    "Actual app binary hosting or distribution infrastructure",
+    "Backend changes for download tracking unless explicitly requested",
+    "Changes to existing video, search, or voice features"
   ],
   "imageRequirements": {
-    "required": [],
+    "required": [
+      "Mediatube app download promotional banner with dark background and gradient accents showing a stylized mobile phone screen (download-banner.dim_1200x400.png)"
+    ],
     "edits": []
   }
 }

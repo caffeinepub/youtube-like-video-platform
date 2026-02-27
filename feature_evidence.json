@@ -2,10 +2,13 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-improve-the-searchresultspage-to-display-richer-search-result-cards-show-video-thumbnail-title-channel-name-view-count-upload-date-and-duration-for-each-result-add-a-results-count-indicator-e-g-x-results-for-query-at-the-top-of-the-results-list",
-      "featureTitle": "Improve the SearchResultsPage to display richer search result cards: show video thumbnail, title, channel name, view count, upload date, and duration for each result. Add a results count indicator (e.g., 'X results for \"query\"') at the top of the results list.",
+      "featureId": "feature-add-an-app-download-page-or-section-that-allows-users-to-download-the-mediatube-app-include-download-buttons-links-for-major-platforms-e-g-android-apk-ios-with-appropriate-platform-icons-and-a-visually-appealing-layout-consistent-with-the-existing-dark-theme",
+      "featureTitle": "Add an app download page or section that allows users to download the Mediatube app. Include download buttons/links for major platforms (e.g., Android APK, iOS) with appropriate platform icons and a visually appealing layout consistent with the existing dark theme.",
       "files": [
-        "frontend/src/pages/SearchResultsPage.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/i18n/translations.ts",
+        "frontend/src/pages/DownloadAppPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -19,28 +22,6 @@
       ],
       "testIds": [
         "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-a-voice-search-button-to-the-search-bar-in-the-layout-navigation-header-when-clicked-it-activates-the-browser-s-web-speech-api-speechrecognition-to-capture-spoken-input-converts-it-to-text-and-automatically-triggers-a-search-by-navigating-to-the-search-results-page-with-the-transcribed-query",
-      "featureTitle": "Add a voice search button to the search bar in the Layout navigation header. When clicked, it activates the browser's Web Speech API (SpeechRecognition) to capture spoken input, converts it to text, and automatically triggers a search by navigating to the search results page with the transcribed query.",
-      "files": [
-        "frontend/src/components/Layout.tsx",
-        "frontend/src/hooks/useVoiceSearch.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "camera@1.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
       ],
       "confidence": "high"
     }

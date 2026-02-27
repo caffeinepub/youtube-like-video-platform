@@ -1,46 +1,37 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Enhance search results page and add voice search",
+  "title": "Add App Download Feature",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Improve SearchResultsPage to display richer video cards with thumbnail, title, channel name, view count, upload date, duration, and results count indicator",
+      "summary": "Add a dedicated app download page with platform-specific download buttons matching Mediatube's dark theme",
       "acceptanceCriteria": [
-        "Search results page shows each video's thumbnail, title, channel name, view count, upload date, and duration",
-        "A results count label is displayed above the results grid (e.g., '12 results for \"cats\"')",
-        "Loading skeleton states are preserved while results are being fetched",
-        "Empty state is shown when no results match the query"
+        "A dedicated download page or modal is accessible from the main navigation or landing area",
+        "Download buttons are clearly labeled by platform (e.g., Android, iOS)",
+        "The page/section matches the existing Mediatube dark theme and design language",
+        "The download section is responsive and renders correctly on both mobile and desktop"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/SearchResultsPage.tsx",
-          "operation": "modify",
-          "description": "Enhance the search results page to display richer video cards. Add a results count indicator at the top showing 'X results for \"query\"'. Ensure each video card displays thumbnail, title, channel name (fetched via useGetUserProfile hook for the uploader principal), view count (formatted using formatViewCount from utils/formatters), upload date (formatted using formatTimeAgo from utils/formatters), and duration (formatted using formatDuration from utils/formatters). Preserve existing loading skeleton states while results are being fetched. Maintain the empty state when no results match the query. Use the existing VideoCard component if it supports all required metadata display, or enhance it inline within this page to show the additional fields."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Add voice search button to the Layout navigation header using Web Speech API to capture spoken input and trigger search",
-      "acceptanceCriteria": [
-        "A microphone icon button appears inside or adjacent to the search bar in the top navigation",
-        "Clicking the microphone button starts voice recognition using the browser's SpeechRecognition API",
-        "While listening, a visual indicator (e.g., animated mic icon or pulsing state) is shown",
-        "On speech recognition result, the transcribed text is placed in the search input and a search is triggered automatically",
-        "If the browser does not support SpeechRecognition, the microphone button is hidden or disabled gracefully",
-        "Errors during recognition (e.g., no speech detected) show a brief toast notification"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useVoiceSearch.ts",
+          "path": "frontend/src/pages/DownloadAppPage.tsx",
           "operation": "create",
-          "description": "Create a custom React hook that encapsulates voice search functionality using the browser's native Web Speech API (SpeechRecognition or webkitSpeechRecognition). The hook should return: isListening (boolean), isSupported (boolean), startListening (function), stopListening (function), transcript (string), and error (string | null). Implement feature detection to check if SpeechRecognition is available in the browser. Handle the following SpeechRecognition events: onstart (set isListening to true), onresult (extract transcript from event.results), onerror (capture error message), and onend (set isListening to false). Use continuous: false and interimResults: false for cleaner single-phrase capture. Return the final transcript when recognition completes successfully. Handle common errors gracefully (no-speech, aborted, not-allowed) and map them to user-friendly error messages."
+          "description": "Create a new download page component that displays the generated promotional banner (frontend/public/assets/generated/download-banner.dim_1200x400.png), platform-specific download buttons for Android APK and iOS with appropriate icons (using lucide-react icons), download instructions, and app feature highlights. The page must use the existing dark theme tokens from index.css and tailwind.config.js (bg-youtube-black, text-white, accent colors). Include responsive layout with centered content, hero section with the banner image, download button cards with platform icons and labels, and app benefits section. Ensure mobile-first responsive design that works on both mobile and desktop viewports."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Register a new route for the download page at path '/download' that renders the DownloadAppPage component. Add the route definition within the existing TanStack Router configuration alongside other page routes like HomePage, VideoPlayerPage, etc."
         },
         {
           "path": "frontend/src/components/Layout.tsx",
           "operation": "modify",
-          "description": "Add a voice search button to the search bar in the top navigation header. Import and use the useVoiceSearch hook from frontend/src/hooks/useVoiceSearch.ts. Place a microphone icon button inside or adjacent to the existing search input field. When the microphone button is clicked, call startListening() from the hook. While isListening is true, show a visual indicator (e.g., pulsing animation or color change on the mic icon). When a transcript is returned by the hook, programmatically set it as the value of the search input field and trigger a navigation to the search results page with the transcribed query (e.g., navigate to /search?q=<transcript>). If isSupported is false, hide or disable the microphone button gracefully. If an error occurs during recognition, display a brief toast notification using an appropriate toast library or inline message. Ensure the button is accessible and properly labeled for screen readers."
+          "description": "Add a 'Download App' navigation link in the sidebar navigation menu that routes to '/download'. Place it logically within the existing navigation items (e.g., after 'Community' or before footer links). Use the Download or Smartphone icon from lucide-react. Ensure the link is visible in both desktop sidebar and mobile bottom navigation if appropriate, maintaining consistent styling with other nav items."
+        },
+        {
+          "path": "frontend/src/i18n/translations.ts",
+          "operation": "modify",
+          "description": "Add translation keys for the download page in all supported languages (at least English and Spanish). Include keys for: 'downloadApp' (nav link label), 'downloadAppTitle', 'downloadAppSubtitle', 'downloadForAndroid', 'downloadForIOS', 'appFeatures', and feature descriptions. Follow the existing translation structure and naming conventions in the file."
         }
       ]
     }
