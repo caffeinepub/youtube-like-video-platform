@@ -1,112 +1,73 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T03:06:41.510Z",
+  "generatedAt": "2026-02-27T03:59:26.194Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 7,
-    "implemented": 6,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Enhance the ReelsPage to support smooth vertical snap-scrolling between full-screen reel cards, with autoplay for the active reel and pause for off-screen reels. Include a progress bar indicator at the top of each reel showing playback progress.",
+        "summary": "Implement Google Sign-In on the Login page so users can authenticate using their Gmail/Google account via the existing Google Identity Services (GSI) script already loaded in index.html. On successful Google sign-in, if the user has no existing profile, open the ProfileSetupModal pre-filled with the Google account's name and email data. If a profile already exists, navigate the user to the home page.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/ReelsPage.tsx",
-          "frontend/src/components/ReelCard.tsx"
+          "frontend/src/pages/LoginPage.tsx",
+          "frontend/src/components/Layout.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/ReelsPage.tsx",
-          "frontend/src/components/ReelCard.tsx"
+          "frontend/src/pages/LoginPage.tsx",
+          "frontend/src/components/Layout.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Enhance the ReelCard component with an improved action sidebar including: like count with animated heart, comment count badge opening the comments drawer, share button, and a follow/subscribe button on the uploader's avatar. Display the video title and description as an overlay at the bottom with a 'show more' expand interaction for long descriptions.",
+        "summary": "Implement Google Sign-Up on the Signup page so new users can create an account by joining with their Gmail/Google ID. On successful Google authentication for a new user, open the ProfileSetupModal pre-filled with data from the Google JWT (name, profile picture URL) to complete channel setup.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/ReelCard.tsx",
-          "frontend/src/hooks/useGetCommentCount.ts"
+          "frontend/src/pages/SignupPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/ReelCard.tsx",
-          "frontend/src/hooks/useGetCommentCount.ts"
+          "frontend/src/pages/SignupPage.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Add a 'For You' and 'Following' tab switcher at the top of the ReelsPage. 'For You' shows all short-form videos; 'Following' shows reels only from channels the authenticated user subscribes to. Show a prompt to log in or subscribe if the Following feed is empty.",
+        "summary": "Update the ProfileSetupModal component to accept optional pre-fill props (displayName, avatarUrl) sourced from Google auth data. When these props are provided, pre-populate the channel name input and attempt to display the Google profile picture as the initial avatar preview.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/ReelsPage.tsx"
+          "frontend/src/components/ProfileSetupModal.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/ReelsPage.tsx"
+          "frontend/src/components/ProfileSetupModal.tsx"
         ]
       },
       {
         "id": "REQ-4",
-        "summary": "Enhance the VideoPlayerPage to support a theatre/cinematic mode toggle that expands the video player to full page width while collapsing the sidebar. Add chapter markers on the seek bar if the video description contains timestamps in the format 'MM:SS Title'. Show a looping end-screen with recommended video thumbnails when playback finishes.",
+        "summary": "Update the Layout/navbar component to display the authenticated Google user's profile picture and display name when signed in via Google (useGoogleAuth hook). Clicking the avatar should navigate to the Profile page. Show a sign-in button when no Google session and no Internet Identity session is active.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/VideoPlayerPage.tsx",
-          "frontend/src/components/VideoPlayer.tsx"
+          "frontend/src/components/Layout.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/VideoPlayerPage.tsx",
-          "frontend/src/components/VideoPlayer.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Add a backend query to fetch short-form videos (reels) from channels that the authenticated caller subscribes to, returning VideoMetadata records sorted by upload date descending.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-6",
-        "summary": "Create a useGetSubscribedReels React Query hook that calls the new getSubscribedReels backend query and returns the reel list, enabled only when an authenticated identity is available.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useGetSubscribedReels.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useGetSubscribedReels.ts"
-        ]
-      },
-      {
-        "id": "REQ-7",
-        "summary": "Add a mute/unmute toggle button with animated icon transition on the ReelCard component. Persist the mute preference in localStorage so that newly scrolled-to reels respect the last mute state.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/ReelCard.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/ReelCard.tsx"
+          "frontend/src/components/Layout.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/ReelCard.tsx",
-    "frontend/src/components/VideoPlayer.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useGetCommentCount.ts",
-    "frontend/src/hooks/useGetSubscribedReels.ts",
-    "frontend/src/pages/ReelsPage.tsx",
-    "frontend/src/pages/VideoPlayerPage.tsx",
+    "frontend/src/components/Layout.tsx",
+    "frontend/src/components/ProfileSetupModal.tsx",
+    "frontend/src/hooks/useGoogleAuth.ts",
+    "frontend/src/pages/LoginPage.tsx",
+    "frontend/src/pages/SignupPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

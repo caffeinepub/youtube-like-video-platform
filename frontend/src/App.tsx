@@ -1,37 +1,27 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider, createRouter, createRoute, createRootRoute, Outlet } from '@tanstack/react-router';
-import { Toaster } from '@/components/ui/sonner';
-import { ThemeProvider } from 'next-themes';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import VideoPlayerPage from './pages/VideoPlayerPage';
+import ChannelPage from './pages/ChannelPage';
 import UploadVideoPage from './pages/UploadVideoPage';
 import ProfilePage from './pages/ProfilePage';
-import ReelsPage from './pages/ReelsPage';
-import ShortsPage from './pages/ShortsPage';
 import SearchResultsPage from './pages/SearchResultsPage';
+import SubscriptionsPage from './pages/SubscriptionsPage';
+import ShortsPage from './pages/ShortsPage';
+import ReelsPage from './pages/ReelsPage';
 import PlaylistsPage from './pages/PlaylistsPage';
 import PlaylistDetailPage from './pages/PlaylistDetailPage';
 import CommunityPage from './pages/CommunityPage';
-import ApiKeysPage from './pages/ApiKeysPage';
+import MonetizationPage from './pages/MonetizationPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import CopyrightPolicyPage from './pages/CopyrightPolicyPage';
-import SubscriptionsPage from './pages/SubscriptionsPage';
-import ChannelPage from './pages/ChannelPage';
-import MonetizationPage from './pages/MonetizationPage';
 import DownloadAppPage from './pages/DownloadAppPage';
-import { GoogleAuthProvider } from './hooks/useGoogleAuth';
-import { LanguageProvider } from './contexts/LanguageContext';
-import React from 'react';
+import ApiKeysPage from './pages/ApiKeysPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5,
-      retry: 1,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -53,6 +43,12 @@ const videoRoute = createRoute({
   component: VideoPlayerPage,
 });
 
+const channelRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/channel/$principalId',
+  component: ChannelPage,
+});
+
 const uploadRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/upload',
@@ -65,10 +61,16 @@ const profileRoute = createRoute({
   component: ProfilePage,
 });
 
-const reelsRoute = createRoute({
+const searchRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/reels',
-  component: ReelsPage,
+  path: '/search',
+  component: SearchResultsPage,
+});
+
+const subscriptionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/subscriptions',
+  component: SubscriptionsPage,
 });
 
 const shortsRoute = createRoute({
@@ -77,10 +79,10 @@ const shortsRoute = createRoute({
   component: ShortsPage,
 });
 
-const searchRoute = createRoute({
+const reelsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/search',
-  component: SearchResultsPage,
+  path: '/reels',
+  component: ReelsPage,
 });
 
 const playlistsRoute = createRoute({
@@ -101,10 +103,10 @@ const communityRoute = createRoute({
   component: CommunityPage,
 });
 
-const apiKeysRoute = createRoute({
+const monetizationRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/api-keys',
-  component: ApiKeysPage,
+  path: '/monetization',
+  component: MonetizationPage,
 });
 
 const adminRoute = createRoute({
@@ -119,48 +121,50 @@ const copyrightRoute = createRoute({
   component: CopyrightPolicyPage,
 });
 
-const subscriptionsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/subscriptions',
-  component: SubscriptionsPage,
-});
-
-const channelRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/channel/$principalId',
-  component: ChannelPage,
-});
-
-const monetizationRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/monetization',
-  component: MonetizationPage,
-});
-
 const downloadRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/download',
   component: DownloadAppPage,
 });
 
+const apiKeysRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/api-keys',
+  component: ApiKeysPage,
+});
+
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/login',
+  component: LoginPage,
+});
+
+const signupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/signup',
+  component: SignupPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   videoRoute,
+  channelRoute,
   uploadRoute,
   profileRoute,
-  reelsRoute,
-  shortsRoute,
   searchRoute,
+  subscriptionsRoute,
+  shortsRoute,
+  reelsRoute,
   playlistsRoute,
   playlistDetailRoute,
   communityRoute,
-  apiKeysRoute,
+  monetizationRoute,
   adminRoute,
   copyrightRoute,
-  subscriptionsRoute,
-  channelRoute,
-  monetizationRoute,
   downloadRoute,
+  apiKeysRoute,
+  loginRoute,
+  signupRoute,
 ]);
 
 const router = createRouter({ routeTree });
@@ -171,53 +175,10 @@ declare module '@tanstack/react-router' {
   }
 }
 
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error: Error | null }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-yt-bg flex items-center justify-center p-4">
-          <div className="text-center max-w-md">
-            <h1 className="text-2xl font-bold text-white mb-2">Something went wrong</h1>
-            <p className="text-yt-text-secondary mb-4">{this.state.error?.message}</p>
-            <button
-              onClick={() => this.setState({ hasError: false, error: null })}
-              className="px-4 py-2 bg-yt-red text-white rounded hover:bg-red-700 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 export default function App() {
   return (
-    <ErrorBoundary>
-      <LanguageProvider>
-        <GoogleAuthProvider>
-          <QueryClientProvider client={queryClient}>
-            <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-              <RouterProvider router={router} />
-              <Toaster richColors position="top-right" />
-            </ThemeProvider>
-          </QueryClientProvider>
-        </GoogleAuthProvider>
-      </LanguageProvider>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
   );
 }

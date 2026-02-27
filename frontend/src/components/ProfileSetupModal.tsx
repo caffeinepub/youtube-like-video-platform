@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,24 +17,38 @@ import { useSaveCallerUserProfile } from '../hooks/useSaveCallerUserProfile';
 interface ProfileSetupModalProps {
   open: boolean;
   onClose: () => void;
+  googleDisplayName?: string;
+  googleAvatarUrl?: string;
 }
 
-export default function ProfileSetupModal({ open, onClose }: ProfileSetupModalProps) {
+export default function ProfileSetupModal({
+  open,
+  onClose,
+  googleDisplayName,
+  googleAvatarUrl,
+}: ProfileSetupModalProps) {
   const { identity } = useInternetIdentity();
   const { googleUser } = useGoogleAuth();
   const { mutateAsync: saveProfile, isPending } = useSaveCallerUserProfile();
 
-  const [name, setName] = useState(googleUser?.name || '');
+  // Use prop override first, then fall back to context googleUser name
+  const initialName = googleDisplayName || googleUser?.name || '';
+  const avatarPreview = googleAvatarUrl || googleUser?.picture || null;
+
+  const [name, setName] = useState(initialName);
   const [handle, setHandle] = useState('');
   const [channelDescription, setChannelDescription] = useState('');
   const [error, setError] = useState('');
 
-  // Pre-fill name from Google if available
-  React.useEffect(() => {
-    if (googleUser?.name && !name) {
-      setName(googleUser.name);
+  // Re-sync when props change (e.g. modal opens with new data)
+  useEffect(() => {
+    if (open) {
+      setName(googleDisplayName || googleUser?.name || '');
+      setHandle('');
+      setChannelDescription('');
+      setError('');
     }
-  }, [googleUser]);
+  }, [open, googleDisplayName, googleUser?.name]);
 
   const generateHandle = (n: string) =>
     n
@@ -72,19 +86,39 @@ export default function ProfileSetupModal({ open, onClose }: ProfileSetupModalPr
 
   if (!isAuthenticated) return null;
 
+  const welcomeName = googleDisplayName || googleUser?.name;
+
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Set up your channel</DialogTitle>
           <DialogDescription>
-            {googleUser
-              ? `Welcome, ${googleUser.name}! Complete your Mediatube channel setup.`
+            {welcomeName
+              ? `Welcome, ${welcomeName}! Complete your Mediatube channel setup.`
               : 'Welcome to Mediatube! Set up your channel to get started.'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          {/* Google Avatar Preview */}
+          {avatarPreview && (
+            <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+              <img
+                src={avatarPreview}
+                alt="Google profile"
+                className="w-12 h-12 rounded-full object-cover border-2 border-border"
+                referrerPolicy="no-referrer"
+              />
+              <div>
+                <p className="text-sm font-medium">{welcomeName}</p>
+                {googleUser?.email && (
+                  <p className="text-xs text-muted-foreground">{googleUser.email}</p>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-1">
             <Label htmlFor="name">Channel Name *</Label>
             <Input

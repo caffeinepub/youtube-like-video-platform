@@ -13,7 +13,7 @@ export interface GoogleUser {
 interface GoogleAuthContextType {
   googleUser: GoogleUser | null;
   isGoogleLoading: boolean;
-  handleGoogleLogin: () => void;
+  handleGoogleLogin: (onSuccess?: (user: GoogleUser) => void) => void;
   handleGoogleLogout: () => void;
 }
 
@@ -73,6 +73,8 @@ export function GoogleAuthProvider({ children }: { children: ReactNode }) {
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [gsiReady, setGsiReady] = useState(false);
+  // Store pending onSuccess callback ref
+  const [pendingCallback, setPendingCallback] = useState<((user: GoogleUser) => void) | null>(null);
 
   // Load persisted session
   useEffect(() => {
@@ -97,6 +99,11 @@ export function GoogleAuthProvider({ children }: { children: ReactNode }) {
             if (user) {
               setGoogleUser(user);
               localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+              // Fire pending callback if any
+              setPendingCallback((cb) => {
+                if (cb) cb(user);
+                return null;
+              });
             }
             setIsGoogleLoading(false);
           },
@@ -127,31 +134,43 @@ export function GoogleAuthProvider({ children }: { children: ReactNode }) {
     document.head.appendChild(s);
   }, []);
 
-  const handleGoogleLogin = useCallback(() => {
-    if (!window.google?.accounts?.id) return;
+  const handleGoogleLogin = useCallback(
+    (onSuccess?: (user: GoogleUser) => void) => {
+      if (!window.google?.accounts?.id) return;
 
-    if (!gsiReady) {
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: (response: { credential: string }) => {
-          const user = parseJwt(response.credential);
-          if (user) {
-            setGoogleUser(user);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-          }
-          setIsGoogleLoading(false);
-        },
-      });
-      setGsiReady(true);
-    }
-
-    setIsGoogleLoading(true);
-    window.google.accounts.id.prompt((notification: GsiNotification) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        setIsGoogleLoading(false);
+      if (onSuccess) {
+        setPendingCallback(() => onSuccess);
       }
-    });
-  }, [gsiReady]);
+
+      if (!gsiReady) {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (response: { credential: string }) => {
+            const user = parseJwt(response.credential);
+            if (user) {
+              setGoogleUser(user);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+              setPendingCallback((cb) => {
+                if (cb) cb(user);
+                return null;
+              });
+            }
+            setIsGoogleLoading(false);
+          },
+        });
+        setGsiReady(true);
+      }
+
+      setIsGoogleLoading(true);
+      window.google.accounts.id.prompt((notification: GsiNotification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          setIsGoogleLoading(false);
+          setPendingCallback(null);
+        }
+      });
+    },
+    [gsiReady]
+  );
 
   const handleGoogleLogout = useCallback(() => {
     if (googleUser && window.google?.accounts?.id) {

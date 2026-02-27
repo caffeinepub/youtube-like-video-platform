@@ -1,56 +1,40 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "A social media app with authentication (Internet Identity) and video reels/content features.",
+  "summary": "Project with profile page and API key integration. Adding Google/Gmail ID sign-in/joining feature.",
   "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-enhance-the-reelspage-to-support-smooth-vertical-snap-scrolling-between-full-screen-reel-cards-with-autoplay-for-the-active-reel-and-pause-for-off-screen-reels-include-a-progress-bar-indicator-at-the-top-of-each-reel-showing-playback-progress",
-      "title": "Enhance the ReelsPage to support smooth vertical snap-scrolling between full-screen reel cards, with autoplay for the active reel and pause for off-screen reels. Include a progress bar indicator at the top of each reel showing playback progress.",
+      "id": "feature-implement-google-sign-in-on-the-login-page-so-users-can-authenticate-using-their-gmail-google-account-via-the-existing-google-identity-services-gsi-script-already-loaded-in-index-html-on-successful-google-sign-in-if-the-user-has-no-existing-profile-open-the-profilesetupmodal-pre-filled-with-the-google-account-s-name-and-email-data-if-a-profile-already-exists-navigate-the-user-to-the-home-page",
+      "title": "Implement Google Sign-In on the Login page so users can authenticate using their Gmail/Google account via the existing Google Identity Services (GSI) script already loaded in index.html. On successful Google sign-in, if the user has no existing profile, open the ProfileSetupModal pre-filled with the Google account's name and email data. If a profile already exists, navigate the user to the home page.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-enhance-the-reelcard-component-with-an-improved-action-sidebar-including-like-count-with-animated-heart-comment-count-badge-opening-the-comments-drawer-share-button-and-a-follow-subscribe-button-on-the-uploader-s-avatar-display-the-video-title-and-description-as-an-overlay-at-the-bottom-with-a-show-more-expand-interaction-for-long-descriptions",
-      "title": "Enhance the ReelCard component with an improved action sidebar including: like count with animated heart, comment count badge opening the comments drawer, share button, and a follow/subscribe button on the uploader's avatar. Display the video title and description as an overlay at the bottom with a 'show more' expand interaction for long descriptions.",
+      "id": "feature-implement-google-sign-up-on-the-signup-page-so-new-users-can-create-an-account-by-joining-with-their-gmail-google-id-on-successful-google-authentication-for-a-new-user-open-the-profilesetupmodal-pre-filled-with-data-from-the-google-jwt-name-profile-picture-url-to-complete-channel-setup",
+      "title": "Implement Google Sign-Up on the Signup page so new users can create an account by joining with their Gmail/Google ID. On successful Google authentication for a new user, open the ProfileSetupModal pre-filled with data from the Google JWT (name, profile picture URL) to complete channel setup.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-for-you-and-following-tab-switcher-at-the-top-of-the-reelspage-for-you-shows-all-short-form-videos-following-shows-reels-only-from-channels-the-authenticated-user-subscribes-to-show-a-prompt-to-log-in-or-subscribe-if-the-following-feed-is-empty",
-      "title": "Add a 'For You' and 'Following' tab switcher at the top of the ReelsPage. 'For You' shows all short-form videos; 'Following' shows reels only from channels the authenticated user subscribes to. Show a prompt to log in or subscribe if the Following feed is empty.",
+      "id": "feature-update-the-profilesetupmodal-component-to-accept-optional-pre-fill-props-displayname-avatarurl-sourced-from-google-auth-data-when-these-props-are-provided-pre-populate-the-channel-name-input-and-attempt-to-display-the-google-profile-picture-as-the-initial-avatar-preview",
+      "title": "Update the ProfileSetupModal component to accept optional pre-fill props (displayName, avatarUrl) sourced from Google auth data. When these props are provided, pre-populate the channel name input and attempt to display the Google profile picture as the initial avatar preview.",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-enhance-the-videoplayerpage-to-support-a-theatre-cinematic-mode-toggle-that-expands-the-video-player-to-full-page-width-while-collapsing-the-sidebar-add-chapter-markers-on-the-seek-bar-if-the-video-description-contains-timestamps-in-the-format-mm-ss-title-show-a-looping-end-screen-with-recommended-video-thumbnails-when-playback-finishes",
-      "title": "Enhance the VideoPlayerPage to support a theatre/cinematic mode toggle that expands the video player to full page width while collapsing the sidebar. Add chapter markers on the seek bar if the video description contains timestamps in the format 'MM:SS Title'. Show a looping end-screen with recommended video thumbnails when playback finishes.",
+      "id": "feature-update-the-layout-navbar-component-to-display-the-authenticated-google-user-s-profile-picture-and-display-name-when-signed-in-via-google-usegoogleauth-hook-clicking-the-avatar-should-navigate-to-the-profile-page-show-a-sign-in-button-when-no-google-session-and-no-internet-identity-session-is-active",
+      "title": "Update the Layout/navbar component to display the authenticated Google user's profile picture and display name when signed in via Google (useGoogleAuth hook). Clicking the avatar should navigate to the Profile page. Show a sign-in button when no Google session and no Internet Identity session is active.",
       "reqIds": [
         "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-create-a-usegetsubscribedreels-react-query-hook-that-calls-the-new-getsubscribedreels-backend-query-and-returns-the-reel-list-enabled-only-when-an-authenticated-identity-is-available",
-      "title": "Create a useGetSubscribedReels React Query hook that calls the new getSubscribedReels backend query and returns the reel list, enabled only when an authenticated identity is available.",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-mute-unmute-toggle-button-with-animated-icon-transition-on-the-reelcard-component-persist-the-mute-preference-in-localstorage-so-that-newly-scrolled-to-reels-respect-the-last-mute-state",
-      "title": "Add a mute/unmute toggle button with animated icon transition on the ReelCard component. Persist the mute preference in localStorage so that newly scrolled-to reels respect the last mute state.",
-      "reqIds": [
-        "REQ-7"
       ],
       "version": 1
     }
@@ -58,20 +42,11 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Reels and video feature",
+      "summary": "Google/Gmail ID sign-in and account joining",
       "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-6",
-      "summary": "Add a backend query to fetch short-form videos (reels) from channels that the authenticated caller subscribes to, returning VideoMetadata records sorted by upload date descending.",
-      "reqIds": [
-        "REQ-5"
-      ],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
   "projectName": "Mediatube",
   "clarification_mode": "instant",
   "clarification_rounds": 0

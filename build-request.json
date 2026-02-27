@@ -1,155 +1,102 @@
 {
   "kind": "build_request",
-  "title": "Enhance Reels and Video Experience",
+  "title": "Google/Gmail Sign-In and Account Joining",
   "projectName": "Mediatube",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Enhance the ReelsPage to support smooth vertical snap-scrolling between full-screen reel cards, with autoplay for the active reel and pause for off-screen reels. Include a progress bar indicator at the top of each reel showing playback progress.",
+      "text": "Implement Google Sign-In on the Login page so users can authenticate using their Gmail/Google account via the existing Google Identity Services (GSI) script already loaded in index.html. On successful Google sign-in, if the user has no existing profile, open the ProfileSetupModal pre-filled with the Google account's name and email data. If a profile already exists, navigate the user to the home page.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Reels and video"
+          "Continue with Google ko gmail ID joining"
         ]
       },
       "acceptanceCriteria": [
-        "Reels page displays videos in a full-screen vertically snapping feed",
-        "Active reel autoplays; off-screen reels pause automatically",
-        "A thin progress bar at the top of each reel card reflects current playback position",
-        "Scrolling between reels is smooth and snaps to each card"
+        "Login page displays a functional 'Continue with Google' button",
+        "Clicking the button triggers the Google Identity Services sign-in flow",
+        "On successful Google authentication, the parsed JWT user data (name, email, picture) is persisted via the existing useGoogleAuth hook",
+        "If no profile exists for the authenticated user, the ProfileSetupModal opens pre-filled with Google account name",
+        "If a profile already exists, the user is redirected to the home page",
+        "Google sign-in state is reflected in the Layout/navbar (shows user avatar or name from Google auth)"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Enhance the ReelCard component with an improved action sidebar including: like count with animated heart, comment count badge opening the comments drawer, share button, and a follow/subscribe button on the uploader's avatar. Display the video title and description as an overlay at the bottom with a 'show more' expand interaction for long descriptions.",
+      "text": "Implement Google Sign-Up on the Signup page so new users can create an account by joining with their Gmail/Google ID. On successful Google authentication for a new user, open the ProfileSetupModal pre-filled with data from the Google JWT (name, profile picture URL) to complete channel setup.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Reels and video"
+          "Continue with Google ko gmail ID joining"
         ]
       },
       "acceptanceCriteria": [
-        "Action sidebar shows like button with animated heart and running like count",
-        "Comment button shows comment count badge and opens ReelCommentsDrawer on tap",
-        "Share button copies the reel URL and shows a toast confirmation",
-        "Uploader avatar in the overlay has a subscribe/follow button",
-        "Video title and description are shown as a bottom overlay",
-        "Long descriptions are truncated with a 'Show more' toggle"
+        "Signup page displays a functional 'Join with Google' button",
+        "Clicking the button triggers the Google Identity Services sign-in flow",
+        "On successful Google authentication, the useGoogleAuth hook stores the user data",
+        "ProfileSetupModal is shown automatically with channel name pre-filled from Google display name",
+        "After profile setup is saved via useSaveCallerUserProfile, the user is navigated to the home page",
+        "Duplicate sign-in (existing profile) redirects user to home without reopening setup modal"
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add a 'For You' and 'Following' tab switcher at the top of the ReelsPage. 'For You' shows all short-form videos; 'Following' shows reels only from channels the authenticated user subscribes to. Show a prompt to log in or subscribe if the Following feed is empty.",
+      "text": "Update the ProfileSetupModal component to accept optional pre-fill props (displayName, avatarUrl) sourced from Google auth data. When these props are provided, pre-populate the channel name input and attempt to display the Google profile picture as the initial avatar preview.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Reels and video"
+          "Continue with Google ko gmail ID joining"
         ]
       },
       "acceptanceCriteria": [
-        "Two tabs ('For You' and 'Following') appear at the top of the Reels page",
-        "'For You' tab displays all short-form videos",
-        "'Following' tab displays reels from subscribed channels only",
-        "Unauthenticated users see a login prompt on the Following tab",
-        "Authenticated users with no subscriptions see a prompt to subscribe to channels"
+        "ProfileSetupModal accepts optional googleDisplayName and googleAvatarUrl props",
+        "When googleDisplayName is provided, the channel name field is pre-filled with it",
+        "When googleAvatarUrl is provided, it is shown as the avatar preview in the modal",
+        "User can still override the pre-filled values before submitting",
+        "Modal submission saves profile correctly with any user-edited values"
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Enhance the VideoPlayerPage to support a theatre/cinematic mode toggle that expands the video player to full page width while collapsing the sidebar. Add chapter markers on the seek bar if the video description contains timestamps in the format 'MM:SS Title'. Show a looping end-screen with recommended video thumbnails when playback finishes.",
+      "text": "Update the Layout/navbar component to display the authenticated Google user's profile picture and display name when signed in via Google (useGoogleAuth hook). Clicking the avatar should navigate to the Profile page. Show a sign-in button when no Google session and no Internet Identity session is active.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Reels and video"
+          "Continue with Google ko gmail ID joining"
         ]
       },
       "acceptanceCriteria": [
-        "A theatre mode button in the video player toggles full-width layout and collapses the recommendations sidebar",
-        "Seek bar displays chapter markers parsed from 'MM:SS Title' timestamp lines in the video description",
-        "Hovering a chapter marker on the seek bar shows the chapter title as a tooltip",
-        "When video ends, an end-screen overlay displays clickable recommended video thumbnails",
-        "End-screen auto-selects the next recommended video after a 5-second countdown"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Add a backend query to fetch short-form videos (reels) from channels that the authenticated caller subscribes to, returning VideoMetadata records sorted by upload date descending.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Reels and video"
-        ]
-      },
-      "acceptanceCriteria": [
-        "A new query function getSubscribedReels exists in the backend actor",
-        "It returns only videos marked as short-form (isShort = true) from subscribed channels",
-        "Results are sorted by uploadedAt descending",
-        "Returns an empty array if the caller has no subscriptions or is anonymous"
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Create a useGetSubscribedReels React Query hook that calls the new getSubscribedReels backend query and returns the reel list, enabled only when an authenticated identity is available.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Reels and video"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Hook file exists at frontend/src/hooks/useGetSubscribedReels.ts",
-        "Hook calls the backend actor's getSubscribedReels method",
-        "Query is disabled when no authenticated identity is present",
-        "Returns loading, error, and data states consistent with other query hooks in the project"
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Add a mute/unmute toggle button with animated icon transition on the ReelCard component. Persist the mute preference in localStorage so that newly scrolled-to reels respect the last mute state.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Reels and video"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Each reel card shows a mute/unmute button with a smooth icon animation",
-        "Toggling mute on one reel persists the state to localStorage",
-        "Newly visible reels initialize their mute state from localStorage"
+        "When a Google session is active (useGoogleAuth returns a user), the navbar shows the Google profile picture as a circular avatar",
+        "Hovering or clicking the avatar shows the user's Google display name",
+        "Clicking the avatar navigates to the Profile page",
+        "A sign-out option is accessible from the user avatar menu for Google-authenticated users",
+        "When neither Google nor Internet Identity session is active, the sign-in button is visible"
       ]
     }
   ],
   "constraints": [
+    "Use the existing useGoogleAuth hook and the Google Identity Services script already loaded in index.html — do not introduce a new OAuth library",
     "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
-    "All Motoko logic must remain within the single backend/main.mo actor"
+    "Internet Identity login must remain fully functional alongside Google sign-in"
   ],
   "nonGoals": [
-    "Live streaming or real-time video features",
-    "Video transcoding or server-side video processing",
-    "External video CDN or third-party video hosting integration",
-    "Paid/monetization gating on reels"
+    "Backend authentication changes — Google auth is handled client-side via GSI JWT",
+    "Email/password authentication implementation",
+    "Facebook, GitHub, or other third-party OAuth providers",
+    "Merging Google and Internet Identity accounts into a single identity"
   ],
   "imageRequirements": {
     "required": [],

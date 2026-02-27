@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useGetApiKeys } from '../hooks/useGetApiKeys';
 import { useCreateApiKey } from '../hooks/useCreateApiKey';
 import { useRevokeApiKey } from '../hooks/useRevokeApiKey';
+import { Key, Plus, Eye, EyeOff, Copy, Check, Trash2, LogIn, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,13 +21,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Key, Copy, Check, Plus, Trash2, Lock, AlertCircle, Eye, EyeOff, BookOpen } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useNavigate } from '@tanstack/react-router';
 import type { ApiKey } from '../backend';
 
 function maskKey(key: string): string {
-  if (key.length <= 8) return '••••••••••••';
-  return key.slice(0, 4) + '••••••••••••••••' + key.slice(-4);
+  if (key.length <= 12) return '••••••••••••';
+  return key.substring(0, 6) + '••••••••••••' + key.substring(key.length - 4);
 }
 
 function formatDate(timestamp: bigint): string {
@@ -37,434 +39,353 @@ function formatDate(timestamp: bigint): string {
   });
 }
 
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <Button variant="outline" size="sm" onClick={handleCopy} className="gap-2 shrink-0">
-      {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-      {copied ? 'Copied!' : 'Copy'}
-    </Button>
-  );
-}
-
-function ApiKeyRow({
-  apiKey,
-  onRevoke,
-  isRevoking,
-  isVisible,
-  onToggleVisibility,
-}: {
+interface ApiKeyRowProps {
   apiKey: ApiKey;
   onRevoke: (key: string) => void;
   isRevoking: boolean;
-  isVisible: boolean;
-  onToggleVisibility: (key: string) => void;
-}) {
+}
+
+function ApiKeyRow({ apiKey, onRevoke, isRevoking }: ApiKeyRowProps) {
+  const [visible, setVisible] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(apiKey.key);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
+    }
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-lg border border-border/60 bg-muted/20 hover:bg-muted/40 transition-colors">
+    <div className="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <Key className="w-4 h-4 text-primary shrink-0" />
-          <span className="font-medium text-sm truncate">
-            {apiKey.apiLabel || <span className="text-muted-foreground italic">Unlabeled key</span>}
-          </span>
+          <span className="font-semibold text-sm truncate">{apiKey.apiLabel}</span>
           <Badge variant={apiKey.active ? 'default' : 'secondary'} className="text-xs shrink-0">
             {apiKey.active ? 'Active' : 'Revoked'}
           </Badge>
         </div>
-        <div className="flex items-center gap-2 pl-6">
-          <p className="text-xs text-muted-foreground font-mono break-all">
-            {isVisible ? apiKey.key : maskKey(apiKey.key)}
-          </p>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-5 h-5 shrink-0 text-muted-foreground hover:text-foreground"
-            onClick={() => onToggleVisibility(apiKey.key)}
-            title={isVisible ? 'Hide key' : 'Show key'}
-          >
-            {isVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-          </Button>
-          <CopyButton text={apiKey.key} />
+        <div className="flex items-center gap-2">
+          <code className="text-xs font-mono text-muted-foreground bg-muted px-2 py-1 rounded truncate max-w-xs">
+            {visible ? apiKey.key : maskKey(apiKey.key)}
+          </code>
         </div>
-        <p className="text-xs text-muted-foreground pl-6 mt-0.5">Created {formatDate(apiKey.createdAt)}</p>
+        <p className="text-xs text-muted-foreground mt-1">Created {formatDate(apiKey.createdAt)}</p>
       </div>
 
-      {apiKey.active && (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60 shrink-0"
-            >
-              <Trash2 className="w-4 h-4" />
-              Revoke
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Revoke API Key</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to revoke the key{' '}
-                <span className="font-semibold">{apiKey.apiLabel || 'Unlabeled key'}</span>?
-                This action cannot be undone. Any applications using this key will lose access immediately.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => onRevoke(apiKey.key)}
+      <div className="flex items-center gap-2 shrink-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setVisible(!visible)}
+          title={visible ? 'Hide key' : 'Show key'}
+          className="h-8 w-8"
+        >
+          {visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleCopy}
+          title="Copy key"
+          className="h-8 w-8"
+          disabled={!apiKey.active}
+        >
+          {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+        </Button>
+        {apiKey.active && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive hover:text-destructive"
+                title="Revoke key"
                 disabled={isRevoking}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {isRevoking ? 'Revoking...' : 'Revoke Key'}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Revoke API Key</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to revoke the key <strong>"{apiKey.apiLabel}"</strong>?
+                  This action cannot be undone. Any applications using this key will lose access immediately.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => onRevoke(apiKey.key)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Revoke Key
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </div>
     </div>
   );
 }
 
-function NewKeyDisplay({ generatedKey, onDismiss }: { generatedKey: string; onDismiss: () => void }) {
-  return (
-    <div className="rounded-lg border border-primary/40 bg-primary/5 p-4 space-y-3">
-      <div className="flex items-start gap-2">
-        <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-semibold text-foreground">Save your API key now</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            This key will only be shown once. Copy it and store it somewhere safe.
-          </p>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <code className="flex-1 text-xs font-mono bg-background border border-border rounded px-3 py-2 break-all select-all">
-          {generatedKey}
-        </code>
-        <CopyButton text={generatedKey} />
-      </div>
-      <Button variant="ghost" size="sm" onClick={onDismiss} className="w-full text-muted-foreground">
-        I've saved my key, dismiss
-      </Button>
-    </div>
-  );
-}
-
-function UsageGuide() {
-  const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
-
-  const snippets = {
-    curl: `curl -X GET "https://your-api-endpoint.com/api/videos" \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
+const CODE_EXAMPLES = {
+  curl: (key: string) => `curl -X GET "https://api.mediatube.app/v1/videos" \\
+  -H "Authorization: Bearer ${key}" \\
   -H "Content-Type: application/json"`,
-    js: `// JavaScript / TypeScript
-const response = await fetch('https://your-api-endpoint.com/api/videos', {
+  javascript: (key: string) => `const response = await fetch('https://api.mediatube.app/v1/videos', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_API_KEY',
+    'Authorization': 'Bearer ${key}',
     'Content-Type': 'application/json',
   },
 });
-const data = await response.json();`,
-    python: `# Python
-import requests
+const data = await response.json();
+console.log(data);`,
+  python: (key: string) => `import requests
 
 headers = {
-    "Authorization": "Bearer YOUR_API_KEY",
-    "Content-Type": "application/json",
+    'Authorization': 'Bearer ${key}',
+    'Content-Type': 'application/json',
 }
-response = requests.get("https://your-api-endpoint.com/api/videos", headers=headers)
-data = response.json()`,
-  };
 
-  const [activeTab, setActiveTab] = useState<'curl' | 'js' | 'python'>('curl');
-
-  const handleCopySnippet = async () => {
-    await navigator.clipboard.writeText(snippets[activeTab]);
-    setCopiedSnippet(activeTab);
-    setTimeout(() => setCopiedSnippet(null), 2000);
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <BookOpen className="w-4 h-4" />
-          How to use your API key
-        </CardTitle>
-        <CardDescription>
-          Include your API key in the <code className="text-xs bg-muted px-1 py-0.5 rounded">Authorization</code> header
-          of every request to authenticate with the Mediatube API.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Security note */}
-        <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
-          <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">Keep your API key secret.</span>{' '}
-            Never expose it in client-side code, public repositories, or logs. Revoke and regenerate
-            any key you believe has been compromised.
-          </p>
-        </div>
-
-        {/* Tab selector */}
-        <div className="flex gap-1 border-b border-border">
-          {(['curl', 'js', 'python'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-t transition-colors ${
-                activeTab === tab
-                  ? 'border-b-2 border-primary text-primary bg-primary/5'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {tab === 'curl' ? 'cURL' : tab === 'js' ? 'JavaScript' : 'Python'}
-            </button>
-          ))}
-        </div>
-
-        {/* Code block */}
-        <div className="relative">
-          <pre className="rounded-lg bg-muted/60 border border-border p-4 text-xs font-mono text-foreground overflow-x-auto whitespace-pre leading-relaxed">
-            <code>{snippets[activeTab]}</code>
-          </pre>
-          <button
-            onClick={handleCopySnippet}
-            className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 rounded text-xs bg-background border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-          >
-            {copiedSnippet === activeTab ? (
-              <>
-                <Check className="w-3 h-3 text-green-500" />
-                Copied
-              </>
-            ) : (
-              <>
-                <Copy className="w-3 h-3" />
-                Copy
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Steps */}
-        <div className="space-y-2">
-          <p className="text-xs font-semibold text-foreground">Quick start:</p>
-          <ol className="space-y-1.5 text-xs text-muted-foreground list-none">
-            <li className="flex items-start gap-2">
-              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold mt-0.5">1</span>
-              <span>Generate a new API key using the form above and copy it immediately.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold mt-0.5">2</span>
-              <span>
-                Add the key to your request headers:{' '}
-                <code className="bg-muted px-1 py-0.5 rounded">Authorization: Bearer YOUR_API_KEY</code>
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold mt-0.5">3</span>
-              <span>
-                The server validates your key via the{' '}
-                <code className="bg-muted px-1 py-0.5 rounded">validateApiKey</code> method. Revoked keys
-                will return <code className="bg-muted px-1 py-0.5 rounded">false</code> and be rejected.
-              </span>
-            </li>
-          </ol>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+response = requests.get('https://api.mediatube.app/v1/videos', headers=headers)
+data = response.json()
+print(data)`,
+};
 
 export default function ApiKeysPage() {
-  const { identity, login } = useInternetIdentity();
-  const isAuthenticated = !!identity;
+  const { identity } = useInternetIdentity();
+  const { googleUser } = useGoogleAuth();
+  const navigate = useNavigate();
+
+  const isAuthenticated = !!identity || !!googleUser;
+
+  const [newLabel, setNewLabel] = useState('');
+  const [newKeyValue, setNewKeyValue] = useState<string | null>(null);
+  const [copiedExample, setCopiedExample] = useState(false);
 
   const { data: apiKeys, isLoading } = useGetApiKeys();
-  const createApiKey = useCreateApiKey();
-  const revokeApiKey = useRevokeApiKey();
+  const { mutate: createApiKey, isPending: creating } = useCreateApiKey();
+  const { mutate: revokeApiKey, isPending: revoking } = useRevokeApiKey();
 
-  const [label, setLabel] = useState('');
-  const [generatedKey, setGeneratedKey] = useState<string | null>(null);
-  // Set of key strings that are currently visible (unmasked)
-  const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
-
-  const handleCreate = async () => {
-    const key = await createApiKey.mutateAsync(label.trim());
-    setGeneratedKey(key);
-    setLabel('');
+  const handleCreate = () => {
+    if (!newLabel.trim()) return;
+    createApiKey(newLabel.trim(), {
+      onSuccess: (key: string) => {
+        setNewKeyValue(key);
+        setNewLabel('');
+      },
+    });
   };
 
-  const handleToggleVisibility = (key: string) => {
-    setVisibleKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
+  const handleRevoke = (key: string) => {
+    revokeApiKey(key);
+  };
+
+  const handleCopyExample = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedExample(true);
+      setTimeout(() => setCopiedExample(false), 2000);
+    } catch {
+      // fallback
+    }
   };
 
   if (!isAuthenticated) {
     return (
-      <div className="container max-w-2xl py-16 flex flex-col items-center text-center gap-6">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-[oklch(0.55_0.28_340)] flex items-center justify-center shadow-lg">
-          <Lock className="w-8 h-8 text-white" />
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 px-4">
+        <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center">
+          <Key className="w-8 h-8 text-muted-foreground" />
         </div>
-        <div>
-          <h1 className="text-2xl font-bold mb-2">API Key Management</h1>
-          <p className="text-muted-foreground">You need to be logged in to manage your API keys.</p>
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Sign in to manage API keys</h2>
+          <p className="text-muted-foreground mb-6">
+            Create and manage API keys to integrate Mediatube into your applications.
+          </p>
+          <Button onClick={() => navigate({ to: '/login' })} className="gap-2">
+            <LogIn className="w-4 h-4" />
+            Sign In
+          </Button>
         </div>
-        <Button onClick={login} className="bg-gradient-to-r from-primary to-[oklch(0.55_0.28_340)] hover:opacity-90">
-          Login to Continue
-        </Button>
       </div>
     );
   }
 
-  const activeKeys = (apiKeys ?? []).filter((k) => k.active);
-  const revokedKeys = (apiKeys ?? []).filter((k) => !k.active);
+  const exampleKey = newKeyValue ?? (apiKeys?.find(k => k.active)?.key ?? 'YOUR_API_KEY');
 
   return (
-    <div className="container max-w-3xl py-10 space-y-8">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-[oklch(0.55_0.28_340)] flex items-center justify-center shadow-md">
-            <Key className="w-5 h-5 text-white" />
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Key className="w-5 h-5 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">API Keys</h1>
+          <h1 className="text-3xl font-bold">API Keys</h1>
         </div>
-        <p className="text-muted-foreground text-sm pl-13">
-          Manage your API keys for programmatic access to Mediatube.
+        <p className="text-muted-foreground">
+          Manage your API keys to integrate Mediatube into your applications and services.
         </p>
       </div>
 
-      {/* Generate New Key */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Generate New API Key
-          </CardTitle>
-          <CardDescription>
-            Create a new API key with an optional label to identify its purpose.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {generatedKey && (
-            <NewKeyDisplay
-              generatedKey={generatedKey}
-              onDismiss={() => setGeneratedKey(null)}
+      {/* Create New Key */}
+      <div className="bg-card border border-border rounded-xl p-6 mb-6">
+        <h2 className="text-lg font-semibold mb-4">Create New API Key</h2>
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <Label htmlFor="key-label" className="sr-only">Key Label</Label>
+            <Input
+              id="key-label"
+              placeholder="e.g. My App, Production, Development..."
+              value={newLabel}
+              onChange={(e) => setNewLabel(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+              disabled={creating}
             />
-          )}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 space-y-1.5">
-              <Label htmlFor="key-label">Label (optional)</Label>
-              <Input
-                id="key-label"
-                placeholder="e.g. My App, CI/CD Pipeline..."
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !createApiKey.isPending && handleCreate()}
-                disabled={createApiKey.isPending}
-              />
+          </div>
+          <Button
+            onClick={handleCreate}
+            disabled={!newLabel.trim() || creating}
+            className="gap-2 shrink-0"
+          >
+            {creating ? (
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+            Create Key
+          </Button>
+        </div>
+
+        {/* Newly created key banner */}
+        {newKeyValue && (
+          <div className="mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+            <div className="flex items-start gap-2 mb-2">
+              <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+                  API key created successfully!
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Copy this key now — it won't be shown again in full.
+                </p>
+              </div>
             </div>
-            <div className="flex items-end">
+            <div className="flex items-center gap-2 mt-2">
+              <code className="flex-1 text-xs font-mono bg-muted px-3 py-2 rounded break-all">
+                {newKeyValue}
+              </code>
               <Button
-                onClick={handleCreate}
-                disabled={createApiKey.isPending}
-                className="w-full sm:w-auto bg-gradient-to-r from-primary to-[oklch(0.55_0.28_340)] hover:opacity-90 gap-2"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(newKeyValue);
+                  setCopiedExample(true);
+                  setTimeout(() => setCopiedExample(false), 2000);
+                }}
+                className="shrink-0 gap-1"
               >
-                {createApiKey.isPending ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4" />
-                    Generate Key
-                  </>
-                )}
+                {copiedExample ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                Copy
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
-      {/* Active Keys */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Active Keys</CardTitle>
-          <CardDescription>
-            {isLoading ? 'Loading...' : `${activeKeys.length} active key${activeKeys.length !== 1 ? 's' : ''}`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {isLoading ? (
-            <>
-              <Skeleton className="h-20 w-full rounded-lg" />
-              <Skeleton className="h-20 w-full rounded-lg" />
-            </>
-          ) : activeKeys.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Key className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">No active API keys. Generate one above to get started.</p>
-            </div>
-          ) : (
-            activeKeys.map((apiKey) => (
+      {/* Keys List */}
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold mb-4">Your API Keys</h2>
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : !apiKeys || apiKeys.length === 0 ? (
+          <div className="text-center py-12 bg-muted/30 rounded-xl border border-dashed border-border">
+            <Key className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground font-medium">No API keys yet</p>
+            <p className="text-sm text-muted-foreground mt-1">Create your first API key above to get started.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {apiKeys.map((key) => (
               <ApiKeyRow
-                key={apiKey.key}
-                apiKey={apiKey}
-                onRevoke={(key) => revokeApiKey.mutate(key)}
-                isRevoking={revokeApiKey.isPending}
-                isVisible={visibleKeys.has(apiKey.key)}
-                onToggleVisibility={handleToggleVisibility}
-              />
-            ))
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Revoked Keys */}
-      {revokedKeys.length > 0 && (
-        <Card className="opacity-70">
-          <CardHeader>
-            <CardTitle className="text-base text-muted-foreground">Revoked Keys</CardTitle>
-            <CardDescription>{revokedKeys.length} revoked key{revokedKeys.length !== 1 ? 's' : ''}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {revokedKeys.map((apiKey) => (
-              <ApiKeyRow
-                key={apiKey.key}
-                apiKey={apiKey}
-                onRevoke={(key) => revokeApiKey.mutate(key)}
-                isRevoking={revokeApiKey.isPending}
-                isVisible={visibleKeys.has(apiKey.key)}
-                onToggleVisibility={handleToggleVisibility}
+                key={key.key}
+                apiKey={key}
+                onRevoke={handleRevoke}
+                isRevoking={revoking}
               />
             ))}
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
+      </div>
 
-      {/* Usage Guide */}
-      <UsageGuide />
+      {/* How to use section */}
+      <div className="bg-card border border-border rounded-xl p-6">
+        <h2 className="text-lg font-semibold mb-2">How to use your API key</h2>
+        <div className="flex items-start gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg mb-4">
+          <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+          <p className="text-xs text-amber-700 dark:text-amber-400">
+            Keep your API keys secure. Never expose them in client-side code or public repositories.
+            Treat them like passwords.
+          </p>
+        </div>
+
+        <Tabs defaultValue="curl">
+          <TabsList className="mb-4">
+            <TabsTrigger value="curl">cURL</TabsTrigger>
+            <TabsTrigger value="javascript">JavaScript</TabsTrigger>
+            <TabsTrigger value="python">Python</TabsTrigger>
+          </TabsList>
+
+          {(['curl', 'javascript', 'python'] as const).map((lang) => (
+            <TabsContent key={lang} value={lang}>
+              <div className="relative">
+                <pre className="bg-muted rounded-lg p-4 text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all">
+                  {CODE_EXAMPLES[lang](exampleKey)}
+                </pre>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 h-7 w-7"
+                  onClick={() => handleCopyExample(CODE_EXAMPLES[lang](exampleKey))}
+                  title="Copy code"
+                >
+                  {copiedExample ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                </Button>
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+
+        {/* Quick Start */}
+        <div className="mt-6">
+          <h3 className="text-sm font-semibold mb-3">Quick Start Guide</h3>
+          <ol className="space-y-2">
+            {[
+              { step: '1', text: 'Create an API key with a descriptive label above.' },
+              { step: '2', text: 'Include the key in the Authorization header of your requests.' },
+              { step: '3', text: 'Use the Mediatube API to upload videos, manage playlists, and more.' },
+            ].map(({ step, text }) => (
+              <li key={step} className="flex items-start gap-3">
+                <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  {step}
+                </span>
+                <p className="text-sm text-muted-foreground">{text}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
     </div>
   );
 }
