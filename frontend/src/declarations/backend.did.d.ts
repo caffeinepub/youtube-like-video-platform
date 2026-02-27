@@ -132,6 +132,7 @@ export interface _SERVICE {
   'getPlaylistById' : ActorMethod<[string], [] | [PlaylistView]>,
   'getPlaylistVideos' : ActorMethod<[string], Array<VideoMetadata>>,
   'getPlaylistsByOwner' : ActorMethod<[Principal], Array<PlaylistView>>,
+  'getSubscribedShorts' : ActorMethod<[], Array<VideoMetadata>>,
   'getSubscriberCount' : ActorMethod<[Principal], bigint>,
   'getSubscribers' : ActorMethod<[Principal], Array<Principal>>,
   'getTrendingVideos' : ActorMethod<[], Array<VideoMetadata>>,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useGetCallerUserProfile } from '../hooks/useGetCallerUserProfile';
@@ -7,7 +7,6 @@ import { useGetSubscribers } from '../hooks/useGetSubscribers';
 import { useSetProfileImage } from '../hooks/useSetProfileImage';
 import { useGetCommunityPostsByChannel } from '../hooks/useGetCommunityPostsByChannel';
 import { useNavigate } from '@tanstack/react-router';
-import { useRef } from 'react';
 import { Principal } from '@dfinity/principal';
 import VideoCard from '../components/VideoCard';
 import CommunityPostCard from '../components/CommunityPostCard';
@@ -36,26 +35,19 @@ export default function ProfilePage() {
   const isAuthenticated = isIIAuthenticated || isGoogleAuthenticated;
 
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
 
   const { data: userProfile, isLoading: profileLoading, isFetched: profileFetched } = useGetCallerUserProfile();
   const { mutate: setProfileImage, isPending: isUploadingAvatar } = useSetProfileImage();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Determine if Google user needs profile setup
-  const googleProfileSetupKey = googleUser ? `google_profile_setup_${googleUser.sub}` : null;
-  const googleNeedsSetup =
-    isGoogleAuthenticated &&
-    !isIIAuthenticated &&
-    !!googleProfileSetupKey &&
-    !localStorage.getItem(googleProfileSetupKey);
-
   // Resolve the caller's Principal for II users
   const callerPrincipal: Principal | undefined = isIIAuthenticated
     ? identity?.getPrincipal()
     : undefined;
 
-  // Always call hooks at top level; pass anonymous principal as fallback (queries disabled when undefined)
+  // Always call hooks at top level; pass anonymous principal as fallback
   const { data: channelVideos, isLoading: videosLoading } = useGetChannelVideos(
     callerPrincipal ?? Principal.anonymous()
   );
@@ -67,20 +59,13 @@ export default function ProfilePage() {
   );
 
   // Determine display info
-  const googleProfileName = googleUser
-    ? localStorage.getItem(`google_profile_name_${googleUser.sub}`) || googleUser.name
-    : null;
-  const googleProfileDesc = googleUser
-    ? localStorage.getItem(`google_profile_desc_${googleUser.sub}`) || ''
-    : null;
-
   const displayName = isIIAuthenticated
     ? userProfile?.name || 'User'
-    : googleProfileName || googleUser?.name || 'User';
+    : googleUser?.name || 'User';
 
   const displayDescription = isIIAuthenticated
     ? userProfile?.channelDescription || ''
-    : googleProfileDesc || '';
+    : '';
 
   const displayHandle = isIIAuthenticated && userProfile?.handle
     ? userProfile.handle
@@ -156,18 +141,10 @@ export default function ProfilePage() {
 
   // Show profile setup for II users without a profile
   if (isIIAuthenticated && profileFetched && userProfile === null) {
-    return <ProfileSetupModal onComplete={() => {}} />;
-  }
-
-  // Show profile setup for Google users who haven't completed setup
-  if (googleNeedsSetup) {
     return (
       <ProfileSetupModal
-        onComplete={() => {
-          if (googleProfileSetupKey) {
-            localStorage.setItem(googleProfileSetupKey, 'true');
-          }
-        }}
+        open={true}
+        onClose={() => navigate({ to: '/' })}
       />
     );
   }
@@ -284,41 +261,49 @@ export default function ProfilePage() {
         />
       )}
 
+      {/* Profile Setup Modal */}
+      <ProfileSetupModal
+        open={showProfileSetup}
+        onClose={() => setShowProfileSetup(false)}
+      />
+
       {/* Tabs — only for II users */}
       {isIIAuthenticated && (
         <Tabs defaultValue="videos">
           <TabsList className="mb-6">
-            <TabsTrigger value="videos" className="flex items-center gap-1.5">
-              <Video className="h-4 w-4" />
-              {t('videos') || 'Videos'}
+            <TabsTrigger value="videos">
+              <Video className="h-4 w-4 mr-2" />
+              Videos
             </TabsTrigger>
-            <TabsTrigger value="community" className="flex items-center gap-1.5">
-              <MessageSquare className="h-4 w-4" />
-              {t('community')}
+            <TabsTrigger value="community">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Community
             </TabsTrigger>
           </TabsList>
 
-          {/* Videos Tab */}
           <TabsContent value="videos">
             {videosLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="aspect-video rounded-lg" />
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="aspect-video w-full rounded-xl" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
                 ))}
               </div>
             ) : channelVideos && channelVideos.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {channelVideos.map((video) => (
-                  <VideoCard key={video.id} video={video} />
+                  <VideoCard key={video.id} video={video} hideChannelInfo />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <Video className="h-12 w-12 mx-auto mb-3 opacity-40" />
-                <p>No videos uploaded yet.</p>
+              <div className="text-center py-16">
+                <Video className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No videos uploaded yet.</p>
                 <Button
-                  variant="outline"
-                  className="mt-4"
+                  className="mt-4 bg-mt-magenta hover:bg-mt-purple text-white"
                   onClick={() => navigate({ to: '/upload' })}
                 >
                   Upload your first video
@@ -327,45 +312,41 @@ export default function ProfilePage() {
             )}
           </TabsContent>
 
-          {/* Community Tab */}
           <TabsContent value="community">
             {postsLoading ? (
               <div className="space-y-4">
-                {[...Array(2)].map((_, i) => (
-                  <div key={i} className="bg-card border border-border rounded-xl p-4 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="h-10 w-10 rounded-full" />
-                      <div className="space-y-1.5">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-3 w-20" />
-                      </div>
-                    </div>
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-32 rounded-xl" />
                 ))}
               </div>
             ) : communityPosts && communityPosts.length > 0 ? (
-              <div className="space-y-4 max-w-2xl">
+              <div className="space-y-4">
                 {communityPosts.map((post) => (
-                  <CommunityPostCard key={post.id} post={post} showDelete={true} />
+                  <CommunityPostCard
+                    key={post.id}
+                    post={post}
+                    showDelete={true}
+                  />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-40" />
-                <p>{t('noCommunityPosts')}</p>
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => navigate({ to: '/community' })}
-                >
-                  Create your first post
-                </Button>
+              <div className="text-center py-16">
+                <MessageSquare className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No community posts yet.</p>
               </div>
             )}
           </TabsContent>
         </Tabs>
+      )}
+
+      {/* Google user — show limited info */}
+      {isGoogleAuthenticated && !isIIAuthenticated && (
+        <div className="text-center py-16">
+          <SiGoogle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">
+            Connect with Internet Identity to access full channel features.
+          </p>
+        </div>
       )}
     </div>
   );

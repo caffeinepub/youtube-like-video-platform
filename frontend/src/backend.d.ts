@@ -110,6 +110,7 @@ export interface backendInterface {
     getPlaylistById(playlistId: string): Promise<PlaylistView | null>;
     getPlaylistVideos(playlistId: string): Promise<Array<VideoMetadata>>;
     getPlaylistsByOwner(owner: Principal): Promise<Array<PlaylistView>>;
+    getSubscribedShorts(): Promise<Array<VideoMetadata>>;
     getSubscriberCount(channel: Principal): Promise<bigint>;
     getSubscribers(channel: Principal): Promise<Array<Principal>>;
     getTrendingVideos(): Promise<Array<VideoMetadata>>;

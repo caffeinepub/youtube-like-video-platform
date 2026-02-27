@@ -1,191 +1,128 @@
 import React, { useState } from 'react';
-import { ListVideo, Plus, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
+import { Loader2, ListPlus, Plus } from 'lucide-react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useGetPlaylistsByOwner } from '../hooks/useGetPlaylistsByOwner';
-import { useCreatePlaylist } from '../hooks/useCreatePlaylist';
 import { useAddVideoToPlaylist } from '../hooks/useAddVideoToPlaylist';
 import { useRemoveVideoFromPlaylist } from '../hooks/useRemoveVideoFromPlaylist';
-import { toast } from 'sonner';
+import { useCreatePlaylist } from '../hooks/useCreatePlaylist';
 
 interface AddToPlaylistButtonProps {
   videoId: string;
+  iconOnly?: boolean;
 }
 
-export default function AddToPlaylistButton({ videoId }: AddToPlaylistButtonProps) {
+export default function AddToPlaylistButton({ videoId, iconOnly }: AddToPlaylistButtonProps) {
   const { identity } = useInternetIdentity();
-  const isAuthenticated = !!identity;
+  const { googleUser } = useGoogleAuth();
+  const isAuthenticated = !!identity || !!googleUser;
 
+  const { data: playlists = [] } = useGetPlaylistsByOwner();
+  const { mutateAsync: addVideo, isPending: isAdding } = useAddVideoToPlaylist();
+  const { mutateAsync: removeVideo, isPending: isRemoving } = useRemoveVideoFromPlaylist();
+  const { mutateAsync: createPlaylist, isPending: isCreating } = useCreatePlaylist();
+
+  const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
   const [open, setOpen] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newDescription, setNewDescription] = useState('');
 
-  const { data: playlists = [], isLoading: playlistsLoading } = useGetPlaylistsByOwner();
-  const { mutate: createPlaylist, isPending: creating } = useCreatePlaylist();
-  const { mutate: addVideo, isPending: adding } = useAddVideoToPlaylist();
-  const { mutate: removeVideo, isPending: removing } = useRemoveVideoFromPlaylist();
+  if (!isAuthenticated) return null;
 
-  const handleOpenChange = (val: boolean) => {
-    if (!isAuthenticated) {
-      toast.info('Sign in to add videos to playlists');
-      return;
-    }
-    setOpen(val);
-    if (!val) {
-      setShowCreateForm(false);
-      setNewTitle('');
-      setNewDescription('');
-    }
-  };
+  const isVideoInPlaylist = (playlistId: string) =>
+    playlists.find((p) => p.id === playlistId)?.videos.includes(videoId) ?? false;
 
-  const isVideoInPlaylist = (playlistVideos: string[]) => playlistVideos.includes(videoId);
-
-  const handleTogglePlaylist = (playlistId: string, currentlyIn: boolean) => {
-    if (currentlyIn) {
-      removeVideo({ playlistId, videoId });
+  const handleToggle = async (playlistId: string) => {
+    if (isVideoInPlaylist(playlistId)) {
+      await removeVideo({ playlistId, videoId });
     } else {
-      addVideo({ playlistId, videoId });
+      await addVideo({ playlistId, videoId });
     }
   };
 
-  const handleCreateAndAdd = () => {
-    if (!newTitle.trim()) {
-      toast.error('Please enter a playlist title');
-      return;
-    }
-    createPlaylist(
-      { title: newTitle.trim(), description: newDescription.trim() },
-      {
-        onSuccess: (newPlaylistId) => {
-          addVideo({ playlistId: newPlaylistId, videoId });
-          setShowCreateForm(false);
-          setNewTitle('');
-          setNewDescription('');
-        },
-      }
-    );
+  const handleCreateAndAdd = async () => {
+    if (!newPlaylistName.trim()) return;
+    const playlistId = await createPlaylist({
+      title: newPlaylistName.trim(),
+      description: '',
+    });
+    await addVideo({ playlistId, videoId });
+    setNewPlaylistName('');
+    setShowCreate(false);
   };
+
+  const isPending = isAdding || isRemoving || isCreating;
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center gap-2">
-          <ListVideo className="w-4 h-4" />
-          <span className="hidden sm:inline">Save</span>
+        <Button
+          variant="ghost"
+          size={iconOnly ? 'icon' : 'sm'}
+          className={iconOnly ? 'rounded-full' : ''}
+          title="Save to playlist"
+        >
+          <ListPlus className="h-4 w-4" />
+          {!iconOnly && <span className="ml-1">Save</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0" align="end">
-        <div className="p-3 border-b border-border">
-          <p className="text-sm font-semibold text-foreground">Save to playlist</p>
+      <PopoverContent className="w-64 p-3" align="end">
+        <p className="text-sm font-medium mb-2">Save to playlist</p>
+        <div className="space-y-2 max-h-48 overflow-y-auto">
+          {playlists.length === 0 && (
+            <p className="text-xs text-muted-foreground">No playlists yet.</p>
+          )}
+          {playlists.map((playlist) => (
+            <label
+              key={playlist.id}
+              className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded p-1"
+            >
+              <Checkbox
+                checked={isVideoInPlaylist(playlist.id)}
+                onCheckedChange={() => handleToggle(playlist.id)}
+                disabled={isPending}
+              />
+              <span className="text-sm truncate">{playlist.title}</span>
+            </label>
+          ))}
         </div>
 
-        {/* Create new playlist form */}
-        {showCreateForm ? (
-          <div className="p-3 space-y-3">
-            <Input
-              placeholder="Playlist title"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              className="text-sm"
-              autoFocus
-            />
-            <Textarea
-              placeholder="Description (optional)"
-              value={newDescription}
-              onChange={(e) => setNewDescription(e.target.value)}
-              className="text-sm resize-none"
-              rows={2}
-            />
-            <div className="flex gap-2">
+        <div className="mt-3 border-t border-border pt-3">
+          {showCreate ? (
+            <div className="flex gap-1">
+              <Input
+                value={newPlaylistName}
+                onChange={(e) => setNewPlaylistName(e.target.value)}
+                placeholder="Playlist name"
+                className="h-7 text-xs"
+                disabled={isPending}
+                onKeyDown={(e) => e.key === 'Enter' && handleCreateAndAdd()}
+                autoFocus
+              />
               <Button
-                variant="ghost"
-                size="sm"
-                className="flex-1"
-                onClick={() => {
-                  setShowCreateForm(false);
-                  setNewTitle('');
-                  setNewDescription('');
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                className="flex-1"
+                size="icon"
+                className="h-7 w-7 shrink-0"
                 onClick={handleCreateAndAdd}
-                disabled={creating || adding || !newTitle.trim()}
+                disabled={!newPlaylistName.trim() || isPending}
               >
-                {creating || adding ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <>
-                    <Check className="w-3 h-3 mr-1" />
-                    Create
-                  </>
-                )}
+                {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
               </Button>
             </div>
-          </div>
-        ) : (
-          <>
-            {/* Create new playlist button */}
-            <button
-              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-primary hover:bg-muted transition-colors"
-              onClick={() => setShowCreateForm(true)}
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs"
+              onClick={() => setShowCreate(true)}
             >
-              <Plus className="w-4 h-4" />
-              Create new playlist
-            </button>
-
-            <Separator />
-
-            {/* Existing playlists */}
-            <div className="max-h-52 overflow-y-auto">
-              {playlistsLoading ? (
-                <div className="flex items-center justify-center py-6">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                </div>
-              ) : playlists.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6 px-3">
-                  No playlists yet. Create one above!
-                </p>
-              ) : (
-                playlists.map((playlist) => {
-                  const inPlaylist = isVideoInPlaylist(playlist.videos);
-                  const isBusy = adding || removing;
-                  return (
-                    <label
-                      key={playlist.id}
-                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted cursor-pointer transition-colors"
-                    >
-                      <Checkbox
-                        checked={inPlaylist}
-                        onCheckedChange={() => !isBusy && handleTogglePlaylist(playlist.id, inPlaylist)}
-                        disabled={isBusy}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{playlist.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {playlist.videos.length} video{playlist.videos.length !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    </label>
-                  );
-                })
-              )}
-            </div>
-          </>
-        )}
+              <Plus className="h-3 w-3 mr-1" />
+              New playlist
+            </Button>
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );

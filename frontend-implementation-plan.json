@@ -1,37 +1,125 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add App Download Feature",
+  "title": "Enhance Reels and Video Experience",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add a dedicated app download page with platform-specific download buttons matching Mediatube's dark theme",
+      "summary": "Enhance ReelsPage with vertical snap-scrolling, autoplay/pause behavior, and progress bar indicator",
       "acceptanceCriteria": [
-        "A dedicated download page or modal is accessible from the main navigation or landing area",
-        "Download buttons are clearly labeled by platform (e.g., Android, iOS)",
-        "The page/section matches the existing Mediatube dark theme and design language",
-        "The download section is responsive and renders correctly on both mobile and desktop"
+        "Reels page displays videos in a full-screen vertically snapping feed",
+        "Active reel autoplays; off-screen reels pause automatically",
+        "A thin progress bar at the top of each reel card reflects current playback position",
+        "Scrolling between reels is smooth and snaps to each card"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/DownloadAppPage.tsx",
+          "path": "frontend/src/pages/ReelsPage.tsx",
+          "operation": "modify",
+          "description": "Implement vertical snap-scroll container with Intersection Observer to track active reel. Pass activeVideoId state to ReelCard components to control autoplay/pause. Add snap-y snap-mandatory scrolling styles to the container and h-screen snap-start to each reel wrapper."
+        },
+        {
+          "path": "frontend/src/components/ReelCard.tsx",
+          "operation": "modify",
+          "description": "Add isActive prop to control autoplay/pause behavior. Add video progress tracking state that updates via timeupdate event. Render a thin horizontal progress bar (<div> with dynamic width style based on currentTime/duration) absolutely positioned at the top of the card. Ensure video plays when isActive is true and pauses when false."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Enhance ReelCard component with improved action sidebar, animated like, comment badge, share, subscribe button, and expandable description overlay",
+      "acceptanceCriteria": [
+        "Action sidebar shows like button with animated heart and running like count",
+        "Comment button shows comment count badge and opens ReelCommentsDrawer on tap",
+        "Share button copies the reel URL and shows a toast confirmation",
+        "Uploader avatar in the overlay has a subscribe/follow button",
+        "Video title and description are shown as a bottom overlay",
+        "Long descriptions are truncated with a 'Show more' toggle"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ReelCard.tsx",
+          "operation": "modify",
+          "description": "Add animated heart icon to like button using scale/opacity keyframe animations. Display like count below the heart. Add comment count badge (fetched via useGetComments) to the comment button. Add state to open/close ReelCommentsDrawer when comment button is clicked. Display title and description as an absolutely positioned bottom overlay with gradient background. Implement 'Show more' toggle state that expands/collapses description text using line-clamp-3 utility. Ensure all action buttons (like, comment, share, subscribe) are vertically stacked in the right sidebar."
+        },
+        {
+          "path": "frontend/src/hooks/useGetCommentCount.ts",
           "operation": "create",
-          "description": "Create a new download page component that displays the generated promotional banner (frontend/public/assets/generated/download-banner.dim_1200x400.png), platform-specific download buttons for Android APK and iOS with appropriate icons (using lucide-react icons), download instructions, and app feature highlights. The page must use the existing dark theme tokens from index.css and tailwind.config.js (bg-youtube-black, text-white, accent colors). Include responsive layout with centered content, hero section with the banner image, download button cards with platform icons and labels, and app benefits section. Ensure mobile-first responsive design that works on both mobile and desktop viewports."
+          "description": "Create a React Query hook that calls actor.getCommentCount(videoId) to fetch the comment count for a given video. Return loading, error, and data states. Enable the query only when actor and videoId are available."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Add 'For You' and 'Following' tab switcher at the top of ReelsPage with login/subscribe prompts",
+      "acceptanceCriteria": [
+        "Two tabs ('For You' and 'Following') appear at the top of the Reels page",
+        "'For You' tab displays all short-form videos",
+        "'Following' tab displays reels from subscribed channels only",
+        "Unauthenticated users see a login prompt on the Following tab",
+        "Authenticated users with no subscriptions see a prompt to subscribe to channels"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/ReelsPage.tsx",
+          "operation": "modify",
+          "description": "Add tab state ('forYou' | 'following') at the top level. Render a fixed tab bar at the top of the page with 'For You' and 'Following' buttons. When 'For You' is selected, fetch and display all short videos using useGetAllVideos filtered by isShort. When 'Following' is selected, use useGetSubscribedReels (REQ-6) to fetch reels from subscribed channels. Show a login prompt card when Following tab is active and user is not authenticated. Show a subscribe prompt card when Following tab is active, user is authenticated, but useGetSubscribedReels returns an empty array."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Enhance VideoPlayerPage with theatre mode toggle, chapter markers, and end-screen with recommended videos",
+      "acceptanceCriteria": [
+        "A theatre mode button in the video player toggles full-width layout and collapses the recommendations sidebar",
+        "Seek bar displays chapter markers parsed from 'MM:SS Title' timestamp lines in the video description",
+        "Hovering a chapter marker on the seek bar shows the chapter title as a tooltip",
+        "When video ends, an end-screen overlay displays clickable recommended video thumbnails",
+        "End-screen auto-selects the next recommended video after a 5-second countdown"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/VideoPlayerPage.tsx",
+          "operation": "modify",
+          "description": "Add theatreMode boolean state. Add a theatre mode toggle button in the video controls bar that flips this state. Conditionally apply full-width layout classes to the video player container and hide/collapse the RecommendedVideos sidebar when theatreMode is true. Parse video description for timestamps matching /\\d{1,2}:\\d{2}\\s+.+/ pattern to extract chapter data (time in seconds and title). Pass chapters array to VideoPlayer component."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/components/VideoPlayer.tsx",
           "operation": "modify",
-          "description": "Register a new route for the download page at path '/download' that renders the DownloadAppPage component. Add the route definition within the existing TanStack Router configuration alongside other page routes like HomePage, VideoPlayerPage, etc."
-        },
+          "description": "Accept chapters prop (array of { time: number, title: string }). Render chapter markers on the seek bar as vertical tick marks positioned at (chapter.time / duration * 100)%. On hover, display a tooltip with the chapter title. Add onEnded event handler that shows an end-screen overlay with recommended video thumbnails (fetched from parent or passed as prop). Implement a 5-second countdown timer on the end-screen that auto-navigates to the next recommended video."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Create useGetSubscribedReels hook that calls getSubscribedReels backend query",
+      "acceptanceCriteria": [
+        "Hook file exists at frontend/src/hooks/useGetSubscribedReels.ts",
+        "Hook calls the backend actor's getSubscribedReels method",
+        "Query is disabled when no authenticated identity is present",
+        "Returns loading, error, and data states consistent with other query hooks in the project"
+      ],
+      "file_operations": [
         {
-          "path": "frontend/src/components/Layout.tsx",
-          "operation": "modify",
-          "description": "Add a 'Download App' navigation link in the sidebar navigation menu that routes to '/download'. Place it logically within the existing navigation items (e.g., after 'Community' or before footer links). Use the Download or Smartphone icon from lucide-react. Ensure the link is visible in both desktop sidebar and mobile bottom navigation if appropriate, maintaining consistent styling with other nav items."
-        },
+          "path": "frontend/src/hooks/useGetSubscribedReels.ts",
+          "operation": "create",
+          "description": "Create a React Query hook using useQuery that calls actor.getSubscribedShorts() (note: backend interface shows getSubscribedShorts, not getSubscribedReels). Use queryKey ['subscribedReels']. Enable the query only when actor is available and identity is authenticated. Return { data, isLoading, error, refetch } consistent with other query hooks in the project."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Add mute/unmute toggle button with animated icon on ReelCard and persist mute preference in localStorage",
+      "acceptanceCriteria": [
+        "Each reel card shows a mute/unmute button with a smooth icon animation",
+        "Toggling mute on one reel persists the state to localStorage",
+        "Newly visible reels initialize their mute state from localStorage"
+      ],
+      "file_operations": [
         {
-          "path": "frontend/src/i18n/translations.ts",
+          "path": "frontend/src/components/ReelCard.tsx",
           "operation": "modify",
-          "description": "Add translation keys for the download page in all supported languages (at least English and Spanish). Include keys for: 'downloadApp' (nav link label), 'downloadAppTitle', 'downloadAppSubtitle', 'downloadForAndroid', 'downloadForIOS', 'appFeatures', and feature descriptions. Follow the existing translation structure and naming conventions in the file."
+          "description": "Add isMuted state initialized from localStorage key 'reelMuted' (default false). Render a mute/unmute button (with speaker-on/speaker-off icons) absolutely positioned on the video. Apply animated icon transition (rotate or fade) when toggling. On toggle, update localStorage 'reelMuted' and apply video.muted property. Ensure mute state is respected when video autoplays."
         }
       ]
     }

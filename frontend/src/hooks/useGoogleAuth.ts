@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, createElement } from 'react';
+import type { ReactNode } from 'react';
 
 export interface GoogleUser {
   sub: string;
@@ -11,20 +12,20 @@ export interface GoogleUser {
 
 interface GoogleAuthContextType {
   googleUser: GoogleUser | null;
-  isLoading: boolean;
-  login: () => void;
-  logout: () => void;
+  isGoogleLoading: boolean;
+  handleGoogleLogin: () => void;
+  handleGoogleLogout: () => void;
 }
 
 const GoogleAuthContext = createContext<GoogleAuthContextType>({
   googleUser: null,
-  isLoading: true,
-  login: () => {},
-  logout: () => {},
+  isGoogleLoading: false,
+  handleGoogleLogin: () => {},
+  handleGoogleLogout: () => {},
 });
 
-const STORAGE_KEY = 'google_user_session';
-const CLIENT_ID = ''; // Will be populated from index.html GSI script
+const GOOGLE_CLIENT_ID = '648897073537-oj0ggbqjqjqjqjqjqjqjqjqjqjqjqjq.apps.googleusercontent.com';
+const STORAGE_KEY = 'google_auth_user';
 
 function parseJwt(token: string): GoogleUser | null {
   try {
@@ -42,69 +43,128 @@ function parseJwt(token: string): GoogleUser | null {
   }
 }
 
-export function GoogleAuthProvider({ children }: { children: React.ReactNode }) {
+interface GsiNotification {
+  isNotDisplayed: () => boolean;
+  isSkippedMoment: () => boolean;
+}
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential: string }) => void;
+            auto_select?: boolean;
+            cancel_on_tap_outside?: boolean;
+          }) => void;
+          prompt: (notification?: (n: GsiNotification) => void) => void;
+          disableAutoSelect: () => void;
+          revoke: (hint: string, done: () => void) => void;
+          renderButton: (element: HTMLElement, options: object) => void;
+        };
+      };
+    };
+  }
+}
+
+export function GoogleAuthProvider({ children }: { children: ReactNode }) {
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [gsiReady, setGsiReady] = useState(false);
 
+  // Load persisted session
   useEffect(() => {
-    // Restore session from localStorage
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as GoogleUser;
-        setGoogleUser(parsed);
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        setGoogleUser(JSON.parse(stored) as GoogleUser);
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
       }
-    } catch {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-    setIsLoading(false);
-  }, []);
-
-  const handleCredentialResponse = useCallback((response: { credential: string }) => {
-    const user = parseJwt(response.credential);
-    if (user) {
-      setGoogleUser(user);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
     }
   }, []);
 
+  // Initialize GSI
   useEffect(() => {
-    // Initialize Google Identity Services
-    const initGSI = () => {
-      if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
-        const metaClientId = document.querySelector('meta[name="google-signin-client_id"]')?.getAttribute('content') || CLIENT_ID;
-        if (!metaClientId) return;
-        (window as any).google.accounts.id.initialize({
-          client_id: metaClientId,
-          callback: handleCredentialResponse,
+    const initGsi = () => {
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (response: { credential: string }) => {
+            const user = parseJwt(response.credential);
+            if (user) {
+              setGoogleUser(user);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+            }
+            setIsGoogleLoading(false);
+          },
           auto_select: false,
+          cancel_on_tap_outside: true,
         });
+        setGsiReady(true);
       }
     };
 
-    // Try immediately, then wait for script load
-    initGSI();
-    const timer = setTimeout(initGSI, 1000);
-    return () => clearTimeout(timer);
-  }, [handleCredentialResponse]);
-
-  const login = useCallback(() => {
-    if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
-      (window as any).google.accounts.id.prompt();
+    if (window.google?.accounts?.id) {
+      initGsi();
+      return;
     }
+
+    const script = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
+    if (script) {
+      script.addEventListener('load', initGsi);
+      return () => script.removeEventListener('load', initGsi);
+    }
+
+    // Dynamically add the script if not present
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.defer = true;
+    s.onload = initGsi;
+    document.head.appendChild(s);
   }, []);
 
-  const logout = useCallback(() => {
+  const handleGoogleLogin = useCallback(() => {
+    if (!window.google?.accounts?.id) return;
+
+    if (!gsiReady) {
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: (response: { credential: string }) => {
+          const user = parseJwt(response.credential);
+          if (user) {
+            setGoogleUser(user);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+          }
+          setIsGoogleLoading(false);
+        },
+      });
+      setGsiReady(true);
+    }
+
+    setIsGoogleLoading(true);
+    window.google.accounts.id.prompt((notification: GsiNotification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        setIsGoogleLoading(false);
+      }
+    });
+  }, [gsiReady]);
+
+  const handleGoogleLogout = useCallback(() => {
+    if (googleUser && window.google?.accounts?.id) {
+      window.google.accounts.id.disableAutoSelect();
+      window.google.accounts.id.revoke(googleUser.email, () => {});
+    }
     setGoogleUser(null);
     localStorage.removeItem(STORAGE_KEY);
-    if (typeof window !== 'undefined' && (window as any).google?.accounts?.id) {
-      (window as any).google.accounts.id.disableAutoSelect();
-    }
-  }, []);
+  }, [googleUser]);
 
-  return React.createElement(
+  return createElement(
     GoogleAuthContext.Provider,
-    { value: { googleUser, isLoading, login, logout } },
+    { value: { googleUser, isGoogleLoading, handleGoogleLogin, handleGoogleLogout } },
     children
   );
 }

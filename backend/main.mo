@@ -144,7 +144,6 @@ actor {
   };
 
   public query ({ caller }) func getComments(videoId : Text) : async [Comment] {
-    // Public access - anyone can view comments
     switch (comments.get(videoId)) {
       case (null) { [] };
       case (?c) { c.toArray() };
@@ -169,7 +168,6 @@ actor {
     switch (commentToDelete) {
       case (null) { Runtime.trap("Comment not found") };
       case (?comment) {
-        // Only video uploader or comment author or admin can delete
         switch (videos.get(videoId)) {
           case (null) { Runtime.trap("Video not found") };
           case (?video) {
@@ -206,7 +204,6 @@ actor {
 
   // Count comments for a video
   public query ({ caller }) func getCommentCount(videoId : Text) : async Nat {
-    // Public access - anyone can view comment counts
     switch (comments.get(videoId)) {
       case (null) { 0 };
       case (?c) { c.size() };
@@ -258,16 +255,13 @@ actor {
   };
 
   public query ({ caller }) func getSubscribers(channel : Principal) : async [Principal] {
-    // Public access - anyone can view subscribers
     switch (subscribers.get(channel)) {
       case (null) { [] };
       case (?subs) { subs.toArray() };
     };
   };
 
-  // Count subscribers for a channel
   public query ({ caller }) func getSubscriberCount(channel : Principal) : async Nat {
-    // Public access - anyone can view subscriber counts
     switch (subscribers.get(channel)) {
       case (null) { 0 };
       case (?subs) { subs.size() };
@@ -276,7 +270,6 @@ actor {
 
   // Get all channels a user is subscribed to
   public query ({ caller }) func getUserSubscriptions(user : Principal) : async [Principal] {
-    // Public access - anyone can view subscriptions
     let channels = List.empty<Principal>();
     subscribers.keys().forEach(
       func(channel) {
@@ -325,7 +318,6 @@ actor {
 
   // Count total videos of a specific channel
   public query ({ caller }) func getChannelVideoCount(channel : Principal) : async Nat {
-    // Public access - anyone can view channel video counts
     var count = 0;
     videos.values().forEach(
       func(video) {
@@ -368,6 +360,48 @@ actor {
         if (score1 > score2) { #less } else if (score1 < score2) { #greater } else { #equal };
       }
     ).map(func(entry) { entry.1 });
+  };
+
+  public query ({ caller }) func getSubscribedShorts() : async [VideoMetadata] {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only logged-in users can access their feed.");
+    };
+
+    var userSubscriptions = List.empty<Principal>();
+
+    // Find channels the caller is subscribed to
+    subscribers.keys().forEach(
+      func(channel) {
+        let channelSubscribers = switch (subscribers.get(channel)) {
+          case (null) { List.empty<Principal>() };
+          case (?subs) { subs };
+        };
+        if (channelSubscribers.toArray().values().any(func(sub) { sub == caller })) {
+          userSubscriptions.add(channel);
+        };
+      }
+    );
+
+    if (userSubscriptions.isEmpty()) { return [] };
+
+    // Filter shorts by subscribed channels
+    let subscribedShorts = List.empty<VideoMetadata>();
+    videos.values().forEach(
+      func(video) {
+        if (video.isShort) {
+          if (userSubscriptions.toArray().values().any(func(channel) { channel == video.uploader })) {
+            subscribedShorts.add(video);
+          };
+        };
+      }
+    );
+
+    // Sort shorts by upload date DESC
+    subscribedShorts.toArray().sort(
+      func(a, b) {
+        if (a.uploadDate > b.uploadDate) { #less } else if (a.uploadDate < b.uploadDate) { #greater } else { #equal };
+      }
+    );
   };
 
   // API Key Management
@@ -626,7 +660,6 @@ actor {
 
   // ADMIN DASHBOARD
 
-  // Struct for admin dashboard analytics
   type AdminAnalytics = {
     totalVideos : Nat;
     totalUsers : Nat;
@@ -634,20 +667,17 @@ actor {
     totalViews : Nat;
   };
 
-  // Admin dashboard data structure
   type AdminDashboard = {
     users : [UserProfile];
     videos : [VideoMetadata];
     analytics : AdminAnalytics;
   };
 
-  // Get all dashboard data for admin
   public query ({ caller }) func getAdminDashboard() : async AdminDashboard {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admin can access dashboard");
     };
 
-    // Calculate analytics
     let totalVideos = videos.size();
     let totalUsers = userProfiles.size();
 
@@ -671,7 +701,6 @@ actor {
     };
   };
 
-  // Admin function to remove any video
   public shared ({ caller }) func adminRemoveVideo(videoId : Text) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admin can remove videos");
@@ -681,13 +710,11 @@ actor {
       case (null) { Runtime.trap("Video not found") };
       case (_) {
         videos.remove(videoId);
-        // Remove associated comments for video
         comments.remove(videoId);
       };
     };
   };
 
-  // Admin function to remove any user profile
   public shared ({ caller }) func adminRemoveUserProfile(user : Principal) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admin can remove user profiles");
@@ -697,7 +724,6 @@ actor {
       case (null) { Runtime.trap("User profile not found") };
       case (_) {
         userProfiles.remove(user);
-        // Remove all user videos
         let userVideos = videos.values().toArray().filter(
           func(video) { video.uploader == user }
         );
@@ -768,21 +794,17 @@ actor {
     communityPosts.remove(postId);
   };
 
-  // Monetization Types and Storage
   type MonetizationStats = {
     totalEarnings : Nat;
     estimatedRevenue : Nat;
     monetizationStatus : Text;
   };
 
-  // Function to get Monetization Stats (not public)
   public query ({ caller }) func getMonetizationStats() : async MonetizationStats {
-    // Only authorized users can access monetization stats
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view monetization stats");
     };
 
-    // Since no tracking occurs, hardcode placeholder data
     let stats : MonetizationStats = {
       totalEarnings = 9000000;
       estimatedRevenue = 40;

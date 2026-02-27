@@ -1,102 +1,175 @@
-import { useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useGetAllVideos } from '../hooks/useGetAllVideos';
+import { useGetSubscribedReels } from '../hooks/useGetSubscribedReels';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import ReelCard from '../components/ReelCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { LogIn, UserPlus } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
-import { Camera } from 'lucide-react';
-import CameraRecordingModal from '../components/CameraRecordingModal';
+import type { VideoMetadata } from '../backend';
+
+type Tab = 'forYou' | 'following';
 
 export default function ReelsPage() {
-  const { data: videos = [], isLoading } = useGetAllVideos();
-  const navigate = useNavigate();
-  const [showCamera, setShowCamera] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>('forYou');
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const navigate = useNavigate();
 
-  const shortVideos = videos.filter((v) => v.isShort);
+  const { identity } = useInternetIdentity();
+  const isAuthenticated = !!identity;
 
-  const handleRecordingComplete = useCallback(
-    (blob: Blob) => {
-      setShowCamera(false);
-      sessionStorage.setItem('recordedVideoBlob', URL.createObjectURL(blob));
-      navigate({ to: '/upload' });
-    },
-    [navigate]
-  );
+  const { data: allVideos, isLoading: allLoading } = useGetAllVideos();
+  const { data: subscribedReels, isLoading: subscribedLoading } = useGetSubscribedReels();
 
-  if (isLoading) {
-    return (
-      <div className="bg-black h-screen flex items-center justify-center">
-        <Skeleton className="w-full h-full bg-yt-chip" />
-      </div>
+  const forYouReels = (allVideos || []).filter((v) => v.isShort);
+  const followingReels = subscribedReels || [];
+
+  const activeReels: VideoMetadata[] =
+    activeTab === 'forYou' ? forYouReels : followingReels;
+
+  const isLoading = activeTab === 'forYou' ? allLoading : subscribedLoading;
+
+  // Intersection Observer to track active reel
+  const setupObserver = useCallback(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = Number(entry.target.getAttribute('data-index'));
+            if (!isNaN(index)) {
+              setActiveIndex(index);
+            }
+          }
+        });
+      },
+      {
+        root: containerRef.current,
+        threshold: 0.6,
+      }
     );
-  }
 
-  if (shortVideos.length === 0) {
-    return (
-      <div className="bg-black min-h-screen flex flex-col items-center justify-center gap-4 text-white p-8">
-        <span className="text-5xl">🎬</span>
-        <h2 className="text-xl font-semibold">No Shorts yet</h2>
-        <p className="text-yt-text-secondary text-sm text-center">
-          Be the first to upload a Short!
-        </p>
-        <button
-          onClick={() => setShowCamera(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-yt-red text-white rounded-full text-sm font-medium hover:bg-red-700 transition-colors"
-        >
-          <Camera className="w-4 h-4" />
-          Record a Short
-        </button>
-        {showCamera && (
-          <CameraRecordingModal
-            onClose={() => setShowCamera(false)}
-            onRecordingComplete={handleRecordingComplete}
-          />
-        )}
-      </div>
-    );
-  }
+    const items = containerRef.current?.querySelectorAll('[data-index]');
+    items?.forEach((item) => observerRef.current?.observe(item));
+  }, []);
+
+  useEffect(() => {
+    setupObserver();
+    return () => observerRef.current?.disconnect();
+  }, [activeReels.length, setupObserver]);
+
+  // Reset active index when tab changes
+  useEffect(() => {
+    setActiveIndex(0);
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+  }, [activeTab]);
+
+  const showFollowingLoginPrompt = activeTab === 'following' && !isAuthenticated;
+  const showFollowingEmptyPrompt =
+    activeTab === 'following' && isAuthenticated && !subscribedLoading && followingReels.length === 0;
 
   return (
-    <div className="bg-black relative">
-      {/* Camera FAB */}
-      <button
-        onClick={() => setShowCamera(true)}
-        className="fixed bottom-20 right-4 z-50 w-12 h-12 bg-yt-red rounded-full flex items-center justify-center shadow-lg hover:bg-red-700 transition-colors lg:bottom-6"
-      >
-        <Camera className="w-5 h-5 text-white" />
-      </button>
-
-      {/* Reels Feed */}
-      <div
-        ref={containerRef}
-        className="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
-        onScroll={() => {
-          // Update active index based on scroll position
-          if (!containerRef.current) return;
-          const scrollTop = containerRef.current.scrollTop;
-          const height = containerRef.current.clientHeight;
-          const idx = Math.round(scrollTop / height);
-          setActiveIndex(idx);
-        }}
-      >
-        {shortVideos.map((video, idx) => (
-          <div
-            key={video.id}
-            ref={(el) => { itemRefs.current[idx] = el; }}
-            className="snap-start snap-always"
+    <div className="relative h-screen bg-black overflow-hidden flex flex-col">
+      {/* Tab Bar */}
+      <div className="absolute top-0 left-0 right-0 z-30 flex justify-center gap-6 pt-4 pb-2 bg-gradient-to-b from-black/70 to-transparent pointer-events-none">
+        <div className="flex gap-6 pointer-events-auto">
+          <button
+            onClick={() => setActiveTab('forYou')}
+            className={`text-sm font-semibold pb-1 transition-all ${
+              activeTab === 'forYou'
+                ? 'text-white border-b-2 border-white'
+                : 'text-white/60 hover:text-white/80'
+            }`}
           >
-            <ReelCard video={video} isActive={activeIndex === idx} />
-          </div>
-        ))}
+            For You
+          </button>
+          <button
+            onClick={() => setActiveTab('following')}
+            className={`text-sm font-semibold pb-1 transition-all ${
+              activeTab === 'following'
+                ? 'text-white border-b-2 border-white'
+                : 'text-white/60 hover:text-white/80'
+            }`}
+          >
+            Following
+          </button>
+        </div>
       </div>
 
-      {showCamera && (
-        <CameraRecordingModal
-          onClose={() => setShowCamera(false)}
-          onRecordingComplete={handleRecordingComplete}
-        />
+      {/* Content */}
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-sm mx-auto space-y-3 px-4">
+            <Skeleton className="w-full aspect-[9/16] rounded-xl bg-white/10" />
+          </div>
+        </div>
+      ) : showFollowingLoginPrompt ? (
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto">
+              <LogIn className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-white text-xl font-bold">Sign in to see your feed</h2>
+            <p className="text-white/60 text-sm">
+              Log in to see reels from channels you follow.
+            </p>
+            <Button
+              onClick={() => navigate({ to: '/' })}
+              className="bg-white text-black hover:bg-white/90 font-semibold px-6"
+            >
+              Sign In
+            </Button>
+          </div>
+        </div>
+      ) : showFollowingEmptyPrompt ? (
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto">
+              <UserPlus className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-white text-xl font-bold">No reels yet</h2>
+            <p className="text-white/60 text-sm">
+              Subscribe to channels to see their short videos here.
+            </p>
+            <Button
+              onClick={() => navigate({ to: '/' })}
+              className="bg-white text-black hover:bg-white/90 font-semibold px-6"
+            >
+              Discover Channels
+            </Button>
+          </div>
+        </div>
+      ) : activeReels.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-white/60 text-sm">No reels available yet.</p>
+        </div>
+      ) : (
+        <div
+          ref={containerRef}
+          className="flex-1 overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {activeReels.map((video, index) => (
+            <div
+              key={video.id}
+              data-index={index}
+              className="h-screen w-full snap-start snap-always flex items-center justify-center"
+            >
+              <ReelCard
+                video={video}
+                isActive={index === activeIndex}
+              />
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

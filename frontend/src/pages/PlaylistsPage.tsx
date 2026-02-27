@@ -1,215 +1,150 @@
 import React, { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetPlaylistsByOwner } from '../hooks/useGetPlaylistsByOwner';
-import { useCreatePlaylist } from '../hooks/useCreatePlaylist';
-import { useGetVideo } from '../hooks/useGetVideo';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription,
 } from '@/components/ui/dialog';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ListVideo, Plus, Lock, Loader2, PlaySquare } from 'lucide-react';
-import { formatTimeAgo } from '../utils/formatters';
-
-function PlaylistCard({
-  playlist,
-}: {
-  playlist: { id: string; title: string; description: string; videos: string[]; createdAt: bigint };
-}) {
-  const firstVideoId = playlist.videos[0];
-  const { data: firstVideo } = useGetVideo(firstVideoId);
-  const thumbnailUrl = firstVideo?.videoFile.getDirectURL();
-
-  return (
-    <Link
-      to="/playlist/$playlistId"
-      params={{ playlistId: playlist.id }}
-      className="group"
-    >
-      <Card className="overflow-hidden border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg">
-        {/* Thumbnail */}
-        <div className="relative aspect-video bg-muted overflow-hidden">
-          {thumbnailUrl ? (
-            <video
-              src={thumbnailUrl}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              preload="metadata"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <PlaySquare className="w-12 h-12 text-muted-foreground/40" />
-            </div>
-          )}
-          <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded font-medium">
-            {playlist.videos.length} video{playlist.videos.length !== 1 ? 's' : ''}
-          </div>
-        </div>
-        <CardContent className="p-4">
-          <h3 className="font-semibold text-base line-clamp-2 mb-1 group-hover:text-primary transition-colors">
-            {playlist.title}
-          </h3>
-          {playlist.description && (
-            <p className="text-sm text-muted-foreground line-clamp-1 mb-2">{playlist.description}</p>
-          )}
-          <p className="text-xs text-muted-foreground">{formatTimeAgo(Number(playlist.createdAt))}</p>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
+import { Plus, ListVideo, Loader2, Lock } from 'lucide-react';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
+import { useGetPlaylistsByOwner } from '../hooks/useGetPlaylistsByOwner';
+import { useCreatePlaylist } from '../hooks/useCreatePlaylist';
 
 export default function PlaylistsPage() {
   const { identity } = useInternetIdentity();
-  const isAuthenticated = !!identity;
+  const { googleUser } = useGoogleAuth();
+  const isAuthenticated = !!identity || !!googleUser;
 
   const { data: playlists = [], isLoading } = useGetPlaylistsByOwner();
-  const { mutate: createPlaylist, isPending: creating } = useCreatePlaylist();
+  const { mutateAsync: createPlaylist, isPending } = useCreatePlaylist();
 
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
 
-  const handleCreate = () => {
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!newTitle.trim()) return;
-    createPlaylist(
-      { title: newTitle.trim(), description: newDescription.trim() },
-      {
-        onSuccess: () => {
-          setShowCreateDialog(false);
-          setNewTitle('');
-          setNewDescription('');
-        },
-      }
-    );
+    await createPlaylist({ title: newTitle.trim(), description: newDescription.trim() });
+    setNewTitle('');
+    setNewDescription('');
+    setShowCreate(false);
   };
 
   if (!isAuthenticated) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="flex flex-col items-center justify-center gap-6 py-16">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-            <Lock className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-foreground mb-2">Sign in to view playlists</h2>
-            <p className="text-muted-foreground">
-              Create and manage your video playlists after signing in.
-            </p>
-          </div>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-8">
+        <Lock className="h-16 w-16 text-muted-foreground" />
+        <h2 className="text-xl font-semibold">Sign in to view playlists</h2>
+        <p className="text-muted-foreground text-center max-w-sm">
+          Create and manage your video playlists after signing in.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Page header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <ListVideo className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">My Playlists</h1>
-            <p className="text-sm text-muted-foreground">
-              {playlists.length} playlist{playlists.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-        </div>
-        <Button onClick={() => setShowCreateDialog(true)} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Your Playlists</h1>
+        <Button
+          onClick={() => setShowCreate(true)}
+          className="bg-mt-magenta hover:bg-mt-purple text-white"
+        >
+          <Plus className="h-4 w-4 mr-2" />
           New Playlist
         </Button>
       </div>
 
-      {/* Loading state */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="space-y-3">
-              <Skeleton className="aspect-video w-full rounded-xl" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
         </div>
       ) : playlists.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-6 py-16">
-          <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center">
-            <ListVideo className="w-10 h-10 text-muted-foreground/50" />
-          </div>
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-foreground mb-2">No playlists yet</h2>
-            <p className="text-muted-foreground text-sm max-w-sm">
-              Create your first playlist to organize your favourite videos.
-            </p>
-          </div>
-          <Button onClick={() => setShowCreateDialog(true)} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Create Playlist
-          </Button>
+        <div className="flex flex-col items-center justify-center py-16 gap-4">
+          <ListVideo className="h-16 w-16 text-muted-foreground" />
+          <p className="text-muted-foreground">No playlists yet. Create your first one!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {playlists.map((playlist) => (
-            <PlaylistCard key={playlist.id} playlist={playlist} />
+            <Link
+              key={playlist.id}
+              to="/playlist/$playlistId"
+              params={{ playlistId: playlist.id }}
+              className="block p-4 rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-mt-magenta/10">
+                  <ListVideo className="h-6 w-6 text-mt-magenta" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium truncate">{playlist.title}</h3>
+                  {playlist.description && (
+                    <p className="text-sm text-muted-foreground truncate mt-0.5">
+                      {playlist.description}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {playlist.videos.length} video{playlist.videos.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+            </Link>
           ))}
         </div>
       )}
 
       {/* Create Playlist Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Create New Playlist</DialogTitle>
-            <DialogDescription>
-              Give your playlist a name and optional description.
-            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Title *</label>
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div className="space-y-1">
+              <Label htmlFor="playlist-title">Title *</Label>
               <Input
-                placeholder="My Playlist"
+                id="playlist-title"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                placeholder="Playlist name"
+                disabled={isPending}
+                autoFocus
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Description</label>
-              <Textarea
-                placeholder="Optional description..."
+            <div className="space-y-1">
+              <Label htmlFor="playlist-desc">Description (optional)</Label>
+              <Input
+                id="playlist-desc"
                 value={newDescription}
                 onChange={(e) => setNewDescription(e.target.value)}
-                rows={3}
+                placeholder="Describe your playlist"
+                disabled={isPending}
               />
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreate} disabled={!newTitle.trim() || creating}>
-              {creating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                'Create Playlist'
-              )}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setShowCreate(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!newTitle.trim() || isPending}
+                className="bg-mt-magenta hover:bg-mt-purple text-white"
+              >
+                {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

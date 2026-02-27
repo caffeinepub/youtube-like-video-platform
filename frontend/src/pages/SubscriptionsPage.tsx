@@ -1,125 +1,78 @@
+import React from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useQuery } from '@tanstack/react-query';
 import { useActor } from '../hooks/useActor';
-import { VideoMetadata } from '../backend';
 import VideoCard from '../components/VideoCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Link } from '@tanstack/react-router';
-import { Tv2 } from 'lucide-react';
+import { Users } from 'lucide-react';
 import type { Principal } from '@dfinity/principal';
-
-function useGetUserSubscriptions() {
-  const { actor, isFetching: actorFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<Principal[]>({
-    queryKey: ['userSubscriptions', identity?.getPrincipal().toString()],
-    queryFn: async () => {
-      if (!actor || !identity) return [];
-      return actor.getUserSubscriptions(identity.getPrincipal());
-    },
-    enabled: !!actor && !actorFetching && !!identity,
-  });
-}
-
-function useGetChannelVideosLocal(channel: Principal | null) {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<VideoMetadata[]>({
-    queryKey: ['channelVideos', channel?.toString()],
-    queryFn: async () => {
-      if (!actor || !channel) return [];
-      return actor.getChannelVideos(channel);
-    },
-    enabled: !!actor && !actorFetching && !!channel,
-  });
-}
-
-function SubscriptionChannelVideos({ channel }: { channel: Principal }) {
-  const { data: videos = [] } = useGetChannelVideosLocal(channel);
-  return (
-    <>
-      {videos
-        .filter((v) => !v.isShort)
-        .map((video) => (
-          <VideoCard key={video.id} video={video} />
-        ))}
-    </>
-  );
-}
+import type { VideoMetadata } from '../backend';
 
 export default function SubscriptionsPage() {
   const { identity } = useInternetIdentity();
   const { googleUser } = useGoogleAuth();
   const isAuthenticated = !!identity || !!googleUser;
+  const { actor } = useActor();
 
-  const { data: subscriptions = [], isLoading } = useGetUserSubscriptions();
+  const { data: subscriptionVideos = [], isLoading } = useQuery<VideoMetadata[]>({
+    queryKey: ['subscriptionVideos', identity?.getPrincipal().toString()],
+    queryFn: async () => {
+      if (!actor || !identity) return [];
+      const principal = identity.getPrincipal() as unknown as Principal;
+      const subscriptions = await actor.getUserSubscriptions(principal);
+      const videoArrays = await Promise.all(
+        subscriptions.map((channel) => actor.getChannelVideos(channel as unknown as Principal))
+      );
+      return videoArrays.flat().sort((a, b) => Number(b.uploadDate - a.uploadDate));
+    },
+    enabled: !!actor && !!identity,
+  });
 
   if (!isAuthenticated) {
     return (
-      <div className="bg-yt-bg min-h-screen flex flex-col items-center justify-center gap-4 p-8">
-        <Tv2 className="w-16 h-16 text-yt-text-secondary" />
-        <h2 className="text-xl font-semibold text-white">Sign in to see your subscriptions</h2>
-        <p className="text-yt-text-secondary text-sm text-center max-w-sm">
-          Keep up with your favourite channels by signing in.
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-8">
+        <Users className="h-16 w-16 text-muted-foreground" />
+        <h2 className="text-xl font-semibold">Sign in to see subscriptions</h2>
+        <p className="text-muted-foreground text-center max-w-sm">
+          Subscribe to channels to see their latest videos here.
         </p>
-        <Link
-          to="/"
-          className="px-4 py-2 bg-yt-red text-white rounded-full text-sm font-medium hover:bg-red-700 transition-colors"
-        >
-          Go to Home
-        </Link>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="bg-yt-bg min-h-screen p-4">
-        <h1 className="text-xl font-semibold text-white mb-6">Subscriptions</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="space-y-3">
-              <Skeleton className="w-full aspect-video rounded-xl bg-yt-chip" />
-              <div className="flex gap-3">
-                <Skeleton className="w-9 h-9 rounded-full bg-yt-chip shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-full bg-yt-chip" />
-                  <Skeleton className="h-3 w-3/4 bg-yt-chip" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="space-y-2">
+            <Skeleton className="aspect-video w-full rounded-xl" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+        ))}
       </div>
     );
   }
 
-  if (subscriptions.length === 0) {
+  if (subscriptionVideos.length === 0) {
     return (
-      <div className="bg-yt-bg min-h-screen flex flex-col items-center justify-center gap-4 p-8">
-        <Tv2 className="w-16 h-16 text-yt-text-secondary" />
-        <h2 className="text-xl font-semibold text-white">No subscriptions yet</h2>
-        <p className="text-yt-text-secondary text-sm text-center max-w-sm">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 p-8">
+        <Users className="h-16 w-16 text-muted-foreground" />
+        <h2 className="text-xl font-semibold">No subscription videos yet</h2>
+        <p className="text-muted-foreground text-center max-w-sm">
           Subscribe to channels to see their latest videos here.
         </p>
-        <Link
-          to="/"
-          className="px-4 py-2 bg-yt-red text-white rounded-full text-sm font-medium hover:bg-red-700 transition-colors"
-        >
-          Discover Videos
-        </Link>
       </div>
     );
   }
 
   return (
-    <div className="bg-yt-bg min-h-screen p-4">
-      <h1 className="text-xl font-semibold text-white mb-6">Subscriptions</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
-        {subscriptions.map((channel) => (
-          <SubscriptionChannelVideos key={channel.toString()} channel={channel} />
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Subscriptions</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {subscriptionVideos.map((video) => (
+          <VideoCard key={video.id} video={video} />
         ))}
       </div>
     </div>

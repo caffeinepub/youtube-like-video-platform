@@ -164,6 +164,7 @@ export const idlService = IDL.Service({
       [IDL.Vec(PlaylistView)],
       ['query'],
     ),
+  'getSubscribedShorts' : IDL.Func([], [IDL.Vec(VideoMetadata)], ['query']),
   'getSubscriberCount' : IDL.Func([IDL.Principal], [IDL.Nat], ['query']),
   'getSubscribers' : IDL.Func(
       [IDL.Principal],
@@ -366,6 +367,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(PlaylistView)],
         ['query'],
       ),
+    'getSubscribedShorts' : IDL.Func([], [IDL.Vec(VideoMetadata)], ['query']),
     'getSubscriberCount' : IDL.Func([IDL.Principal], [IDL.Nat], ['query']),
     'getSubscribers' : IDL.Func(
         [IDL.Principal],

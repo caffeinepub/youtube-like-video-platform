@@ -1,32 +1,38 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-26T18:25:06.678Z",
-  "summary": "The diff implements REQ-1 comprehensively. A dedicated download page (DownloadAppPage.tsx) was added at the /download route with Android and iOS download buttons using platform icons (SiAndroid, Apple), the page uses the existing dark theme (bg-yt-bg, mt-magenta/mt-purple brand colors), the layout is responsive with flex-col/sm:flex-row patterns, and a 'Download App' link with a Smartphone icon was added to the sidebar navigation in Layout.tsx. The required banner image (download-banner.dim_1200x400.png) is referenced. All acceptance criteria appear to be met.",
-  "missing_requirements": [],
-  "hallucinated_features": [
+  "generatedAt": "2026-02-27T03:06:41.505Z",
+  "summary": "Most requirements are implemented. The frontend changes cover REQ-1 through REQ-4 and REQ-6/REQ-7. REQ-5 (backend getSubscribedReels/getSubscribedShorts) has a naming discrepancy - the hook calls 'getSubscribedShorts' rather than the specified 'getSubscribedReels'. The backend diff is truncated so the exact function name, sorting, and filtering cannot be fully verified.",
+  "missing_requirements": [
     {
-      "description": "App screenshots section displaying multiple app screenshots from device-specific image assets",
-      "reason": "The build request only requested download buttons for platforms and a visually appealing layout. The inclusion of specific app screenshot images (App-1.jpeg, App.jpeg, Screenshot_2026-02-25-*.jpg, etc.) was not requested.",
+      "id": "REQ-5",
+      "requirement": "A new query function getSubscribedReels exists in the backend actor returning isShort=true videos from subscribed channels sorted by uploadedAt descending.",
+      "reason": "The backend diff is truncated and does not show the getSubscribedReels function implementation. The frontend hook calls 'actor.getSubscribedShorts()' rather than 'actor.getSubscribedReels()', which contradicts the AC specifying the function name is 'getSubscribedReels'. Cannot confirm the function exists with the correct name, sorting, or filtering logic.",
       "evidence": [
-        "frontend/src/pages/DownloadAppPage.tsx"
-      ]
-    },
-    {
-      "description": "i18n/translations added for download page strings across multiple languages",
-      "reason": "The build request did not request internationalization or translation support for the download page. Translation keys like downloadApp, downloadAppTitle, downloadForAndroid, downloadForIOS, etc. were added to translations.ts without being requested.",
-      "evidence": [
-        "frontend/src/i18n/translations.ts"
+        "backend/main.mo",
+        "frontend/src/hooks/useGetSubscribedReels.ts"
       ]
     }
   ],
-  "confidence": 0.82,
+  "hallucinated_features": [
+    {
+      "description": "useGetCommentCount hook added as a new file to support comment count badges in ReelCard.",
+      "reason": "The build request does not mention creating a useGetCommentCount hook. It was added as a supporting utility not explicitly requested in the spec.",
+      "evidence": [
+        "frontend/src/hooks/useGetCommentCount.ts"
+      ]
+    }
+  ],
+  "confidence": 0.72,
   "changed_files": [
+    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
-    "frontend/src/components/Layout.tsx",
-    "frontend/src/i18n/translations.ts",
-    "frontend/src/pages/DownloadAppPage.tsx",
+    "frontend/src/components/ReelCard.tsx",
+    "frontend/src/components/VideoPlayer.tsx",
+    "frontend/src/hooks/useGetCommentCount.ts",
+    "frontend/src/hooks/useGetSubscribedReels.ts",
+    "frontend/src/pages/ReelsPage.tsx",
+    "frontend/src/pages/VideoPlayerPage.tsx",
     "project_state.json"
   ]
 }

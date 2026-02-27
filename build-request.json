@@ -1,42 +1,158 @@
 {
   "kind": "build_request",
-  "title": "Add App Download Feature",
+  "title": "Enhance Reels and Video Experience",
   "projectName": "Mediatube",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add an app download page or section that allows users to download the Mediatube app. Include download buttons/links for major platforms (e.g., Android APK, iOS) with appropriate platform icons and a visually appealing layout consistent with the existing dark theme.",
+      "text": "Enhance the ReelsPage to support smooth vertical snap-scrolling between full-screen reel cards, with autoplay for the active reel and pause for off-screen reels. Include a progress bar indicator at the top of each reel showing playback progress.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-4"
         ],
         "quotes": [
-          "App download kar hai"
+          "Reels and video"
         ]
       },
       "acceptanceCriteria": [
-        "A dedicated download page or modal is accessible from the main navigation or landing area",
-        "Download buttons are clearly labeled by platform (e.g., Android, iOS)",
-        "The page/section matches the existing Mediatube dark theme and design language",
-        "The download section is responsive and renders correctly on both mobile and desktop"
+        "Reels page displays videos in a full-screen vertically snapping feed",
+        "Active reel autoplays; off-screen reels pause automatically",
+        "A thin progress bar at the top of each reel card reflects current playback position",
+        "Scrolling between reels is smooth and snaps to each card"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Enhance the ReelCard component with an improved action sidebar including: like count with animated heart, comment count badge opening the comments drawer, share button, and a follow/subscribe button on the uploader's avatar. Display the video title and description as an overlay at the bottom with a 'show more' expand interaction for long descriptions.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Reels and video"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Action sidebar shows like button with animated heart and running like count",
+        "Comment button shows comment count badge and opens ReelCommentsDrawer on tap",
+        "Share button copies the reel URL and shows a toast confirmation",
+        "Uploader avatar in the overlay has a subscribe/follow button",
+        "Video title and description are shown as a bottom overlay",
+        "Long descriptions are truncated with a 'Show more' toggle"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Add a 'For You' and 'Following' tab switcher at the top of the ReelsPage. 'For You' shows all short-form videos; 'Following' shows reels only from channels the authenticated user subscribes to. Show a prompt to log in or subscribe if the Following feed is empty.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Reels and video"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Two tabs ('For You' and 'Following') appear at the top of the Reels page",
+        "'For You' tab displays all short-form videos",
+        "'Following' tab displays reels from subscribed channels only",
+        "Unauthenticated users see a login prompt on the Following tab",
+        "Authenticated users with no subscriptions see a prompt to subscribe to channels"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Enhance the VideoPlayerPage to support a theatre/cinematic mode toggle that expands the video player to full page width while collapsing the sidebar. Add chapter markers on the seek bar if the video description contains timestamps in the format 'MM:SS Title'. Show a looping end-screen with recommended video thumbnails when playback finishes.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Reels and video"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A theatre mode button in the video player toggles full-width layout and collapses the recommendations sidebar",
+        "Seek bar displays chapter markers parsed from 'MM:SS Title' timestamp lines in the video description",
+        "Hovering a chapter marker on the seek bar shows the chapter title as a tooltip",
+        "When video ends, an end-screen overlay displays clickable recommended video thumbnails",
+        "End-screen auto-selects the next recommended video after a 5-second countdown"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Add a backend query to fetch short-form videos (reels) from channels that the authenticated caller subscribes to, returning VideoMetadata records sorted by upload date descending.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Reels and video"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A new query function getSubscribedReels exists in the backend actor",
+        "It returns only videos marked as short-form (isShort = true) from subscribed channels",
+        "Results are sorted by uploadedAt descending",
+        "Returns an empty array if the caller has no subscriptions or is anonymous"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Create a useGetSubscribedReels React Query hook that calls the new getSubscribedReels backend query and returns the reel list, enabled only when an authenticated identity is available.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Reels and video"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Hook file exists at frontend/src/hooks/useGetSubscribedReels.ts",
+        "Hook calls the backend actor's getSubscribedReels method",
+        "Query is disabled when no authenticated identity is present",
+        "Returns loading, error, and data states consistent with other query hooks in the project"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Add a mute/unmute toggle button with animated icon transition on the ReelCard component. Persist the mute preference in localStorage so that newly scrolled-to reels respect the last mute state.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Reels and video"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Each reel card shows a mute/unmute button with a smooth icon animation",
+        "Toggling mute on one reel persists the state to localStorage",
+        "Newly visible reels initialize their mute state from localStorage"
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files listed in frontend.immutablePaths",
-    "Maintain the existing dark YouTube-style theme defined in frontend/src/index.css and tailwind.config.js"
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
+    "All Motoko logic must remain within the single backend/main.mo actor"
   ],
   "nonGoals": [
-    "Actual app binary hosting or distribution infrastructure",
-    "Backend changes for download tracking unless explicitly requested",
-    "Changes to existing video, search, or voice features"
+    "Live streaming or real-time video features",
+    "Video transcoding or server-side video processing",
+    "External video CDN or third-party video hosting integration",
+    "Paid/monetization gating on reels"
   ],
   "imageRequirements": {
-    "required": [
-      "Mediatube app download promotional banner with dark background and gradient accents showing a stylized mobile phone screen (download-banner.dim_1200x400.png)"
-    ],
+    "required": [],
     "edits": []
   }
 }

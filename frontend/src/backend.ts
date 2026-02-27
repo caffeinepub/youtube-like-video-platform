@@ -203,6 +203,7 @@ export interface backendInterface {
     getPlaylistById(playlistId: string): Promise<PlaylistView | null>;
     getPlaylistVideos(playlistId: string): Promise<Array<VideoMetadata>>;
     getPlaylistsByOwner(owner: Principal): Promise<Array<PlaylistView>>;
+    getSubscribedShorts(): Promise<Array<VideoMetadata>>;
     getSubscriberCount(channel: Principal): Promise<bigint>;
     getSubscribers(channel: Principal): Promise<Array<Principal>>;
     getTrendingVideos(): Promise<Array<VideoMetadata>>;
@@ -698,6 +699,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getPlaylistsByOwner(arg0);
             return result;
+        }
+    }
+    async getSubscribedShorts(): Promise<Array<VideoMetadata>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getSubscribedShorts();
+                return from_candid_vec_n18(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getSubscribedShorts();
+            return from_candid_vec_n18(this._uploadFile, this._downloadFile, result);
         }
     }
     async getSubscriberCount(arg0: Principal): Promise<bigint> {

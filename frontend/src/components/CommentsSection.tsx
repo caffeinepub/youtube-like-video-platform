@@ -1,99 +1,85 @@
-import { useState } from 'react';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGoogleAuth } from '../hooks/useGoogleAuth';
-import { useGetCallerUserProfile } from '../hooks/useGetCallerUserProfile';
-import { useGetComments } from '../hooks/useGetComments';
-import { useAddComment } from '../hooks/useAddComment';
-import { useGetUserProfile } from '../hooks/useGetUserProfile';
+import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Skeleton } from '@/components/ui/skeleton';
-import { MessageSquare, Loader2, LogIn } from 'lucide-react';
-import { SiGoogle } from 'react-icons/si';
-import { formatTimeAgo } from '../utils/formatters';
+import { Loader2, MessageSquare } from 'lucide-react';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
+import { useGetComments } from '../hooks/useGetComments';
+import { useAddComment } from '../hooks/useAddComment';
+import { useGetUserProfile } from '../hooks/useGetUserProfile';
 import { convertBlobToDataURL, getInitials } from '../utils/avatarHelpers';
-import { toast } from 'sonner';
-import type { Comment } from '../backend';
+import { formatTimeAgo } from '../utils/formatters';
 import type { Principal } from '@dfinity/principal';
+import type { Comment } from '../backend';
 
-interface CommentsSectionProps {
-  videoId: string;
+interface CommentItemProps {
+  comment: Comment;
 }
 
-function CommentItem({ comment }: { comment: Comment }) {
-  const { data: authorProfile } = useGetUserProfile(comment.author as Principal);
-
-  const avatarUrl = authorProfile?.avatar ? convertBlobToDataURL(authorProfile.avatar) : undefined;
-  const displayName = authorProfile?.name || (comment.author.toString().slice(0, 8) + '...');
+function CommentItem({ comment }: CommentItemProps) {
+  const { data: authorProfile } = useGetUserProfile(comment.author as unknown as Principal);
+  const avatarUrl = authorProfile?.avatar ? convertBlobToDataURL(authorProfile.avatar) : null;
 
   return (
     <div className="flex gap-3">
       <Avatar className="h-8 w-8 shrink-0">
-        {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} />}
-        <AvatarFallback className="bg-muted text-muted-foreground text-xs font-bold">
-          {getInitials(displayName)}
+        {avatarUrl && <AvatarImage src={avatarUrl} />}
+        <AvatarFallback className="text-xs bg-muted">
+          {getInitials(authorProfile?.name || '?')}
         </AvatarFallback>
       </Avatar>
-      <div className="flex-1">
-        <div className="flex items-baseline gap-2 mb-0.5">
-          <span className="text-sm font-medium">{displayName}</span>
-          <span className="text-xs text-muted-foreground">{formatTimeAgo(Number(comment.timestamp))}</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-sm font-medium">{authorProfile?.name || 'Anonymous'}</span>
+          <span className="text-xs text-muted-foreground">
+            {formatTimeAgo(Number(comment.timestamp))}
+          </span>
         </div>
-        <p className="text-sm text-foreground/90">{comment.content}</p>
+        <p className="text-sm text-foreground/90 break-words">{comment.content}</p>
       </div>
     </div>
   );
 }
 
+interface CommentsSectionProps {
+  videoId: string;
+}
+
 export default function CommentsSection({ videoId }: CommentsSectionProps) {
-  const { identity, login } = useInternetIdentity();
+  const { identity } = useInternetIdentity();
   const { googleUser } = useGoogleAuth();
-  const { data: userProfile } = useGetCallerUserProfile();
+  const isAuthenticated = !!identity || !!googleUser;
 
-  const isIIAuthenticated = !!identity;
-  const isGoogleAuthenticated = !!googleUser;
-  const isAuthenticated = isIIAuthenticated || isGoogleAuthenticated;
-
-  const { data: comments, isLoading } = useGetComments(videoId);
-  const { mutate: addComment, isPending: isSubmitting } = useAddComment();
-
+  const { data: comments = [], isLoading } = useGetComments(videoId);
+  const { mutateAsync: addComment, isPending } = useAddComment();
   const [commentText, setCommentText] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentText.trim()) return;
-
-    if (!isIIAuthenticated) {
-      toast.error('Please sign in with Internet Identity to post comments.');
-      return;
+    if (!commentText.trim() || !isAuthenticated) return;
+    try {
+      await addComment({ videoId, content: commentText.trim() });
+      setCommentText('');
+    } catch {
+      // error handled by mutation
     }
-
-    addComment(
-      { videoId, content: commentText.trim() },
-      {
-        onSuccess: () => setCommentText(''),
-        onError: (err: any) => toast.error(err?.message || 'Failed to post comment'),
-      }
-    );
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="font-semibold flex items-center gap-2">
+    <div className="space-y-6">
+      <h3 className="text-lg font-semibold flex items-center gap-2">
         <MessageSquare className="h-5 w-5" />
-        Comments {comments ? `(${comments.length})` : ''}
+        {comments.length} Comments
       </h3>
 
-      {/* Comment Input Area */}
-      {isIIAuthenticated && userProfile ? (
+      {/* Comment Input */}
+      {isAuthenticated ? (
         <form onSubmit={handleSubmit} className="flex gap-3">
-          <Avatar className="h-8 w-8 shrink-0">
-            {userProfile.avatar && (
-              <AvatarImage src={convertBlobToDataURL(userProfile.avatar)} alt={userProfile.name} />
-            )}
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
-              {getInitials(userProfile.name)}
+          <Avatar className="h-9 w-9 shrink-0">
+            {googleUser?.picture && <AvatarImage src={googleUser.picture} />}
+            <AvatarFallback className="text-xs bg-primary/20">
+              {googleUser ? getInitials(googleUser.name) : 'U'}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-2">
@@ -101,78 +87,60 @@ export default function CommentsSection({ videoId }: CommentsSectionProps) {
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Add a comment..."
-              rows={2}
-              className="resize-none"
+              className="min-h-[80px] resize-none"
+              disabled={isPending}
             />
-            <div className="flex justify-end">
-              <Button type="submit" size="sm" disabled={isSubmitting || !commentText.trim()}>
-                {isSubmitting ? (
-                  <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Posting...</>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setCommentText('')}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!commentText.trim() || isPending}
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    Posting...
+                  </>
                 ) : (
-                  'Post'
+                  'Comment'
                 )}
               </Button>
             </div>
           </div>
         </form>
-      ) : isGoogleAuthenticated && !isIIAuthenticated ? (
-        <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-          <Avatar className="h-8 w-8 shrink-0">
-            {googleUser?.picture && <AvatarImage src={googleUser.picture} alt={googleUser.name} />}
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
-              {getInitials(googleUser?.name || 'G')}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <p className="text-sm font-medium mb-1">Hi, {googleUser?.name}!</p>
-            <p className="text-xs text-muted-foreground mb-2">
-              To post comments, connect with Internet Identity — a secure, decentralized identity.
-            </p>
-            <Button size="sm" onClick={() => login()}>
-              Connect Internet Identity
-            </Button>
-          </div>
+      ) : (
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border border-border">
+          <MessageSquare className="h-5 w-5 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
+            Sign in to leave a comment
+          </p>
         </div>
-      ) : !isAuthenticated ? (
-        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-          <LogIn className="h-5 w-5 text-muted-foreground shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm text-muted-foreground mb-2">Sign in to join the conversation.</p>
-            <div className="flex gap-2 flex-wrap">
-              <Button size="sm" variant="outline" className="flex items-center gap-1.5" onClick={() => {}}>
-                <SiGoogle className="h-3.5 w-3.5" /> Google
-              </Button>
-              <Button size="sm" onClick={() => login()}>
-                Internet Identity
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      )}
 
       {/* Comments List */}
       {isLoading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="flex gap-3">
-              <Skeleton className="h-8 w-8 rounded-full shrink-0" />
-              <div className="flex-1 space-y-1.5">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-            </div>
-          ))}
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : comments && comments.length > 0 ? (
+      ) : comments.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-8">
+          No comments yet. Be the first to comment!
+        </p>
+      ) : (
         <div className="space-y-4">
           {comments.map((comment) => (
             <CommentItem key={comment.id} comment={comment} />
           ))}
         </div>
-      ) : (
-        <p className="text-sm text-muted-foreground text-center py-4">
-          No comments yet. Be the first to comment!
-        </p>
       )}
     </div>
   );

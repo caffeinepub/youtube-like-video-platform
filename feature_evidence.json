@@ -2,13 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-an-app-download-page-or-section-that-allows-users-to-download-the-mediatube-app-include-download-buttons-links-for-major-platforms-e-g-android-apk-ios-with-appropriate-platform-icons-and-a-visually-appealing-layout-consistent-with-the-existing-dark-theme",
-      "featureTitle": "Add an app download page or section that allows users to download the Mediatube app. Include download buttons/links for major platforms (e.g., Android APK, iOS) with appropriate platform icons and a visually appealing layout consistent with the existing dark theme.",
+      "featureId": "feature-enhance-the-reelspage-to-support-smooth-vertical-snap-scrolling-between-full-screen-reel-cards-with-autoplay-for-the-active-reel-and-pause-for-off-screen-reels-include-a-progress-bar-indicator-at-the-top-of-each-reel-showing-playback-progress",
+      "featureTitle": "Enhance the ReelsPage to support smooth vertical snap-scrolling between full-screen reel cards, with autoplay for the active reel and pause for off-screen reels. Include a progress bar indicator at the top of each reel showing playback progress.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/Layout.tsx",
-        "frontend/src/i18n/translations.ts",
-        "frontend/src/pages/DownloadAppPage.tsx"
+        "frontend/src/components/ReelCard.tsx",
+        "frontend/src/pages/ReelsPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -22,6 +20,113 @@
       ],
       "testIds": [
         "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-enhance-the-reelcard-component-with-an-improved-action-sidebar-including-like-count-with-animated-heart-comment-count-badge-opening-the-comments-drawer-share-button-and-a-follow-subscribe-button-on-the-uploader-s-avatar-display-the-video-title-and-description-as-an-overlay-at-the-bottom-with-a-show-more-expand-interaction-for-long-descriptions",
+      "featureTitle": "Enhance the ReelCard component with an improved action sidebar including: like count with animated heart, comment count badge opening the comments drawer, share button, and a follow/subscribe button on the uploader's avatar. Display the video title and description as an overlay at the bottom with a 'show more' expand interaction for long descriptions.",
+      "files": [
+        "frontend/src/components/ReelCard.tsx",
+        "frontend/src/hooks/useGetCommentCount.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-for-you-and-following-tab-switcher-at-the-top-of-the-reelspage-for-you-shows-all-short-form-videos-following-shows-reels-only-from-channels-the-authenticated-user-subscribes-to-show-a-prompt-to-log-in-or-subscribe-if-the-following-feed-is-empty",
+      "featureTitle": "Add a 'For You' and 'Following' tab switcher at the top of the ReelsPage. 'For You' shows all short-form videos; 'Following' shows reels only from channels the authenticated user subscribes to. Show a prompt to log in or subscribe if the Following feed is empty.",
+      "files": [
+        "frontend/src/pages/ReelsPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-enhance-the-videoplayerpage-to-support-a-theatre-cinematic-mode-toggle-that-expands-the-video-player-to-full-page-width-while-collapsing-the-sidebar-add-chapter-markers-on-the-seek-bar-if-the-video-description-contains-timestamps-in-the-format-mm-ss-title-show-a-looping-end-screen-with-recommended-video-thumbnails-when-playback-finishes",
+      "featureTitle": "Enhance the VideoPlayerPage to support a theatre/cinematic mode toggle that expands the video player to full page width while collapsing the sidebar. Add chapter markers on the seek bar if the video description contains timestamps in the format 'MM:SS Title'. Show a looping end-screen with recommended video thumbnails when playback finishes.",
+      "files": [
+        "frontend/src/components/VideoPlayer.tsx",
+        "frontend/src/pages/VideoPlayerPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-create-a-usegetsubscribedreels-react-query-hook-that-calls-the-new-getsubscribedreels-backend-query-and-returns-the-reel-list-enabled-only-when-an-authenticated-identity-is-available",
+      "featureTitle": "Create a useGetSubscribedReels React Query hook that calls the new getSubscribedReels backend query and returns the reel list, enabled only when an authenticated identity is available.",
+      "files": [
+        "frontend/src/hooks/useGetSubscribedReels.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-mute-unmute-toggle-button-with-animated-icon-transition-on-the-reelcard-component-persist-the-mute-preference-in-localstorage-so-that-newly-scrolled-to-reels-respect-the-last-mute-state",
+      "featureTitle": "Add a mute/unmute toggle button with animated icon transition on the ReelCard component. Persist the mute preference in localStorage so that newly scrolled-to reels respect the last mute state.",
+      "files": [
+        "frontend/src/components/ReelCard.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
       ],
       "confidence": "high"
     }

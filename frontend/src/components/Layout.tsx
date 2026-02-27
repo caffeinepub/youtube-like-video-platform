@@ -1,61 +1,113 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useMatchRoute } from '@tanstack/react-router';
 import {
-  Search, Bell, Upload, User, Menu,
-  Home, Flame, ListVideo, Key, BookOpen, Rss, Tv2,
-  DollarSign, Shield, Mic, MicOff, Smartphone,
+  Home,
+  PlaySquare,
+  Users,
+  Clock,
+  ThumbsUp,
+  Menu,
+  Search,
+  Bell,
+  Upload,
+  Mic,
+  Flame,
+  Music2,
+  Gamepad2,
+  Newspaper,
+  Trophy,
+  Lightbulb,
+  Shirt,
+  Film,
+  Smartphone,
+  LogOut,
+  User,
+  Shield,
+  Key,
+  DollarSign,
+  BookOpen,
+  TrendingUp,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { useGetCallerUserProfile } from '../hooks/useGetCallerUserProfile';
-import { useIsCallerAdmin } from '../hooks/useIsCallerAdmin';
+import { convertBlobToDataURL, getInitials } from '../utils/avatarHelpers';
+import LanguageSelector from './LanguageSelector';
+import { useLanguage } from '../contexts/LanguageContext';
+import { getTranslation } from '../i18n/translations';
 import { useVoiceSearch } from '../hooks/useVoiceSearch';
+import { SiGoogle } from 'react-icons/si';
 import ProfileSetupModal from './ProfileSetupModal';
-import BottomNav from './BottomNav';
-import { getInitials, convertBlobToDataURL } from '../utils/avatarHelpers';
-import { toast } from 'sonner';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-const NAV_ITEMS = [
-  { icon: Home, label: 'Home', path: '/' as const },
-  { icon: Flame, label: 'Shorts', path: '/shorts' as const },
-  { icon: Tv2, label: 'Subscriptions', path: '/subscriptions' as const },
-  { icon: ListVideo, label: 'Playlists', path: '/playlists' as const },
-  { icon: BookOpen, label: 'Community', path: '/community' as const },
-  { icon: Rss, label: 'Upload', path: '/upload' as const },
+const navItems = [
+  { icon: Home, label: 'Home', path: '/' },
+  { icon: TrendingUp, label: 'Trending', path: '/trending' },
+  { icon: PlaySquare, label: 'Shorts', path: '/shorts' },
+  { icon: Film, label: 'Reels', path: '/reels' },
+  { icon: Users, label: 'Subscriptions', path: '/subscriptions' },
+];
+
+const libraryItems = [
+  { icon: Clock, label: 'History', path: '/history' },
+  { icon: ThumbsUp, label: 'Liked Videos', path: '/liked' },
+  { icon: PlaySquare, label: 'Playlists', path: '/playlists' },
+];
+
+const exploreItems = [
+  { icon: Flame, label: 'Trending', path: '/trending' },
+  { icon: Music2, label: 'Music', path: '/music' },
+  { icon: Gamepad2, label: 'Gaming', path: '/gaming' },
+  { icon: Newspaper, label: 'News', path: '/news' },
+  { icon: Trophy, label: 'Sports', path: '/sports' },
+  { icon: Lightbulb, label: 'Learning', path: '/learning' },
+  { icon: Shirt, label: 'Fashion', path: '/fashion' },
 ];
 
 export default function Layout({ children }: LayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
   const navigate = useNavigate();
   const matchRoute = useMatchRoute();
+
+  // All hooks called at top level
+  const { identity, clear, login } = useInternetIdentity();
+  const { googleUser, handleGoogleLogin, handleGoogleLogout, isGoogleLoading } = useGoogleAuth();
   const queryClient = useQueryClient();
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const { data: userProfile } = useGetCallerUserProfile();
+  const { data: profileCheck, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
+  const { currentLanguage } = useLanguage();
+  const t = (key: string) => getTranslation(currentLanguage, key);
+  const { isListening, startListening, stopListening, isSupported: voiceSupported, transcript } = useVoiceSearch();
 
-  const { login, clear, loginStatus, identity } = useInternetIdentity();
-  const { googleUser, logout: googleLogout } = useGoogleAuth();
-  const isAuthenticated = !!identity || !!googleUser;
-  const isLoggingIn = loginStatus === 'logging-in';
+  const isAuthenticated = !!identity;
+  const isGoogleAuthenticated = !!googleUser;
+  const isAnyAuthenticated = isAuthenticated || isGoogleAuthenticated;
 
-  const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
-  const { data: isCallerAdmin } = useIsCallerAdmin();
-  const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
+  // Show profile setup modal for new users
+  useEffect(() => {
+    if (isAnyAuthenticated && !profileLoading && isFetched && profileCheck === null) {
+      setShowProfileSetup(true);
+    }
+  }, [isAnyAuthenticated, profileLoading, isFetched, profileCheck]);
 
-  const {
-    isListening,
-    isSupported: voiceSupported,
-    startListening,
-    stopListening,
-    transcript,
-    error: voiceError,
-  } = useVoiceSearch();
-
-  // When transcript arrives, populate search and navigate
+  // When voice transcript arrives, navigate to search
   useEffect(() => {
     if (transcript) {
       setSearchQuery(transcript);
@@ -63,12 +115,23 @@ export default function Layout({ children }: LayoutProps) {
     }
   }, [transcript, navigate]);
 
-  // Show voice error as toast
-  useEffect(() => {
-    if (voiceError) {
-      toast.error(voiceError);
+  const handleIILogin = async () => {
+    try {
+      await login();
+    } catch {
+      // handled by II provider
     }
-  }, [voiceError]);
+  };
+
+  const handleLogout = async () => {
+    await clear();
+    queryClient.clear();
+  };
+
+  const handleGoogleLogoutAndClear = () => {
+    handleGoogleLogout();
+    queryClient.clear();
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,326 +148,388 @@ export default function Layout({ children }: LayoutProps) {
     }
   };
 
-  const handleAuth = async () => {
-    if (isAuthenticated) {
-      if (identity) {
-        await clear();
-        queryClient.clear();
-      } else if (googleUser) {
-        googleLogout();
-        queryClient.clear();
-      }
-    } else {
-      try {
-        await login();
-      } catch (error: any) {
-        if (error.message === 'User is already authenticated') {
-          await clear();
-          setTimeout(() => login(), 300);
-        }
-      }
-    }
-  };
+  const avatarUrl = userProfile?.avatar ? convertBlobToDataURL(userProfile.avatar) : null;
+  const displayName = isGoogleAuthenticated
+    ? googleUser.name
+    : userProfile?.name || 'User';
+  const displayAvatar = isGoogleAuthenticated && !avatarUrl
+    ? googleUser.picture
+    : avatarUrl;
 
-  const displayName = userProfile?.name || googleUser?.name || 'User';
-  const initials = getInitials(displayName);
-
-  // convertBlobToDataURL is synchronous — returns string directly
-  const avatarUrl = userProfile?.avatar
-    ? convertBlobToDataURL(userProfile.avatar)
-    : googleUser?.picture || null;
+  const isPathActive = (path: string) => !!matchRoute({ to: path as '/', fuzzy: path !== '/' });
 
   return (
-    <div className="min-h-screen bg-yt-bg text-white flex flex-col">
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-50 bg-yt-surface border-b border-yt-border h-14 flex items-center px-4 gap-4">
-        {/* Left: Hamburger + Logo */}
-        <div className="flex items-center gap-2 min-w-0">
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden lg:flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 transition-colors"
-            aria-label="Toggle sidebar"
-          >
-            <Menu className="w-5 h-5 text-white" />
-          </button>
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <img
-              src="/assets/generated/mediatube-logo.dim_512x512.png"
-              alt="Mediatube and Photo"
-              className="h-9 w-9 object-contain rounded-lg"
-            />
-            <span className="hidden sm:block font-bold text-base tracking-tight brand-gradient-text">
-              Mediatube and Photo
-            </span>
-          </Link>
-        </div>
-
-        {/* Center: Search */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-xl mx-auto hidden sm:flex items-center gap-1">
-          <div className="flex w-full">
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isListening ? 'Listening...' : 'Search'}
-              className={`flex-1 bg-yt-bg border border-yt-border rounded-l-full px-4 py-2 text-sm text-white placeholder-yt-text-secondary focus:outline-none focus:border-mt-magenta transition-colors ${
-                isListening ? 'border-mt-magenta placeholder-mt-magenta' : ''
-              }`}
-            />
-            <button
-              type="submit"
-              className="px-5 py-2 bg-yt-chip border border-yt-border border-l-0 rounded-r-full hover:bg-yt-chip-hover transition-colors"
-              aria-label="Search"
+    <TooltipProvider>
+      <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
+        {/* Header */}
+        <header className="flex items-center justify-between px-4 py-2 bg-background border-b border-border z-50 h-14 shrink-0">
+          {/* Left: Menu + Logo */}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="rounded-full"
             >
-              <Search className="w-4 h-4 text-yt-text-secondary" />
-            </button>
+              <Menu className="h-5 w-5" />
+            </Button>
+            <Link to="/" className="flex items-center gap-2">
+              <img
+                src="/assets/generated/mediatube-logo-icon.dim_128x128.png"
+                alt="Mediatube"
+                className="h-8 w-8"
+              />
+              <span className="font-bold text-lg hidden sm:block brand-gradient-text">
+                Mediatube
+              </span>
+            </Link>
           </div>
 
-          {/* Voice Search Button */}
-          {voiceSupported && (
-            <button
-              type="button"
-              onClick={handleVoiceSearch}
-              aria-label={isListening ? 'Stop listening' : 'Search by voice'}
-              className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 shrink-0 ${
-                isListening
-                  ? 'bg-mt-magenta text-white animate-pulse shadow-lg shadow-mt-magenta/40'
-                  : 'bg-yt-chip hover:bg-yt-chip-hover text-yt-text-secondary hover:text-white'
-              }`}
-            >
-              {isListening ? (
-                <MicOff className="w-4 h-4" />
-              ) : (
-                <Mic className="w-4 h-4" />
-              )}
-            </button>
-          )}
-        </form>
-
-        {/* Right: Actions */}
-        <div className="flex items-center gap-1 ml-auto">
-          {/* Mobile search */}
-          <button
-            className="sm:hidden flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 transition-colors"
-            onClick={() => navigate({ to: '/search', search: { q: '' } })}
-          >
-            <Search className="w-5 h-5 text-white" />
-          </button>
-
-          {isAuthenticated && (
-            <>
-              <Link
-                to="/upload"
-                className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 transition-colors"
+          {/* Center: Search */}
+          <form onSubmit={handleSearch} className="flex items-center gap-2 flex-1 max-w-xl mx-4">
+            <div className="flex flex-1 items-center border border-border rounded-full overflow-hidden bg-muted/30 focus-within:border-primary">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('search') || 'Search'}
+                className="flex-1 px-4 py-2 bg-transparent text-sm outline-none"
+              />
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon"
+                className="rounded-none border-l border-border h-10 w-12 hover:bg-muted"
               >
-                <Upload className="w-5 h-5 text-white" />
-              </Link>
-              <button className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 transition-colors">
-                <Bell className="w-5 h-5 text-white" />
-              </button>
-            </>
-          )}
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+            {voiceSupported && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={handleVoiceSearch}
+                className={`rounded-full ${isListening ? 'bg-destructive/20 text-destructive' : ''}`}
+              >
+                <Mic className="h-4 w-4" />
+              </Button>
+            )}
+          </form>
 
-          {isAuthenticated ? (
-            <button
-              onClick={handleAuth}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-mt-magenta text-white text-sm font-bold hover:opacity-90 transition-opacity overflow-hidden"
-            >
-              {avatarUrl ? (
-                <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
-              ) : (
-                <span>{initials}</span>
-              )}
-            </button>
-          ) : (
-            <button
-              onClick={handleAuth}
-              disabled={isLoggingIn}
-              className="flex items-center gap-2 px-3 py-1.5 border border-mt-magenta text-mt-magenta rounded-full text-sm hover:bg-mt-magenta/10 transition-colors disabled:opacity-50"
-            >
-              <User className="w-4 h-4" />
-              <span className="hidden sm:inline">{isLoggingIn ? 'Signing in...' : 'Sign in'}</span>
-            </button>
-          )}
-        </div>
-      </header>
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2">
+            <LanguageSelector />
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar - Desktop only */}
-        <aside
-          className={`hidden lg:flex flex-col fixed top-14 left-0 bottom-0 z-40 bg-yt-bg transition-all duration-200 overflow-y-auto scrollbar-hide ${
-            sidebarCollapsed ? 'w-[72px]' : 'w-60'
-          }`}
-        >
-          <nav className="py-3">
-            {NAV_ITEMS.map(({ icon: Icon, label, path }) => {
-              const isActive = !!matchRoute({ to: path, fuzzy: path === '/' ? false : true });
-              return (
-                <Link
-                  key={path}
-                  to={path}
-                  className={`flex items-center gap-4 px-3 py-2.5 mx-2 rounded-xl transition-colors ${
-                    isActive ? 'bg-mt-magenta/20 font-semibold' : 'hover:bg-yt-chip'
-                  } ${sidebarCollapsed ? 'justify-center px-0 mx-0 rounded-none py-4' : ''}`}
-                >
-                  <Icon
-                    className={`w-5 h-5 shrink-0 ${isActive ? 'text-mt-magenta' : 'text-yt-text-secondary'}`}
-                  />
-                  {!sidebarCollapsed && (
-                    <span className={`text-sm ${isActive ? 'text-mt-magenta' : 'text-yt-text-secondary'}`}>
-                      {label}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-
-            {!sidebarCollapsed && <div className="border-t border-yt-border my-3 mx-3" />}
-
-            {isAuthenticated && !sidebarCollapsed && (
-              <>
-                <Link
-                  to="/profile"
-                  className="flex items-center gap-4 px-3 py-2.5 mx-2 rounded-xl hover:bg-yt-chip transition-colors"
-                >
-                  <User className="w-5 h-5 text-yt-text-secondary shrink-0" />
-                  <span className="text-sm text-yt-text-secondary">Your Channel</span>
-                </Link>
-                <Link
-                  to="/monetization"
-                  className={`flex items-center gap-4 px-3 py-2.5 mx-2 rounded-xl transition-colors ${
-                    !!matchRoute({ to: '/monetization' }) ? 'bg-mt-magenta/20 font-semibold' : 'hover:bg-yt-chip'
-                  }`}
-                >
-                  <DollarSign
-                    className={`w-5 h-5 shrink-0 ${
-                      !!matchRoute({ to: '/monetization' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
-                    }`}
-                  />
-                  <span
-                    className={`text-sm ${
-                      !!matchRoute({ to: '/monetization' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
-                    }`}
+            {isAnyAuthenticated && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full"
+                    onClick={() => navigate({ to: '/upload' })}
                   >
-                    Monetization
-                  </span>
-                </Link>
-                <Link
-                  to="/api-keys"
-                  className="flex items-center gap-4 px-3 py-2.5 mx-2 rounded-xl hover:bg-yt-chip transition-colors"
+                    <Upload className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Upload</TooltipContent>
+              </Tooltip>
+            )}
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Bell className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Notifications</TooltipContent>
+            </Tooltip>
+
+            {/* Auth buttons */}
+            {!isAnyAuthenticated ? (
+              <div className="flex items-center gap-2">
+                {/* Internet Identity Login */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleIILogin}
+                  className="rounded-full border-primary text-primary hover:bg-primary/10 hidden sm:flex"
                 >
-                  <Key className="w-5 h-5 text-yt-text-secondary shrink-0" />
-                  <span className="text-sm text-yt-text-secondary">API Keys</span>
-                </Link>
-                {isCallerAdmin && (
+                  <User className="h-4 w-4 mr-1" />
+                  Sign in
+                </Button>
+                {/* Google Login */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGoogleLogin}
+                  disabled={isGoogleLoading}
+                  className="rounded-full border-border hover:bg-muted hidden sm:flex items-center gap-1"
+                >
+                  <SiGoogle className="h-4 w-4" style={{ color: '#4285F4' }} />
+                  <span className="hidden md:inline">
+                    {isGoogleLoading ? 'Signing in...' : 'Google'}
+                  </span>
+                </Button>
+              </div>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <Avatar className="h-8 w-8">
+                      {displayAvatar && <AvatarImage src={displayAvatar} alt={displayName} />}
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                        {getInitials(displayName)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-3 py-2">
+                    <p className="text-sm font-medium">{displayName}</p>
+                    {isGoogleAuthenticated && (
+                      <p className="text-xs text-muted-foreground">{googleUser.email}</p>
+                    )}
+                    {isAuthenticated && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {identity?.getPrincipal().toString().slice(0, 20)}...
+                      </p>
+                    )}
+                  </div>
+                  <DropdownMenuSeparator />
+                  {isAuthenticated && (
+                    <DropdownMenuItem onClick={() => navigate({ to: '/profile' })}>
+                      <User className="h-4 w-4 mr-2" />
+                      Your Channel
+                    </DropdownMenuItem>
+                  )}
+                  {isAuthenticated && (
+                    <DropdownMenuItem onClick={() => navigate({ to: '/monetization' })}>
+                      <DollarSign className="h-4 w-4 mr-2" />
+                      Monetization
+                    </DropdownMenuItem>
+                  )}
+                  {isAuthenticated && (
+                    <DropdownMenuItem onClick={() => navigate({ to: '/api-keys' })}>
+                      <Key className="h-4 w-4 mr-2" />
+                      API Keys
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  {isAuthenticated && (
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign out (II)
+                    </DropdownMenuItem>
+                  )}
+                  {isGoogleAuthenticated && (
+                    <DropdownMenuItem onClick={handleGoogleLogoutAndClear} className="text-destructive">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign out (Google)
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </header>
+
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar */}
+          <aside
+            className={`${
+              sidebarOpen ? 'w-56' : 'w-16'
+            } shrink-0 bg-background border-r border-border overflow-y-auto transition-all duration-200 hidden md:flex flex-col`}
+          >
+            <nav className="flex flex-col gap-1 p-2">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = isPathActive(item.path);
+                return (
+                  <Tooltip key={item.path} delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={item.path}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                          isActive
+                            ? 'bg-mt-magenta/10 text-mt-magenta font-medium'
+                            : 'hover:bg-muted text-foreground'
+                        }`}
+                      >
+                        <Icon className="h-5 w-5 shrink-0" />
+                        {sidebarOpen && <span>{item.label}</span>}
+                      </Link>
+                    </TooltipTrigger>
+                    {!sidebarOpen && <TooltipContent side="right">{item.label}</TooltipContent>}
+                  </Tooltip>
+                );
+              })}
+
+              <Separator className="my-2" />
+
+              {sidebarOpen && (
+                <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  You
+                </p>
+              )}
+
+              {libraryItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = isPathActive(item.path);
+                return (
+                  <Tooltip key={item.path} delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={item.path}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                          isActive
+                            ? 'bg-mt-magenta/10 text-mt-magenta font-medium'
+                            : 'hover:bg-muted text-foreground'
+                        }`}
+                      >
+                        <Icon className="h-5 w-5 shrink-0" />
+                        {sidebarOpen && <span>{item.label}</span>}
+                      </Link>
+                    </TooltipTrigger>
+                    {!sidebarOpen && <TooltipContent side="right">{item.label}</TooltipContent>}
+                  </Tooltip>
+                );
+              })}
+
+              <Separator className="my-2" />
+
+              {sidebarOpen && (
+                <p className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Explore
+                </p>
+              )}
+
+              {exploreItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = isPathActive(item.path);
+                return (
+                  <Tooltip key={item.path} delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <Link
+                        to={item.path}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                          isActive
+                            ? 'bg-mt-magenta/10 text-mt-magenta font-medium'
+                            : 'hover:bg-muted text-foreground'
+                        }`}
+                      >
+                        <Icon className="h-5 w-5 shrink-0" />
+                        {sidebarOpen && <span>{item.label}</span>}
+                      </Link>
+                    </TooltipTrigger>
+                    {!sidebarOpen && <TooltipContent side="right">{item.label}</TooltipContent>}
+                  </Tooltip>
+                );
+              })}
+
+              <Separator className="my-2" />
+
+              {/* Admin link */}
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
                   <Link
                     to="/admin"
-                    className={`flex items-center gap-4 px-3 py-2.5 mx-2 rounded-xl transition-colors ${
-                      !!matchRoute({ to: '/admin' }) ? 'bg-mt-magenta/20 font-semibold' : 'hover:bg-yt-chip'
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      isPathActive('/admin')
+                        ? 'bg-mt-magenta/10 text-mt-magenta font-medium'
+                        : 'hover:bg-muted text-foreground'
                     }`}
                   >
-                    <Shield
-                      className={`w-5 h-5 shrink-0 ${
-                        !!matchRoute({ to: '/admin' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
-                      }`}
-                    />
-                    <span
-                      className={`text-sm ${
-                        !!matchRoute({ to: '/admin' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
-                      }`}
-                    >
-                      Admin Dashboard
-                    </span>
+                    <Shield className="h-5 w-5 shrink-0" />
+                    {sidebarOpen && <span>Admin</span>}
                   </Link>
-                )}
-              </>
-            )}
+                </TooltipTrigger>
+                {!sidebarOpen && <TooltipContent side="right">Admin</TooltipContent>}
+              </Tooltip>
 
-            {/* Download App Link */}
-            {!sidebarCollapsed && (
-              <>
-                <div className="border-t border-yt-border my-3 mx-3" />
-                <Link
-                  to="/download"
-                  className={`flex items-center gap-4 px-3 py-2.5 mx-2 rounded-xl transition-colors ${
-                    !!matchRoute({ to: '/download' }) ? 'bg-mt-magenta/20 font-semibold' : 'hover:bg-yt-chip'
-                  }`}
-                >
-                  <Smartphone
-                    className={`w-5 h-5 shrink-0 ${
-                      !!matchRoute({ to: '/download' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
-                    }`}
-                  />
-                  <span
-                    className={`text-sm ${
-                      !!matchRoute({ to: '/download' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
+              {/* Community link */}
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <Link
+                    to="/community"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      isPathActive('/community')
+                        ? 'bg-mt-magenta/10 text-mt-magenta font-medium'
+                        : 'hover:bg-muted text-foreground'
                     }`}
                   >
-                    Download App
-                  </span>
-                </Link>
-              </>
-            )}
+                    <BookOpen className="h-5 w-5 shrink-0" />
+                    {sidebarOpen && <span>Community</span>}
+                  </Link>
+                </TooltipTrigger>
+                {!sidebarOpen && <TooltipContent side="right">Community</TooltipContent>}
+              </Tooltip>
 
-            {/* Collapsed sidebar: Download App icon */}
-            {sidebarCollapsed && (
-              <Link
-                to="/download"
-                className={`flex items-center justify-center px-0 mx-0 rounded-none py-4 transition-colors hover:bg-yt-chip`}
-              >
-                <Smartphone
-                  className={`w-5 h-5 shrink-0 ${
-                    !!matchRoute({ to: '/download' }) ? 'text-mt-magenta' : 'text-yt-text-secondary'
-                  }`}
-                />
-              </Link>
-            )}
-
-            {!sidebarCollapsed && (
-              <div className="px-3 py-4">
-                <Link
-                  to="/copyright-policy"
-                  className="text-xs text-yt-text-secondary hover:text-white transition-colors block mb-1"
-                >
-                  Copyright Policy
-                </Link>
-                <p className="text-xs text-yt-text-secondary/60">
-                  © {new Date().getFullYear()} Mediatube and Photo
-                </p>
-                <p className="text-xs text-yt-text-secondary/60 mt-1">
-                  Built with ❤️ using{' '}
-                  <a
-                    href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
-                      typeof window !== 'undefined' ? window.location.hostname : 'mediatube-app'
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-mt-magenta hover:underline"
+              {/* Download App link */}
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <Link
+                    to="/download"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      isPathActive('/download')
+                        ? 'bg-mt-magenta/10 text-mt-magenta font-medium'
+                        : 'hover:bg-muted text-foreground'
+                    }`}
                   >
-                    caffeine.ai
-                  </a>
-                </p>
-              </div>
-            )}
-          </nav>
-        </aside>
+                    <Smartphone className="h-5 w-5 shrink-0" />
+                    {sidebarOpen && <span>Download App</span>}
+                  </Link>
+                </TooltipTrigger>
+                {!sidebarOpen && <TooltipContent side="right">Download App</TooltipContent>}
+              </Tooltip>
 
-        {/* Main Content */}
-        <main
-          className={`flex-1 overflow-y-auto transition-all duration-200 ${
-            sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-60'
-          } pb-14 lg:pb-0`}
-        >
-          {children}
-        </main>
+              <Separator className="my-2" />
+
+              {/* Footer links */}
+              {sidebarOpen && (
+                <div className="px-3 py-2 space-y-1">
+                  <Link
+                    to="/copyright-policy"
+                    className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Copyright Policy
+                  </Link>
+                  <p className="text-xs text-muted-foreground">
+                    © {new Date().getFullYear()} Mediatube
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Built with ❤️ using{' '}
+                    <a
+                      href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
+                        typeof window !== 'undefined' ? window.location.hostname : 'mediatube'
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground"
+                    >
+                      caffeine.ai
+                    </a>
+                  </p>
+                </div>
+              )}
+            </nav>
+          </aside>
+
+          {/* Main Content */}
+          <main className="flex-1 overflow-y-auto">
+            {children}
+          </main>
+        </div>
+
+        {/* Profile Setup Modal */}
+        {showProfileSetup && (
+          <ProfileSetupModal
+            open={showProfileSetup}
+            onClose={() => setShowProfileSetup(false)}
+          />
+        )}
       </div>
-
-      {/* Mobile Bottom Nav */}
-      <BottomNav />
-
-      {/* Profile Setup Modal */}
-      {showProfileSetup && <ProfileSetupModal />}
-    </div>
+    </TooltipProvider>
   );
 }

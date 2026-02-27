@@ -1,25 +1,23 @@
-import { useState, useRef } from 'react';
-import { ImagePlus, X, Loader2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
-import { ExternalBlob } from '../backend';
+import { Image, Loader2, X } from 'lucide-react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useGetCallerUserProfile } from '../hooks/useGetCallerUserProfile';
 import { useCreateCommunityPost } from '../hooks/useCreateCommunityPost';
 import { convertBlobToDataURL, getInitials } from '../utils/avatarHelpers';
-import { useLanguage } from '../contexts/LanguageContext';
-import { getTranslation } from '../i18n/translations';
+import { ExternalBlob } from '../backend';
 
 export default function CommunityPostComposer() {
-  const { identity, login } = useInternetIdentity();
-  const { currentLanguage } = useLanguage();
-  const t = (key: string) => getTranslation(currentLanguage, key);
+  const { identity } = useInternetIdentity();
+  const { googleUser } = useGoogleAuth();
+  const isAuthenticated = !!identity || !!googleUser;
 
-  const isAuthenticated = !!identity;
   const { data: userProfile } = useGetCallerUserProfile();
-  const { mutate: createPost, isPending } = useCreateCommunityPost();
+  const { mutateAsync: createPost, isPending } = useCreateCommunityPost();
 
   const [body, setBody] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -27,18 +25,16 @@ export default function CommunityPostComposer() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const displayName = userProfile?.name || 'User';
-  const avatarBytes = userProfile?.avatar;
-  const avatarDataUrl = avatarBytes ? convertBlobToDataURL(avatarBytes) : undefined;
+  const avatarUrl = userProfile?.avatar ? convertBlobToDataURL(userProfile.avatar) : null;
+  const displayName = googleUser?.name || userProfile?.name || 'User';
+  const displayAvatar = (googleUser?.picture && !avatarUrl) ? googleUser.picture : avatarUrl;
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setImageFile(file);
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      setImagePreview(ev.target?.result as string);
-    };
+    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
     reader.readAsDataURL(file);
   };
 
@@ -48,130 +44,114 @@ export default function CommunityPostComposer() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleSubmit = async () => {
-    if (!body.trim() || isPending) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!body.trim() || !isAuthenticated) return;
 
     let attachment: ExternalBlob | null = null;
-
     if (imageFile) {
-      const arrayBuffer = await imageFile.arrayBuffer();
-      const bytes = new Uint8Array(arrayBuffer);
-      attachment = ExternalBlob.fromBytes(bytes).withUploadProgress((pct) => {
-        setUploadProgress(pct);
-      });
+      const bytes = new Uint8Array(await imageFile.arrayBuffer());
+      attachment = ExternalBlob.fromBytes(bytes).withUploadProgress((pct) =>
+        setUploadProgress(pct)
+      );
     }
 
-    createPost(
-      { body: body.trim(), attachment },
-      {
-        onSuccess: () => {
-          setBody('');
-          setImageFile(null);
-          setImagePreview(null);
-          setUploadProgress(0);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-        },
-      }
-    );
+    try {
+      await createPost({ body: body.trim(), attachment });
+      setBody('');
+      setImageFile(null);
+      setImagePreview(null);
+      setUploadProgress(0);
+    } catch {
+      // handled by mutation
+    }
   };
 
   if (!isAuthenticated) {
     return (
-      <div className="bg-card border border-border rounded-xl p-5 text-center">
-        <p className="text-muted-foreground text-sm mb-3">{t('signInToPost')}</p>
-        <Button size="sm" onClick={() => login()}>
-          {t('signIn') || 'Sign in'}
-        </Button>
+      <div className="p-4 rounded-xl border border-border bg-muted/30 text-center">
+        <p className="text-sm text-muted-foreground">Sign in to post in the community</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+    <form onSubmit={handleSubmit} className="p-4 rounded-xl border border-border bg-card space-y-3">
       <div className="flex gap-3">
-        <Avatar className="h-9 w-9 shrink-0 mt-0.5">
-          {avatarDataUrl && <AvatarImage src={avatarDataUrl} alt={displayName} />}
-          <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+        <Avatar className="h-10 w-10 shrink-0">
+          {displayAvatar && <AvatarImage src={displayAvatar} />}
+          <AvatarFallback className="bg-primary/20 text-sm">
             {getInitials(displayName)}
           </AvatarFallback>
         </Avatar>
-
-        <div className="flex-1 space-y-3">
-          <Textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder={t('writePostPlaceholder')}
-            className="min-h-[80px] resize-none border-0 bg-muted/50 focus-visible:ring-1 focus-visible:ring-primary/50 text-sm"
-            disabled={isPending}
-          />
-
-          {/* Image preview */}
-          {imagePreview && (
-            <div className="relative inline-block">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="max-h-48 rounded-lg border border-border object-cover"
-              />
-              <button
-                onClick={handleRemoveImage}
-                className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5 transition-colors"
-                disabled={isPending}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          )}
-
-          {/* Upload progress */}
-          {isPending && uploadProgress > 0 && uploadProgress < 100 && (
-            <div className="space-y-1">
-              <Progress value={uploadProgress} className="h-1.5" />
-              <p className="text-xs text-muted-foreground">{t('posting')} {uploadProgress}%</p>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex items-center justify-between">
-            <div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageSelect}
-                disabled={isPending}
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isPending}
-                className="text-muted-foreground hover:text-foreground gap-1.5"
-              >
-                <ImagePlus className="h-4 w-4" />
-                <span className="text-xs">{t('uploadImage')}</span>
-              </Button>
-            </div>
-
-            <Button
-              size="sm"
-              onClick={handleSubmit}
-              disabled={!body.trim() || isPending}
-              className="gap-1.5"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  {t('posting')}
-                </>
-              ) : (
-                t('postButton')
-              )}
-            </Button>
-          </div>
-        </div>
+        <Textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Share something with the community..."
+          className="flex-1 min-h-[80px] resize-none border-0 bg-transparent focus-visible:ring-0 p-0 text-sm"
+          disabled={isPending}
+        />
       </div>
-    </div>
+
+      {imagePreview && (
+        <div className="relative inline-block">
+          <img
+            src={imagePreview}
+            alt="Preview"
+            className="max-h-48 rounded-lg object-cover"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute top-1 right-1 h-6 w-6 bg-black/50 hover:bg-black/70 text-white rounded-full"
+            onClick={handleRemoveImage}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+
+      {isPending && uploadProgress > 0 && (
+        <Progress value={uploadProgress} className="h-1" />
+      )}
+
+      <div className="flex items-center justify-between border-t border-border pt-3">
+        <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageSelect}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isPending}
+          >
+            <Image className="h-4 w-4 mr-1" />
+            Photo
+          </Button>
+        </div>
+        <Button
+          type="submit"
+          size="sm"
+          disabled={!body.trim() || isPending}
+          className="bg-mt-magenta hover:bg-mt-purple text-white"
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              Posting...
+            </>
+          ) : (
+            'Post'
+          )}
+        </Button>
+      </div>
+    </form>
   );
 }

@@ -16,7 +16,6 @@ interface VideoCardProps {
 function ChannelAvatar({ uploader }: { uploader: Principal }) {
   const { data: profile } = useGetUserProfile(uploader);
 
-  // convertBlobToDataURL is synchronous
   const avatarUrl = profile?.avatar ? convertBlobToDataURL(profile.avatar) : null;
   const initials = getInitials(profile?.name || '?');
 
@@ -108,7 +107,7 @@ export default function VideoCard({
             </p>
             {showSubscribe && (
               <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-                <SubscribeButton channelPrincipal={video.uploader} compact />
+                <SubscribeButton channelPrincipal={video.uploader} />
               </div>
             )}
           </div>
