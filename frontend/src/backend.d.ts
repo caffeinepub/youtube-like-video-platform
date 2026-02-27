@@ -35,6 +35,10 @@ export interface AdminDashboard {
     users: Array<UserProfile>;
     videos: Array<VideoMetadata>;
 }
+export interface AccountState {
+    withdrawals: Array<Withdrawal>;
+    balanceCents: bigint;
+}
 export interface ApiKey {
     key: string;
     active: boolean;
@@ -60,6 +64,11 @@ export interface AdminAnalytics {
     totalUsers: bigint;
     totalComments: bigint;
 }
+export interface Withdrawal {
+    status: WithdrawalStatus;
+    amountCents: bigint;
+    timestamp: Time;
+}
 export interface VideoMetadata {
     id: string;
     title: string;
@@ -82,12 +91,19 @@ export enum UserRole {
     user = "user",
     guest = "guest"
 }
+export enum WithdrawalStatus {
+    cancelled = "cancelled",
+    pending = "pending",
+    approved = "approved"
+}
 export interface backendInterface {
     addComment(videoId: string, content: string): Promise<void>;
     addVideoToPlaylist(playlistId: string, videoId: string): Promise<void>;
     adminRemoveUserProfile(user: Principal): Promise<void>;
     adminRemoveVideo(videoId: string): Promise<void>;
+    approveWithdrawal(): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    cancelWithdrawal(): Promise<void>;
     clearVideoComments(videoId: string): Promise<void>;
     createApiKey(apiLabel: string): Promise<string>;
     createCommunityPost(body: string, attachment: ExternalBlob | null): Promise<string>;
@@ -106,6 +122,9 @@ export interface backendInterface {
     getComments(videoId: string): Promise<Array<Comment>>;
     getCommunityPosts(): Promise<Array<CommunityPost>>;
     getCommunityPostsByChannel(channel: Principal): Promise<Array<CommunityPost>>;
+    getCreatorBankAccountState(): Promise<AccountState>;
+    getCreatorBankBalanceCents(): Promise<bigint>;
+    getHasUnapprovedWithdrawal(): Promise<boolean>;
     getMonetizationStats(): Promise<MonetizationStats>;
     getPlaylistById(playlistId: string): Promise<PlaylistView | null>;
     getPlaylistVideos(playlistId: string): Promise<Array<VideoMetadata>>;
@@ -119,10 +138,13 @@ export interface backendInterface {
     getVideo(videoId: string): Promise<VideoMetadata | null>;
     incrementViewCount(videoId: string): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
+    removeLastPendingWithdrawal(): Promise<void>;
     removeVideoFromPlaylist(playlistId: string, videoId: string): Promise<void>;
+    requestWithdrawal(amountCents: bigint): Promise<void>;
     revokeApiKey(key: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     searchVideos(searchTerm: string): Promise<Array<VideoMetadata>>;
+    simulateAdminBankPayment(testAmountCents: bigint): Promise<void>;
     subscribeToChannel(channel: Principal): Promise<void>;
     unsubscribeFromChannel(channel: Principal): Promise<void>;
     updateUserProfile(name: string, channelDescription: string, handle: string, avatar: Uint8Array | null): Promise<void>;

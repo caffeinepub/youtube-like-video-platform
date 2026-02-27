@@ -75,6 +75,20 @@ export const CommunityPost = IDL.Record({
   'timestamp' : Time,
   'attachment' : IDL.Opt(ExternalBlob),
 });
+export const WithdrawalStatus = IDL.Variant({
+  'cancelled' : IDL.Null,
+  'pending' : IDL.Null,
+  'approved' : IDL.Null,
+});
+export const Withdrawal = IDL.Record({
+  'status' : WithdrawalStatus,
+  'amountCents' : IDL.Nat,
+  'timestamp' : Time,
+});
+export const AccountState = IDL.Record({
+  'withdrawals' : IDL.Vec(Withdrawal),
+  'balanceCents' : IDL.Nat,
+});
 export const MonetizationStats = IDL.Record({
   'monetizationStatus' : IDL.Text,
   'totalEarnings' : IDL.Nat,
@@ -121,7 +135,9 @@ export const idlService = IDL.Service({
   'addVideoToPlaylist' : IDL.Func([IDL.Text, IDL.Text], [], []),
   'adminRemoveUserProfile' : IDL.Func([IDL.Principal], [], []),
   'adminRemoveVideo' : IDL.Func([IDL.Text], [], []),
+  'approveWithdrawal' : IDL.Func([], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'cancelWithdrawal' : IDL.Func([], [], []),
   'clearVideoComments' : IDL.Func([IDL.Text], [], []),
   'createApiKey' : IDL.Func([IDL.Text], [IDL.Text], []),
   'createCommunityPost' : IDL.Func(
@@ -152,6 +168,9 @@ export const idlService = IDL.Service({
       [IDL.Vec(CommunityPost)],
       ['query'],
     ),
+  'getCreatorBankAccountState' : IDL.Func([], [AccountState], ['query']),
+  'getCreatorBankBalanceCents' : IDL.Func([], [IDL.Nat], ['query']),
+  'getHasUnapprovedWithdrawal' : IDL.Func([], [IDL.Bool], ['query']),
   'getMonetizationStats' : IDL.Func([], [MonetizationStats], ['query']),
   'getPlaylistById' : IDL.Func([IDL.Text], [IDL.Opt(PlaylistView)], ['query']),
   'getPlaylistVideos' : IDL.Func(
@@ -185,10 +204,13 @@ export const idlService = IDL.Service({
   'getVideo' : IDL.Func([IDL.Text], [IDL.Opt(VideoMetadata)], ['query']),
   'incrementViewCount' : IDL.Func([IDL.Text], [], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'removeLastPendingWithdrawal' : IDL.Func([], [], []),
   'removeVideoFromPlaylist' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'requestWithdrawal' : IDL.Func([IDL.Nat], [], []),
   'revokeApiKey' : IDL.Func([IDL.Text], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'searchVideos' : IDL.Func([IDL.Text], [IDL.Vec(VideoMetadata)], ['query']),
+  'simulateAdminBankPayment' : IDL.Func([IDL.Nat], [], []),
   'subscribeToChannel' : IDL.Func([IDL.Principal], [], []),
   'unsubscribeFromChannel' : IDL.Func([IDL.Principal], [], []),
   'updateUserProfile' : IDL.Func(
@@ -274,6 +296,20 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : Time,
     'attachment' : IDL.Opt(ExternalBlob),
   });
+  const WithdrawalStatus = IDL.Variant({
+    'cancelled' : IDL.Null,
+    'pending' : IDL.Null,
+    'approved' : IDL.Null,
+  });
+  const Withdrawal = IDL.Record({
+    'status' : WithdrawalStatus,
+    'amountCents' : IDL.Nat,
+    'timestamp' : Time,
+  });
+  const AccountState = IDL.Record({
+    'withdrawals' : IDL.Vec(Withdrawal),
+    'balanceCents' : IDL.Nat,
+  });
   const MonetizationStats = IDL.Record({
     'monetizationStatus' : IDL.Text,
     'totalEarnings' : IDL.Nat,
@@ -320,7 +356,9 @@ export const idlFactory = ({ IDL }) => {
     'addVideoToPlaylist' : IDL.Func([IDL.Text, IDL.Text], [], []),
     'adminRemoveUserProfile' : IDL.Func([IDL.Principal], [], []),
     'adminRemoveVideo' : IDL.Func([IDL.Text], [], []),
+    'approveWithdrawal' : IDL.Func([], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'cancelWithdrawal' : IDL.Func([], [], []),
     'clearVideoComments' : IDL.Func([IDL.Text], [], []),
     'createApiKey' : IDL.Func([IDL.Text], [IDL.Text], []),
     'createCommunityPost' : IDL.Func(
@@ -351,6 +389,9 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(CommunityPost)],
         ['query'],
       ),
+    'getCreatorBankAccountState' : IDL.Func([], [AccountState], ['query']),
+    'getCreatorBankBalanceCents' : IDL.Func([], [IDL.Nat], ['query']),
+    'getHasUnapprovedWithdrawal' : IDL.Func([], [IDL.Bool], ['query']),
     'getMonetizationStats' : IDL.Func([], [MonetizationStats], ['query']),
     'getPlaylistById' : IDL.Func(
         [IDL.Text],
@@ -388,10 +429,13 @@ export const idlFactory = ({ IDL }) => {
     'getVideo' : IDL.Func([IDL.Text], [IDL.Opt(VideoMetadata)], ['query']),
     'incrementViewCount' : IDL.Func([IDL.Text], [], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'removeLastPendingWithdrawal' : IDL.Func([], [], []),
     'removeVideoFromPlaylist' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'requestWithdrawal' : IDL.Func([IDL.Nat], [], []),
     'revokeApiKey' : IDL.Func([IDL.Text], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'searchVideos' : IDL.Func([IDL.Text], [IDL.Vec(VideoMetadata)], ['query']),
+    'simulateAdminBankPayment' : IDL.Func([IDL.Nat], [], []),
     'subscribeToChannel' : IDL.Func([IDL.Principal], [], []),
     'unsubscribeFromChannel' : IDL.Func([IDL.Principal], [], []),
     'updateUserProfile' : IDL.Func(

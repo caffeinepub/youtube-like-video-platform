@@ -5,12 +5,15 @@ import CommunityPostCard from '../components/CommunityPostCard';
 import { useGetCommunityPosts } from '../hooks/useGetCommunityPosts';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getTranslation } from '../i18n/translations';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import OfflineErrorState from '../components/OfflineErrorState';
 
 export default function CommunityPage() {
   const { currentLanguage } = useLanguage();
   const t = (key: string) => getTranslation(currentLanguage, key);
+  const isOnline = useNetworkStatus();
 
-  const { data: posts, isLoading } = useGetCommunityPosts();
+  const { data: posts, isLoading, refetch } = useGetCommunityPosts();
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
@@ -25,7 +28,12 @@ export default function CommunityPage() {
 
       {/* Feed */}
       <div className="space-y-4">
-        {isLoading ? (
+        {!isOnline && isLoading ? (
+          <OfflineErrorState
+            onRetry={() => refetch()}
+            message="Unable to load community posts. Please check your internet connection."
+          />
+        ) : isLoading ? (
           <>
             {[...Array(3)].map((_, i) => (
               <div key={i} className="bg-card border border-border rounded-xl p-4 space-y-3">
@@ -41,6 +49,11 @@ export default function CommunityPage() {
               </div>
             ))}
           </>
+        ) : !isOnline && (!posts || posts.length === 0) ? (
+          <OfflineErrorState
+            onRetry={() => refetch()}
+            message="Unable to load community posts. Please check your internet connection."
+          />
         ) : posts && posts.length > 0 ? (
           posts.map((post) => (
             <CommunityPostCard key={post.id} post={post} />

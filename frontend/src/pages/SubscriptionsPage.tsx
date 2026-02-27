@@ -8,14 +8,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Users } from 'lucide-react';
 import type { Principal } from '@dfinity/principal';
 import type { VideoMetadata } from '../backend';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import OfflineErrorState from '../components/OfflineErrorState';
 
 export default function SubscriptionsPage() {
   const { identity } = useInternetIdentity();
   const { googleUser } = useGoogleAuth();
   const isAuthenticated = !!identity || !!googleUser;
+  const isOnline = useNetworkStatus();
   const { actor } = useActor();
 
-  const { data: subscriptionVideos = [], isLoading } = useQuery<VideoMetadata[]>({
+  const { data: subscriptionVideos = [], isLoading, refetch } = useQuery<VideoMetadata[]>({
     queryKey: ['subscriptionVideos', identity?.getPrincipal().toString()],
     queryFn: async () => {
       if (!actor || !identity) return [];
@@ -41,6 +44,17 @@ export default function SubscriptionsPage() {
     );
   }
 
+  if (!isOnline && isLoading) {
+    return (
+      <div className="p-6">
+        <OfflineErrorState
+          onRetry={() => refetch()}
+          message="Unable to load subscriptions. Please check your internet connection."
+        />
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -51,6 +65,17 @@ export default function SubscriptionsPage() {
             <Skeleton className="h-3 w-1/2" />
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (!isOnline && subscriptionVideos.length === 0) {
+    return (
+      <div className="p-6">
+        <OfflineErrorState
+          onRetry={() => refetch()}
+          message="Unable to load subscriptions. Please check your internet connection."
+        />
       </div>
     );
   }

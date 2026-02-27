@@ -12,6 +12,8 @@ import { convertBlobToDataURL, getInitials } from '../utils/avatarHelpers';
 import { Link } from '@tanstack/react-router';
 import CommunityPostCard from '../components/CommunityPostCard';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import OfflineErrorState from '../components/OfflineErrorState';
 
 function useChannelProfile(principalId: string) {
   const { actor, isFetching: actorFetching } = useActor();
@@ -85,9 +87,10 @@ function useChannelCommunityPosts(principalId: string) {
 export default function ChannelPage() {
   const { principalId } = useParams({ from: '/channel/$principalId' });
   const { identity } = useInternetIdentity();
+  const isOnline = useNetworkStatus();
 
-  const { data: profile, isLoading: profileLoading } = useChannelProfile(principalId);
-  const { data: videos = [], isLoading: videosLoading } = useChannelVideos(principalId);
+  const { data: profile, isLoading: profileLoading, refetch: refetchProfile } = useChannelProfile(principalId);
+  const { data: videos = [], isLoading: videosLoading, refetch: refetchVideos } = useChannelVideos(principalId);
   const { data: subscribers = [] } = useChannelSubscribers(principalId);
   const { data: playlists = [] } = useChannelPlaylists(principalId);
   const { data: communityPosts = [] } = useChannelCommunityPosts(principalId);
@@ -103,7 +106,6 @@ export default function ChannelPage() {
   const handle = profile?.handle ? `@${profile.handle}` : '';
   const description = profile?.channelDescription || '';
   const initials = getInitials(channelName);
-  // convertBlobToDataURL is synchronous
   const avatarUrl = profile?.avatar ? convertBlobToDataURL(profile.avatar) : null;
   const longVideos = videos.filter((v) => !v.isShort);
   const shortVideos = videos.filter((v) => v.isShort);
@@ -111,6 +113,22 @@ export default function ChannelPage() {
     identity && channelPrincipal
       ? identity.getPrincipal().toString() === principalId
       : false;
+
+  const handleRetry = () => {
+    refetchProfile();
+    refetchVideos();
+  };
+
+  if (profileLoading && !isOnline) {
+    return (
+      <div className="bg-yt-bg min-h-screen flex items-center justify-center">
+        <OfflineErrorState
+          onRetry={handleRetry}
+          message="Unable to load channel. Please check your internet connection."
+        />
+      </div>
+    );
+  }
 
   if (profileLoading) {
     return (
@@ -214,7 +232,12 @@ export default function ChannelPage() {
 
           {/* Videos Tab */}
           <TabsContent value="videos" className="mt-6">
-            {videosLoading ? (
+            {videosLoading && !isOnline ? (
+              <OfflineErrorState
+                onRetry={handleRetry}
+                message="Unable to load videos. Please check your internet connection."
+              />
+            ) : videosLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="space-y-3">

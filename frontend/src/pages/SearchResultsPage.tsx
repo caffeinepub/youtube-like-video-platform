@@ -3,12 +3,14 @@ import { useSearchVideos } from '../hooks/useSearchVideos';
 import VideoCard from '../components/VideoCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search } from 'lucide-react';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import OfflineErrorState from '../components/OfflineErrorState';
 
 export default function SearchResultsPage() {
-  // Use strict: false to avoid route type issues with search params
   const searchParams = useSearch({ strict: false }) as { q?: string };
   const query = (searchParams.q ?? '').trim();
-  const { data: results = [], isLoading } = useSearchVideos(query);
+  const isOnline = useNetworkStatus();
+  const { data: results = [], isLoading, refetch } = useSearchVideos(query);
 
   if (!query) {
     return (
@@ -28,7 +30,7 @@ export default function SearchResultsPage() {
           Search results for{' '}
           <span className="text-mt-magenta">"{query}"</span>
         </h1>
-        {!isLoading && (
+        {!isLoading && isOnline && (
           <p className="text-sm text-yt-text-secondary mt-1">
             {results.length === 0
               ? 'No results found'
@@ -37,7 +39,12 @@ export default function SearchResultsPage() {
         )}
       </div>
 
-      {isLoading ? (
+      {!isOnline && isLoading ? (
+        <OfflineErrorState
+          onRetry={() => refetch()}
+          message="Unable to search. Please check your internet connection."
+        />
+      ) : isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="space-y-3">
@@ -53,6 +60,11 @@ export default function SearchResultsPage() {
             </div>
           ))}
         </div>
+      ) : !isOnline && results.length === 0 ? (
+        <OfflineErrorState
+          onRetry={() => refetch()}
+          message="Unable to search. Please check your internet connection."
+        />
       ) : results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <Search className="w-16 h-16 text-yt-text-secondary mb-4" />

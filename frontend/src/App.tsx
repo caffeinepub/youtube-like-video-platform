@@ -20,6 +20,7 @@ import DownloadAppPage from './pages/DownloadAppPage';
 import ApiKeysPage from './pages/ApiKeysPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import WithdrawalPage from './pages/WithdrawalPage';
 
 const queryClient = new QueryClient();
 
@@ -145,6 +146,12 @@ const signupRoute = createRoute({
   component: SignupPage,
 });
 
+const withdrawalRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/withdrawal',
+  component: WithdrawalPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   videoRoute,
@@ -165,6 +172,7 @@ const routeTree = rootRoute.addChildren([
   apiKeysRoute,
   loginRoute,
   signupRoute,
+  withdrawalRoute,
 ]);
 
 const router = createRouter({ routeTree });

@@ -10,6 +10,10 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface AccountState {
+  'withdrawals' : Array<Withdrawal>,
+  'balanceCents' : bigint,
+}
 export interface AdminAnalytics {
   'totalViews' : bigint,
   'totalVideos' : bigint,
@@ -77,6 +81,14 @@ export interface VideoMetadata {
   'uploader' : Principal,
   'uploadDate' : Time,
 }
+export interface Withdrawal {
+  'status' : WithdrawalStatus,
+  'amountCents' : bigint,
+  'timestamp' : Time,
+}
+export type WithdrawalStatus = { 'cancelled' : null } |
+  { 'pending' : null } |
+  { 'approved' : null };
 export interface _CaffeineStorageCreateCertificateResult {
   'method' : string,
   'blob_hash' : string,
@@ -109,7 +121,9 @@ export interface _SERVICE {
   'addVideoToPlaylist' : ActorMethod<[string, string], undefined>,
   'adminRemoveUserProfile' : ActorMethod<[Principal], undefined>,
   'adminRemoveVideo' : ActorMethod<[string], undefined>,
+  'approveWithdrawal' : ActorMethod<[], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'cancelWithdrawal' : ActorMethod<[], undefined>,
   'clearVideoComments' : ActorMethod<[string], undefined>,
   'createApiKey' : ActorMethod<[string], string>,
   'createCommunityPost' : ActorMethod<[string, [] | [ExternalBlob]], string>,
@@ -128,6 +142,9 @@ export interface _SERVICE {
   'getComments' : ActorMethod<[string], Array<Comment>>,
   'getCommunityPosts' : ActorMethod<[], Array<CommunityPost>>,
   'getCommunityPostsByChannel' : ActorMethod<[Principal], Array<CommunityPost>>,
+  'getCreatorBankAccountState' : ActorMethod<[], AccountState>,
+  'getCreatorBankBalanceCents' : ActorMethod<[], bigint>,
+  'getHasUnapprovedWithdrawal' : ActorMethod<[], boolean>,
   'getMonetizationStats' : ActorMethod<[], MonetizationStats>,
   'getPlaylistById' : ActorMethod<[string], [] | [PlaylistView]>,
   'getPlaylistVideos' : ActorMethod<[string], Array<VideoMetadata>>,
@@ -141,10 +158,13 @@ export interface _SERVICE {
   'getVideo' : ActorMethod<[string], [] | [VideoMetadata]>,
   'incrementViewCount' : ActorMethod<[string], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'removeLastPendingWithdrawal' : ActorMethod<[], undefined>,
   'removeVideoFromPlaylist' : ActorMethod<[string, string], undefined>,
+  'requestWithdrawal' : ActorMethod<[bigint], undefined>,
   'revokeApiKey' : ActorMethod<[string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'searchVideos' : ActorMethod<[string], Array<VideoMetadata>>,
+  'simulateAdminBankPayment' : ActorMethod<[bigint], undefined>,
   'subscribeToChannel' : ActorMethod<[Principal], undefined>,
   'unsubscribeFromChannel' : ActorMethod<[Principal], undefined>,
   'updateUserProfile' : ActorMethod<

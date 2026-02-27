@@ -1,84 +1,67 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Google/Gmail Sign-In and Account Joining",
+  "title": "Add Dollar Bank Account Withdrawal Feature",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Implement Google Sign-In on the Login page with profile setup flow",
+      "id": "REQ-2",
+      "summary": "Create a Dollar Withdrawal page at /withdrawal with balance display, withdrawal form, and transaction history",
       "acceptanceCriteria": [
-        "Login page displays a functional 'Continue with Google' button",
-        "Clicking the button triggers the Google Identity Services sign-in flow",
-        "On successful Google authentication, the parsed JWT user data (name, email, picture) is persisted via the existing useGoogleAuth hook",
-        "If no profile exists for the authenticated user, the ProfileSetupModal opens pre-filled with Google account name",
-        "If a profile already exists, the user is redirected to the home page",
-        "Google sign-in state is reflected in the Layout/navbar (shows user avatar or name from Google auth)"
+        "The page is reachable via a /withdrawal route registered in App.tsx.",
+        "Current USD balance is fetched from the backend and displayed prominently.",
+        "User can enter a withdrawal amount and submit the request.",
+        "An error message is shown if the entered amount exceeds the available balance.",
+        "A table or list of past withdrawal transactions is displayed with amount, date, and status columns.",
+        "The page shows a sign-in prompt for unauthenticated users.",
+        "Loading skeletons are displayed while data is fetching.",
+        "Offline error state is handled using the existing OfflineErrorState component."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/LoginPage.tsx",
-          "operation": "modify",
-          "description": "Add a 'Continue with Google' button that triggers the Google Sign-In flow via the useGoogleAuth hook. On successful authentication, check if a user profile exists using useGetCallerUserProfile. If no profile exists, open the ProfileSetupModal with pre-filled data from the Google JWT (displayName, avatarUrl). If a profile exists, navigate to the home page. Ensure the button is styled consistently with existing auth buttons and positioned prominently on the page."
+          "path": "frontend/src/pages/WithdrawalPage.tsx",
+          "operation": "create",
+          "description": "Create the Dollar Withdrawal page component that fetches and displays the current USD balance (converted from cents to dollars with 2 decimal places), provides an input field and submit button for withdrawal requests, validates the amount against available balance, displays a transaction history table with columns for amount, date, and status, shows authentication prompts for unauthenticated users, renders loading skeletons while data is fetching, and uses the OfflineErrorState component for offline scenarios. Use the authorization component's authentication patterns to guard access. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/Layout.tsx",
-          "operation": "modify",
-          "description": "Integrate Google authentication state from useGoogleAuth hook alongside existing Internet Identity state. When a Google session is active (useGoogleAuth returns a user object), display the Google profile picture as a circular avatar in the navbar. Ensure the avatar is clickable and navigates to the Profile page. Add a sign-out option in the user menu that clears the Google session via the useGoogleAuth clear method. Show the sign-in button only when neither Google nor Internet Identity sessions are active."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Implement Google Sign-Up on the Signup page with automatic profile setup flow",
-      "acceptanceCriteria": [
-        "Signup page displays a functional 'Join with Google' button",
-        "Clicking the button triggers the Google Identity Services sign-in flow",
-        "On successful Google authentication, the useGoogleAuth hook stores the user data",
-        "ProfileSetupModal is shown automatically with channel name pre-filled from Google display name",
-        "After profile setup is saved via useSaveCallerUserProfile, the user is navigated to the home page",
-        "Duplicate sign-in (existing profile) redirects user to home without reopening setup modal"
-      ],
-      "file_operations": [
+          "path": "frontend/src/hooks/useGetCreatorBankAccountState.ts",
+          "operation": "create",
+          "description": "Create a React Query hook that fetches the creator's bank account state (balance and withdrawals) from the backend actor using getCreatorBankAccountState, enabled only when the actor and identity are available. Return the account state with isLoading, isFetching, and error states following the existing query hook patterns in the codebase."
+        },
         {
-          "path": "frontend/src/pages/SignupPage.tsx",
+          "path": "frontend/src/hooks/useRequestWithdrawal.ts",
+          "operation": "create",
+          "description": "Create a React Query mutation hook that calls actor.requestWithdrawal with the amount in cents (user enters dollars, convert to cents by multiplying by 100), invalidates the creator bank account query cache on success, and shows a toast notification for success or error states following the existing mutation hook patterns."
+        },
+        {
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Add a 'Join with Google' button that triggers the Google Sign-In flow via the useGoogleAuth hook. On successful authentication, check if a user profile already exists using useGetCallerUserProfile. If no profile exists, open the ProfileSetupModal with pre-filled data from the Google JWT (displayName, avatarUrl). If a profile exists (duplicate sign-in), navigate directly to the home page. Ensure the button is styled consistently with existing signup options and positioned prominently below or alongside the email/password form."
+          "description": "Register a new route at path '/withdrawal' that renders the WithdrawalPage component in the existing router configuration alongside the other page routes (home, video, channel, upload, etc.). Ensure the route is wrapped in the Layout component like other authenticated pages."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Update ProfileSetupModal to accept and display Google auth pre-fill data",
+      "summary": "Add 'Withdraw' navigation link with wallet icon to sidebar and bottom navigation bar",
       "acceptanceCriteria": [
-        "ProfileSetupModal accepts optional googleDisplayName and googleAvatarUrl props",
-        "When googleDisplayName is provided, the channel name field is pre-filled with it",
-        "When googleAvatarUrl is provided, it is shown as the avatar preview in the modal",
-        "User can still override the pre-filled values before submitting",
-        "Modal submission saves profile correctly with any user-edited values"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/ProfileSetupModal.tsx",
-          "operation": "modify",
-          "description": "Add optional props googleDisplayName (string) and googleAvatarUrl (string) to the component. When googleDisplayName is provided, pre-populate the channel name input field with this value using the useState initial state or useEffect. When googleAvatarUrl is provided, display it as the initial avatar preview image in the modal. Ensure users can still edit the pre-filled channel name and upload a different avatar if desired. The form submission logic should use the final (possibly user-modified) values when calling useSaveCallerUserProfile."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Update Layout/navbar to display Google user profile with navigation and sign-out",
-      "acceptanceCriteria": [
-        "When a Google session is active (useGoogleAuth returns a user), the navbar shows the Google profile picture as a circular avatar",
-        "Hovering or clicking the avatar shows the user's Google display name",
-        "Clicking the avatar navigates to the Profile page",
-        "A sign-out option is accessible from the user avatar menu for Google-authenticated users",
-        "When neither Google nor Internet Identity session is active, the sign-in button is visible"
+        "A 'Withdraw' link with a wallet or cash icon appears in the desktop sidebar.",
+        "A 'Withdraw' tab appears in the BottomNav component on mobile.",
+        "Clicking the link navigates to /withdrawal."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/Layout.tsx",
           "operation": "modify",
-          "description": "This file operation is covered by REQ-1 (modify Layout.tsx to integrate Google auth state). Ensure the implementation includes: (1) displaying the Google profile picture from useGoogleAuth as a circular avatar when a Google session is active, (2) showing the Google display name on hover or in a dropdown menu, (3) making the avatar clickable to navigate to /profile, (4) adding a sign-out menu item that calls the useGoogleAuth clear method and clears cached data via queryClient.clear(), and (5) conditionally showing the sign-in button only when both Google and Internet Identity sessions are inactive."
+          "description": "Add a 'Withdraw' navigation link to the desktop sidebar navigation menu with a wallet icon (use lucide-react's Wallet icon), positioned after the Monetization link and before Admin Dashboard. The link should navigate to /withdrawal and use the same styling and active state logic as other sidebar links. Add multilingual label support by adding 'withdraw' key to the translations map if needed."
+        },
+        {
+          "path": "frontend/src/components/BottomNav.tsx",
+          "operation": "modify",
+          "description": "Add a 'Withdraw' tab to the mobile bottom navigation bar using the Wallet icon from lucide-react, positioned between Community and Profile tabs. The tab should link to /withdrawal and follow the existing styling and active state patterns. Add multilingual label support by using the translations context with a 'withdraw' key."
+        },
+        {
+          "path": "frontend/src/i18n/translations.ts",
+          "operation": "modify",
+          "description": "Add a 'withdraw' translation key to all language objects in the translations map with appropriate translations (e.g., 'Withdraw' for English, 'Retirar' for Spanish, etc.) to support the new withdrawal navigation labels in the sidebar and bottom navigation."
         }
       ]
     }

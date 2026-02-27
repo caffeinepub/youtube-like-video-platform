@@ -1,18 +1,39 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T03:59:26.190Z",
-  "summary": "The diff implements all four requirements: Google Sign-In on the Login page (REQ-1), Google Sign-Up on the Signup page (REQ-2), ProfileSetupModal pre-fill props (REQ-3), and Layout/navbar Google user display (REQ-4). All major acceptance criteria appear to be addressed. One minor gap exists: the navbar sign-out option for Google-authenticated users is referenced in the file summary but the Layout.tsx content is truncated, making it difficult to fully verify. The implementation is largely complete with no obvious hallucinated features.",
+  "generatedAt": "2026-02-27T04:44:15.763Z",
+  "summary": "The diff implements all three requirements: REQ-1 (backend dollar bank account model and methods), REQ-2 (WithdrawalPage at /withdrawal), and REQ-3 (sidebar and bottom nav Withdraw links). The implementation appears largely complete with minor uncertainty around backend method names due to truncation.",
   "missing_requirements": [],
-  "hallucinated_features": [],
-  "confidence": 0.82,
+  "hallucinated_features": [
+    {
+      "description": "Multi-language translations for the 'Withdraw' label in BottomNav (es, fr, de, ar, hi, ja) beyond the core English label",
+      "reason": "The build request only asked for a 'Withdraw' label with wallet/cash icon; it did not request i18n/localization of this label across multiple languages. The BottomNav and Layout.tsx add localized variants for all supported languages.",
+      "evidence": [
+        "frontend/src/components/BottomNav.tsx",
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/i18n/translations.ts"
+      ]
+    },
+    {
+      "description": "backend/migration.mo module providing a data migration path from the old actor state to the new actor state with creatorBankBalance and withdrawalRequests fields",
+      "reason": "The build request specified backend logic in main.mo but did not request a separate migration module. A migration.mo file was added as a new file.",
+      "evidence": [
+        "backend/migration.mo"
+      ]
+    }
+  ],
+  "confidence": 0.78,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
+    "frontend/src/App.tsx",
+    "frontend/src/components/BottomNav.tsx",
     "frontend/src/components/Layout.tsx",
-    "frontend/src/components/ProfileSetupModal.tsx",
-    "frontend/src/hooks/useGoogleAuth.ts",
-    "frontend/src/pages/LoginPage.tsx",
-    "frontend/src/pages/SignupPage.tsx",
+    "frontend/src/hooks/useGetCreatorBankAccountState.ts",
+    "frontend/src/hooks/useRequestWithdrawal.ts",
+    "frontend/src/i18n/translations.ts",
+    "frontend/src/pages/WithdrawalPage.tsx",
     "project_state.json"
   ]
 }

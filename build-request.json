@@ -1,102 +1,81 @@
 {
   "kind": "build_request",
-  "title": "Google/Gmail Sign-In and Account Joining",
+  "title": "Add Dollar Bank Account Withdrawal Feature",
   "projectName": "Mediatube",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Implement Google Sign-In on the Login page so users can authenticate using their Gmail/Google account via the existing Google Identity Services (GSI) script already loaded in index.html. On successful Google sign-in, if the user has no existing profile, open the ProfileSetupModal pre-filled with the Google account's name and email data. If a profile already exists, navigate the user to the home page.",
-      "target": "frontend",
+      "text": "Add a backend data model and logic for a creator dollar bank account, including: storing a USD balance (as a float or integer cents), recording withdrawal transactions (amount, timestamp, status), and exposing methods to get the current balance, request a withdrawal, and list transaction history.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-6"
         ],
         "quotes": [
-          "Continue with Google ko gmail ID joining"
+          "Dollar bank account nikal ke liye"
         ]
       },
       "acceptanceCriteria": [
-        "Login page displays a functional 'Continue with Google' button",
-        "Clicking the button triggers the Google Identity Services sign-in flow",
-        "On successful Google authentication, the parsed JWT user data (name, email, picture) is persisted via the existing useGoogleAuth hook",
-        "If no profile exists for the authenticated user, the ProfileSetupModal opens pre-filled with Google account name",
-        "If a profile already exists, the user is redirected to the home page",
-        "Google sign-in state is reflected in the Layout/navbar (shows user avatar or name from Google auth)"
+        "Backend stores a USD balance per authenticated user.",
+        "A withdraw method accepts an amount and creates a pending transaction record.",
+        "A getBalance method returns the current balance for the caller.",
+        "A getTransactionHistory method returns a list of past withdrawal records with amount, timestamp, and status.",
+        "Withdrawals that exceed the available balance are rejected with an error."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Implement Google Sign-Up on the Signup page so new users can create an account by joining with their Gmail/Google ID. On successful Google authentication for a new user, open the ProfileSetupModal pre-filled with data from the Google JWT (name, profile picture URL) to complete channel setup.",
+      "text": "Create a Dollar Withdrawal page (route: /withdrawal) accessible from the sidebar and/or the Monetization page. The page must display the current USD balance, an input field for the withdrawal amount, a submit button to request a withdrawal, and a transaction history table showing past withdrawals with their amount, date, and status.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-6"
         ],
         "quotes": [
-          "Continue with Google ko gmail ID joining"
+          "Dollar bank account nikal ke liye"
         ]
       },
       "acceptanceCriteria": [
-        "Signup page displays a functional 'Join with Google' button",
-        "Clicking the button triggers the Google Identity Services sign-in flow",
-        "On successful Google authentication, the useGoogleAuth hook stores the user data",
-        "ProfileSetupModal is shown automatically with channel name pre-filled from Google display name",
-        "After profile setup is saved via useSaveCallerUserProfile, the user is navigated to the home page",
-        "Duplicate sign-in (existing profile) redirects user to home without reopening setup modal"
+        "The page is reachable via a /withdrawal route registered in App.tsx.",
+        "Current USD balance is fetched from the backend and displayed prominently.",
+        "User can enter a withdrawal amount and submit the request.",
+        "An error message is shown if the entered amount exceeds the available balance.",
+        "A table or list of past withdrawal transactions is displayed with amount, date, and status columns.",
+        "The page shows a sign-in prompt for unauthenticated users.",
+        "Loading skeletons are displayed while data is fetching.",
+        "Offline error state is handled using the existing OfflineErrorState component."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Update the ProfileSetupModal component to accept optional pre-fill props (displayName, avatarUrl) sourced from Google auth data. When these props are provided, pre-populate the channel name input and attempt to display the Google profile picture as the initial avatar preview.",
+      "text": "Add a navigation link to the Dollar Withdrawal page in the sidebar (desktop) and the bottom navigation bar (mobile), using an appropriate wallet/withdrawal icon and label 'Withdraw'.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-6"
         ],
         "quotes": [
-          "Continue with Google ko gmail ID joining"
+          "Dollar bank account nikal ke liye"
         ]
       },
       "acceptanceCriteria": [
-        "ProfileSetupModal accepts optional googleDisplayName and googleAvatarUrl props",
-        "When googleDisplayName is provided, the channel name field is pre-filled with it",
-        "When googleAvatarUrl is provided, it is shown as the avatar preview in the modal",
-        "User can still override the pre-filled values before submitting",
-        "Modal submission saves profile correctly with any user-edited values"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Update the Layout/navbar component to display the authenticated Google user's profile picture and display name when signed in via Google (useGoogleAuth hook). Clicking the avatar should navigate to the Profile page. Show a sign-in button when no Google session and no Internet Identity session is active.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Continue with Google ko gmail ID joining"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When a Google session is active (useGoogleAuth returns a user), the navbar shows the Google profile picture as a circular avatar",
-        "Hovering or clicking the avatar shows the user's Google display name",
-        "Clicking the avatar navigates to the Profile page",
-        "A sign-out option is accessible from the user avatar menu for Google-authenticated users",
-        "When neither Google nor Internet Identity session is active, the sign-in button is visible"
+        "A 'Withdraw' link with a wallet or cash icon appears in the desktop sidebar.",
+        "A 'Withdraw' tab appears in the BottomNav component on mobile.",
+        "Clicking the link navigates to /withdrawal."
       ]
     }
   ],
   "constraints": [
-    "Use the existing useGoogleAuth hook and the Google Identity Services script already loaded in index.html — do not introduce a new OAuth library",
-    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui",
-    "Internet Identity login must remain fully functional alongside Google sign-in"
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
+    "All backend logic must remain in the single main actor (backend/main.mo).",
+    "Use the existing OfflineErrorState and NetworkStatusBanner components for offline handling."
   ],
   "nonGoals": [
-    "Backend authentication changes — Google auth is handled client-side via GSI JWT",
-    "Email/password authentication implementation",
-    "Facebook, GitHub, or other third-party OAuth providers",
-    "Merging Google and Internet Identity accounts into a single identity"
+    "Real money transfer or integration with any external payment gateway.",
+    "Stripe or any third-party payment processing.",
+    "Email or SMS notifications for withdrawal status changes.",
+    "Admin approval workflow for withdrawals (basic status tracking only)."
   ],
   "imageRequirements": {
     "required": [],

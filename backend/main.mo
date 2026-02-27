@@ -10,8 +10,11 @@ import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
 import Iter "mo:core/Iter";
+import Migration "migration";
 import AccessControl "authorization/access-control";
 
+// Migrate on upgrade to persist data
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -812,5 +815,194 @@ actor {
     };
 
     stats;
+  };
+
+  // Creator Dollar Bank Account
+  public type WithdrawalStatus = {
+    #pending;
+    #approved;
+    #cancelled;
+  };
+
+  public type Withdrawal = {
+    amountCents : Nat;
+    timestamp : Time.Time;
+    status : WithdrawalStatus;
+  };
+
+  public type AccountState = {
+    balanceCents : Nat;
+    withdrawals : [Withdrawal];
+  };
+
+  var creatorBankBalance = 0; // Balance in cents
+  var withdrawalRequests : [Withdrawal] = [];
+
+  // Get Account State (Balance + Withdrawals) - creator (user) access
+  public query ({ caller }) func getCreatorBankAccountState() : async AccountState {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access their account state");
+    };
+    {
+      balanceCents = creatorBankBalance;
+      withdrawals = withdrawalRequests;
+    };
+  };
+
+  // Get Balance (Cents) - creator (user) access
+  public query ({ caller }) func getCreatorBankBalanceCents() : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access their balance");
+    };
+    creatorBankBalance;
+  };
+
+  // Request Withdrawal - creator (user) action
+  public shared ({ caller }) func requestWithdrawal(amountCents : Nat) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can request withdrawals");
+    };
+
+    if (amountCents == 0 or amountCents > creatorBankBalance) {
+      Runtime.trap("Invalid withdrawal amount");
+    };
+
+    // Check for pending withdrawals
+    let hasPending = withdrawalRequests.any(
+      func(w) {
+        switch (w.status) {
+          case (#pending) { true };
+          case (_) { false };
+        };
+      }
+    );
+
+    if (hasPending) {
+      Runtime.trap("Existing pending withdrawal");
+    };
+
+    let newWithdrawal : Withdrawal = {
+      amountCents;
+      timestamp = Time.now();
+      status = #pending;
+    };
+
+    withdrawalRequests := withdrawalRequests.concat([newWithdrawal]);
+  };
+
+  // Approve Withdrawal - admin-only action (admin processes the payout)
+  public shared ({ caller }) func approveWithdrawal() : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admin can approve withdrawals");
+    };
+
+    // Find the index of the first pending withdrawal (search from start)
+    let pendingIndex = withdrawalRequests.findIndex(
+      func(w) {
+        switch (w.status) {
+          case (#pending) { true };
+          case (_) { false };
+        };
+      }
+    );
+
+    switch (pendingIndex) {
+      case (null) { Runtime.trap("No pending withdrawals found") };
+      case (?index) {
+        let withdrawalToApprove = withdrawalRequests[index];
+        let approvedWithdrawal = {
+          withdrawalToApprove with
+          status = #approved : WithdrawalStatus
+        };
+
+        if (creatorBankBalance >= withdrawalToApprove.amountCents) {
+          creatorBankBalance -= withdrawalToApprove.amountCents;
+        } else {
+          Runtime.trap("Insufficient balance for withdrawal approval");
+        };
+
+        // Remove the pending withdrawal from the array
+        let beforePendingWith = withdrawalRequests.sliceToArray(0, index);
+        let afterPending = withdrawalRequests.sliceToArray(index + 1, withdrawalRequests.size());
+        withdrawalRequests := beforePendingWith.concat(afterPending).concat([approvedWithdrawal]);
+      };
+    };
+  };
+
+  // Cancel Withdrawal - creator (user) can cancel their own pending withdrawal
+  public shared ({ caller }) func cancelWithdrawal() : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can cancel withdrawals");
+    };
+
+    // Find the index of the first pending withdrawal (search from start)
+    let firstPendingIndex = withdrawalRequests.findIndex(
+      func(w) {
+        switch (w.status) {
+          case (#pending) { true };
+          case (_) { false };
+        };
+      }
+    );
+
+    switch (firstPendingIndex) {
+      case (null) { () };
+      case (?index) {
+        let withdrawalToCancel = withdrawalRequests[index];
+        let cancelledWithdrawal = {
+          withdrawalToCancel with
+          status = #cancelled : WithdrawalStatus
+        };
+
+        // Remove the cancelled withdrawal from the array
+        let beforeCancelled = withdrawalRequests.sliceToArray(0, index);
+        let afterCancelled = withdrawalRequests.sliceToArray(index + 1, withdrawalRequests.size());
+        withdrawalRequests := beforeCancelled.concat(afterCancelled).concat([cancelledWithdrawal]);
+      };
+    };
+  };
+
+  // Simulate Incoming Test Payment - admin-only action
+  public shared ({ caller }) func simulateAdminBankPayment(testAmountCents : Nat) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admin can simulate payments");
+    };
+    creatorBankBalance += testAmountCents;
+  };
+
+  // Remove Last Pending Withdrawal - creator (user) action
+  public shared ({ caller }) func removeLastPendingWithdrawal() : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can remove their pending withdrawals");
+    };
+
+    let lastPendingIndex = switch (withdrawalRequests.size()) {
+      case (0) { null };
+      case (size) { ?(size - 1) };
+    };
+
+    switch (lastPendingIndex) {
+      case (null) { Runtime.trap("No pending withdrawals to remove") };
+      case (?index) {
+        if (switch (withdrawalRequests[index].status) { case (#pending) { true }; case (_) { false } }) {
+          withdrawalRequests := withdrawalRequests.sliceToArray(0, index);
+        };
+      };
+    };
+  };
+
+  // Check for account deletion - creator (user) access
+  public query ({ caller }) func getHasUnapprovedWithdrawal() : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can check their withdrawal status");
+    };
+    withdrawalRequests.find(
+      func(w) {
+        switch (w.status) {
+          case (#pending) { true };
+          case (_) { false };
+        };
+      }
+    ) != null;
   };
 };

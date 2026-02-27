@@ -1,12 +1,15 @@
 # Specification
 
 ## Summary
-**Goal:** Add Google/Gmail Sign-In and Sign-Up support to the Mediatube app using the existing Google Identity Services integration.
+**Goal:** Add a Dollar Bank Account Withdrawal feature to Mediatube, allowing creators to view their USD balance, request withdrawals, and track transaction history.
 
 **Planned changes:**
-- Add a "Continue with Google" button on the Login page that triggers Google Identity Services sign-in; on success, redirect to home if a profile exists, or open ProfileSetupModal pre-filled with Google account data if not
-- Add a "Join with Google" button on the Signup page that triggers Google sign-in for new users and opens ProfileSetupModal pre-filled with Google name and avatar
-- Update ProfileSetupModal to accept optional `googleDisplayName` and `googleAvatarUrl` props for pre-filling the channel name and avatar preview
-- Update the Layout/navbar to display the Google user's profile picture and display name as a circular avatar when signed in via Google, with navigation to the Profile page and a sign-out option; show the sign-in button when no session is active
+- Add backend data model in `backend/main.mo` to store a USD balance per user, record withdrawal transactions (amount, timestamp, status), and expose `getBalance`, `requestWithdrawal`, and `getTransactionHistory` methods
+- Reject withdrawal requests that exceed the available balance with an appropriate error
+- Create a new `/withdrawal` page displaying the current USD balance, a withdrawal amount input with submit button, and a transaction history table (amount, date, status)
+- Show sign-in prompt for unauthenticated users, loading skeletons while fetching, and handle offline state with the existing `OfflineErrorState` component
+- Register the `/withdrawal` route in `App.tsx`
+- Add a "Withdraw" navigation link (wallet/cash icon) to the desktop sidebar
+- Add a "Withdraw" tab to the mobile `BottomNav` component
 
-**User-visible outcome:** Users can sign in or sign up using their Google/Gmail account. The navbar reflects the Google profile picture and name, and new users are guided through profile setup with their Google data pre-filled.
+**User-visible outcome:** Creators can navigate to the Withdraw page from the sidebar or bottom nav, see their current USD balance, submit a withdrawal request, and review their past withdrawal transactions with status updates.

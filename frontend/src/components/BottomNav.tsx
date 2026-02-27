@@ -1,16 +1,16 @@
 import React from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Home, TrendingUp, PlaySquare, Users, User } from 'lucide-react';
+import { Home, TrendingUp, PlaySquare, Users, User, Wallet } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const LABELS: Record<string, Record<string, string>> = {
-  en: { home: 'Home', shorts: 'Shorts', subscriptions: 'Subs', community: 'Community', profile: 'Profile' },
-  es: { home: 'Inicio', shorts: 'Cortos', subscriptions: 'Subs', community: 'Comunidad', profile: 'Perfil' },
-  fr: { home: 'Accueil', shorts: 'Courts', subscriptions: 'Abos', community: 'Communauté', profile: 'Profil' },
-  de: { home: 'Start', shorts: 'Shorts', subscriptions: 'Abos', community: 'Gemeinschaft', profile: 'Profil' },
-  ar: { home: 'الرئيسية', shorts: 'قصيرة', subscriptions: 'اشتراكات', community: 'مجتمع', profile: 'ملف' },
-  hi: { home: 'होम', shorts: 'शॉर्ट्स', subscriptions: 'सदस्यता', community: 'समुदाय', profile: 'प्रोफ़ाइल' },
-  ja: { home: 'ホーム', shorts: 'ショート', subscriptions: '登録', community: 'コミュニティ', profile: 'プロフィール' },
+  en: { home: 'Home', shorts: 'Shorts', subscriptions: 'Subs', community: 'Community', profile: 'Profile', withdraw: 'Withdraw' },
+  es: { home: 'Inicio', shorts: 'Cortos', subscriptions: 'Subs', community: 'Comunidad', profile: 'Perfil', withdraw: 'Retirar' },
+  fr: { home: 'Accueil', shorts: 'Courts', subscriptions: 'Abos', community: 'Communauté', profile: 'Profil', withdraw: 'Retirer' },
+  de: { home: 'Start', shorts: 'Shorts', subscriptions: 'Abos', community: 'Gemeinschaft', profile: 'Profil', withdraw: 'Abheben' },
+  ar: { home: 'الرئيسية', shorts: 'قصيرة', subscriptions: 'اشتراكات', community: 'مجتمع', profile: 'ملف', withdraw: 'سحب' },
+  hi: { home: 'होम', shorts: 'शॉर्ट्स', subscriptions: 'सदस्यता', community: 'समुदाय', profile: 'प्रोफ़ाइल', withdraw: 'निकासी' },
+  ja: { home: 'ホーム', shorts: 'ショート', subscriptions: '登録', community: 'コミュニティ', profile: 'プロフィール', withdraw: '出金' },
 };
 
 function getLabel(lang: string, key: string): string {
@@ -21,7 +21,7 @@ const NAV_ITEMS = [
   { icon: Home, label: 'home', path: '/' },
   { icon: TrendingUp, label: 'shorts', path: '/shorts' },
   { icon: PlaySquare, label: 'subscriptions', path: '/subscriptions' },
-  { icon: Users, label: 'community', path: '/community' },
+  { icon: Wallet, label: 'withdraw', path: '/withdrawal' },
   { icon: User, label: 'profile', path: '/profile' },
 ];
 

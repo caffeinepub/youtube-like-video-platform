@@ -3,9 +3,12 @@ import { useGetAllVideos } from '../hooks/useGetAllVideos';
 import VideoCard from '../components/VideoCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Zap } from 'lucide-react';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import OfflineErrorState from '../components/OfflineErrorState';
 
 export default function ShortsPage() {
-  const { data: allVideos = [], isLoading } = useGetAllVideos();
+  const isOnline = useNetworkStatus();
+  const { data: allVideos = [], isLoading, refetch } = useGetAllVideos();
   const shorts = allVideos.filter((v) => v.isShort);
 
   return (
@@ -21,8 +24,16 @@ export default function ShortsPage() {
         </div>
       </div>
 
+      {/* Offline + loading state */}
+      {!isOnline && isLoading && (
+        <OfflineErrorState
+          onRetry={() => refetch()}
+          message="Unable to load shorts. Please check your internet connection."
+        />
+      )}
+
       {/* Loading state */}
-      {isLoading && (
+      {isOnline && isLoading && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {Array.from({ length: 10 }).map((_, i) => (
             <div key={i} className="space-y-2">
@@ -34,8 +45,16 @@ export default function ShortsPage() {
         </div>
       )}
 
+      {/* Offline + no data */}
+      {!isOnline && !isLoading && shorts.length === 0 && (
+        <OfflineErrorState
+          onRetry={() => refetch()}
+          message="Unable to load shorts. Please check your internet connection."
+        />
+      )}
+
       {/* Empty state */}
-      {!isLoading && shorts.length === 0 && (
+      {isOnline && !isLoading && shorts.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
           <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
             <Zap className="w-8 h-8 text-muted-foreground" />

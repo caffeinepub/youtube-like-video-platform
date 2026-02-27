@@ -12,6 +12,8 @@ import AddToPlaylistButton from '../components/AddToPlaylistButton';
 import { useGetUserProfile } from '../hooks/useGetUserProfile';
 import { formatViewCount, formatTimeAgo } from '../utils/formatters';
 import { convertBlobToDataURL } from '../utils/avatarHelpers';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import OfflineErrorState from '../components/OfflineErrorState';
 import { ThumbsUp, ThumbsDown, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -40,8 +42,9 @@ function parseChapters(description: string): Chapter[] {
 
 export default function VideoPlayerPage() {
   const { videoId } = useParams({ from: '/video/$videoId' });
-  const { data: video, isLoading } = useGetVideo(videoId);
-  const { data: allVideos = [], isLoading: videosLoading } = useGetAllVideos();
+  const isOnline = useNetworkStatus();
+  const { data: video, isLoading, refetch: refetchVideo } = useGetVideo(videoId);
+  const { data: allVideos = [], isLoading: videosLoading, refetch: refetchAllVideos } = useGetAllVideos();
   const { mutate: incrementViewCount } = useIncrementViewCount();
 
   // video.uploader is a Principal — pass it directly (undefined-safe)
@@ -69,6 +72,22 @@ export default function VideoPlayerPage() {
     return parseChapters(video.description);
   }, [video?.description]);
 
+  const handleRetry = () => {
+    refetchVideo();
+    refetchAllVideos();
+  };
+
+  if (isLoading && !isOnline) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <OfflineErrorState
+          onRetry={handleRetry}
+          message="Unable to load video. Please check your internet connection."
+        />
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-6">
@@ -82,7 +101,14 @@ export default function VideoPlayerPage() {
   if (!video) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-6 text-center">
-        <p className="text-muted-foreground">Video not found.</p>
+        {!isOnline ? (
+          <OfflineErrorState
+            onRetry={handleRetry}
+            message="Unable to load video. Please check your internet connection."
+          />
+        ) : (
+          <p className="text-muted-foreground">Video not found.</p>
+        )}
       </div>
     );
   }

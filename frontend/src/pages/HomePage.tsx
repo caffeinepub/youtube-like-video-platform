@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useGetAllVideos } from '../hooks/useGetAllVideos';
 import VideoCard from '../components/VideoCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import OfflineErrorState from '../components/OfflineErrorState';
 
 const CATEGORIES = [
   'All', 'Trending', 'Gaming', 'Music', 'Sports', 'News',
@@ -11,7 +13,8 @@ const CATEGORIES = [
 
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState('All');
-  const { data: videos = [], isLoading } = useGetAllVideos();
+  const isOnline = useNetworkStatus();
+  const { data: videos = [], isLoading, refetch } = useGetAllVideos();
 
   const filteredVideos = activeCategory === 'All'
     ? videos.filter((v) => !v.isShort)
@@ -40,7 +43,12 @@ export default function HomePage() {
 
       {/* Video Grid */}
       <div className="px-4 py-6">
-        {isLoading ? (
+        {!isOnline && isLoading ? (
+          <OfflineErrorState
+            onRetry={() => refetch()}
+            message="Unable to load videos. Please check your internet connection."
+          />
+        ) : isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="space-y-3">
@@ -56,6 +64,11 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        ) : !isOnline && filteredVideos.length === 0 ? (
+          <OfflineErrorState
+            onRetry={() => refetch()}
+            message="Unable to load videos. Please check your internet connection."
+          />
         ) : filteredVideos.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-20 h-20 rounded-full bg-yt-chip flex items-center justify-center mb-4">

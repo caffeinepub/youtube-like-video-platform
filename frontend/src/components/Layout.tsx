@@ -6,6 +6,7 @@ import { useGetCallerUserProfile } from '../hooks/useGetCallerUserProfile';
 import { useQueryClient } from '@tanstack/react-query';
 import ProfileSetupModal from './ProfileSetupModal';
 import LanguageSelector from './LanguageSelector';
+import NetworkStatusBanner from './NetworkStatusBanner';
 import { useLanguage } from '../contexts/LanguageContext';
 import { convertBlobToDataURL, getInitials } from '../utils/avatarHelpers';
 import {
@@ -30,6 +31,7 @@ import {
   LogOut,
   Mic,
   MicOff,
+  Wallet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,6 +64,7 @@ const ACCOUNT_NAV_ITEMS = [
   { icon: Key, label: 'apiKeys', path: '/api-keys' },
   { icon: Upload, label: 'upload', path: '/upload' },
   { icon: DollarSign, label: 'monetization', path: '/monetization' },
+  { icon: Wallet, label: 'withdraw', path: '/withdrawal' },
 ];
 
 const LABELS: Record<string, Record<string, string>> = {
@@ -71,7 +74,7 @@ const LABELS: Record<string, Record<string, string>> = {
     profile: 'Profile', apiKeys: 'API Keys', upload: 'Upload',
     monetization: 'Monetization', search: 'Search', signIn: 'Sign In',
     signOut: 'Sign Out', admin: 'Admin', download: 'Download App',
-    copyright: 'Copyright Policy',
+    copyright: 'Copyright Policy', withdraw: 'Withdraw',
   },
   es: {
     home: 'Inicio', trending: 'Cortos', subscriptions: 'Suscripciones',
@@ -79,7 +82,7 @@ const LABELS: Record<string, Record<string, string>> = {
     profile: 'Perfil', apiKeys: 'Claves API', upload: 'Subir',
     monetization: 'Monetización', search: 'Buscar', signIn: 'Iniciar sesión',
     signOut: 'Cerrar sesión', admin: 'Admin', download: 'Descargar App',
-    copyright: 'Política de derechos',
+    copyright: 'Política de derechos', withdraw: 'Retirar',
   },
   fr: {
     home: 'Accueil', trending: 'Courts', subscriptions: 'Abonnements',
@@ -87,7 +90,7 @@ const LABELS: Record<string, Record<string, string>> = {
     profile: 'Profil', apiKeys: 'Clés API', upload: 'Télécharger',
     monetization: 'Monétisation', search: 'Rechercher', signIn: 'Se connecter',
     signOut: 'Se déconnecter', admin: 'Admin', download: 'Télécharger App',
-    copyright: 'Politique droits',
+    copyright: 'Politique droits', withdraw: 'Retirer',
   },
   de: {
     home: 'Startseite', trending: 'Shorts', subscriptions: 'Abonnements',
@@ -95,7 +98,7 @@ const LABELS: Record<string, Record<string, string>> = {
     profile: 'Profil', apiKeys: 'API-Schlüssel', upload: 'Hochladen',
     monetization: 'Monetarisierung', search: 'Suchen', signIn: 'Anmelden',
     signOut: 'Abmelden', admin: 'Admin', download: 'App herunterladen',
-    copyright: 'Urheberrecht',
+    copyright: 'Urheberrecht', withdraw: 'Abheben',
   },
   ar: {
     home: 'الرئيسية', trending: 'قصيرة', subscriptions: 'اشتراكات',
@@ -103,7 +106,7 @@ const LABELS: Record<string, Record<string, string>> = {
     profile: 'ملف', apiKeys: 'مفاتيح API', upload: 'رفع',
     monetization: 'تحقيق الدخل', search: 'بحث', signIn: 'تسجيل الدخول',
     signOut: 'تسجيل الخروج', admin: 'مشرف', download: 'تحميل التطبيق',
-    copyright: 'سياسة حقوق النشر',
+    copyright: 'سياسة حقوق النشر', withdraw: 'سحب',
   },
   hi: {
     home: 'होम', trending: 'शॉर्ट्स', subscriptions: 'सदस्यता',
@@ -111,7 +114,7 @@ const LABELS: Record<string, Record<string, string>> = {
     profile: 'प्रोफ़ाइल', apiKeys: 'API कुंजी', upload: 'अपलोड',
     monetization: 'मुद्रीकरण', search: 'खोज', signIn: 'साइन इन',
     signOut: 'साइन आउट', admin: 'एडमिन', download: 'ऐप डाउनलोड',
-    copyright: 'कॉपीराइट नीति',
+    copyright: 'कॉपीराइट नीति', withdraw: 'निकासी',
   },
   ja: {
     home: 'ホーム', trending: 'ショート', subscriptions: '登録チャンネル',
@@ -119,7 +122,7 @@ const LABELS: Record<string, Record<string, string>> = {
     profile: 'プロフィール', apiKeys: 'APIキー', upload: 'アップロード',
     monetization: '収益化', search: '検索', signIn: 'ログイン',
     signOut: 'ログアウト', admin: '管理者', download: 'アプリをダウンロード',
-    copyright: '著作権ポリシー',
+    copyright: '著作権ポリシー', withdraw: '出金',
   },
 };
 
@@ -192,6 +195,9 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Toaster richColors position="top-right" />
+
+      {/* Network Status Banner - appears above everything */}
+      <NetworkStatusBanner />
 
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border h-14 flex items-center px-4 gap-3">
@@ -323,6 +329,12 @@ export default function Layout({ children }: LayoutProps) {
                       {t('monetization')}
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/withdrawal" className="flex items-center gap-2 cursor-pointer">
+                      <Wallet className="w-4 h-4" />
+                      {t('withdraw')}
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={handleLogout}
@@ -351,15 +363,14 @@ export default function Layout({ children }: LayoutProps) {
         {/* Sidebar */}
         <aside
           className={`
-            fixed lg:sticky top-14 left-0 z-40 h-[calc(100vh-3.5rem)]
-            w-56 bg-background border-r border-border
-            flex flex-col overflow-y-auto
-            transition-transform duration-200
-            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+            fixed inset-y-0 left-0 z-40 w-56 bg-background border-r border-border pt-14
+            transform transition-transform duration-200 ease-in-out
+            lg:relative lg:translate-x-0 lg:pt-0 lg:flex lg:flex-col lg:shrink-0
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           `}
         >
-          <nav className="flex-1 py-3 px-2 space-y-0.5">
-            {/* Main Nav */}
+          <nav className="flex flex-col gap-1 p-3 overflow-y-auto h-full">
+            {/* Main nav */}
             {NAV_ITEMS.map(({ icon: Icon, label, path }) => {
               const isActive = currentPath === path;
               return (
@@ -370,66 +381,76 @@ export default function Layout({ children }: LayoutProps) {
                   className={`
                     flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
                     ${isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-foreground/70 hover:bg-muted hover:text-foreground'
+                      ? 'bg-mt-magenta/15 text-mt-magenta'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                     }
                   `}
                 >
-                  <Icon className="w-5 h-5 shrink-0" />
+                  <Icon className="w-4 h-4 shrink-0" />
                   {t(label)}
                 </Link>
               );
             })}
 
-            {/* Account Section */}
+            {/* Divider */}
+            <div className="my-2 border-t border-border" />
+
+            {/* Account nav */}
+            {isAuthenticated && ACCOUNT_NAV_ITEMS.map(({ icon: Icon, label, path }) => {
+              const isActive = currentPath === path;
+              return (
+                <Link
+                  key={path}
+                  to={path}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`
+                    flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                    ${isActive
+                      ? 'bg-mt-magenta/15 text-mt-magenta'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }
+                  `}
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
+                  {t(label)}
+                </Link>
+              );
+            })}
+
+            {/* Admin link */}
             {isAuthenticated && (
-              <>
-                <div className="pt-3 pb-1 px-3">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Account
-                  </p>
-                </div>
-                {ACCOUNT_NAV_ITEMS.map(({ icon: Icon, label, path }) => {
-                  const isActive = currentPath === path;
-                  return (
-                    <Link
-                      key={path}
-                      to={path}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`
-                        flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                        ${isActive
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-foreground/70 hover:bg-muted hover:text-foreground'
-                        }
-                      `}
-                    >
-                      <Icon className="w-5 h-5 shrink-0" />
-                      {t(label)}
-                    </Link>
-                  );
-                })}
-              </>
+              <Link
+                to="/admin"
+                onClick={() => setSidebarOpen(false)}
+                className={`
+                  flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                  ${currentPath === '/admin'
+                    ? 'bg-mt-magenta/15 text-mt-magenta'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }
+                `}
+              >
+                <Shield className="w-4 h-4 shrink-0" />
+                {t('admin')}
+              </Link>
             )}
 
-            {/* More Links */}
-            <div className="pt-3 pb-1 px-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                More
-              </p>
-            </div>
+            {/* Divider */}
+            <div className="my-2 border-t border-border" />
+
+            {/* Download & Copyright */}
             <Link
               to="/download"
               onClick={() => setSidebarOpen(false)}
               className={`
                 flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
                 ${currentPath === '/download'
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-foreground/70 hover:bg-muted hover:text-foreground'
+                  ? 'bg-mt-magenta/15 text-mt-magenta'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }
               `}
             >
-              <Download className="w-5 h-5 shrink-0" />
+              <Download className="w-4 h-4 shrink-0" />
               {t('download')}
             </Link>
             <Link
@@ -438,33 +459,15 @@ export default function Layout({ children }: LayoutProps) {
               className={`
                 flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
                 ${currentPath === '/copyright-policy'
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-foreground/70 hover:bg-muted hover:text-foreground'
+                  ? 'bg-mt-magenta/15 text-mt-magenta'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }
               `}
             >
-              <Shield className="w-5 h-5 shrink-0" />
+              <BookOpen className="w-4 h-4 shrink-0" />
               {t('copyright')}
             </Link>
           </nav>
-
-          {/* Sidebar Footer */}
-          <div className="p-3 border-t border-border">
-            <p className="text-xs text-muted-foreground text-center">
-              © {new Date().getFullYear()} Mediatube
-            </p>
-            <p className="text-xs text-muted-foreground text-center mt-1">
-              Built with ❤️ using{' '}
-              <a
-                href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                caffeine.ai
-              </a>
-            </p>
-          </div>
         </aside>
 
         {/* Sidebar overlay for mobile */}
@@ -476,10 +479,26 @@ export default function Layout({ children }: LayoutProps) {
         )}
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto min-w-0 pb-16 lg:pb-0">
+        <main className="flex-1 overflow-y-auto min-w-0">
           {children}
         </main>
       </div>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-background py-4 px-6 text-center text-xs text-muted-foreground hidden lg:block">
+        <p>
+          © {new Date().getFullYear()} Mediatube and Photo. {t('allRightsReserved') || 'All rights reserved.'}{' '}
+          Built with ❤️ using{' '}
+          <a
+            href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== 'undefined' ? window.location.hostname : 'unknown-app')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-mt-magenta hover:underline"
+          >
+            caffeine.ai
+          </a>
+        </p>
+      </footer>
 
       {/* Profile Setup Modal */}
       {showProfileSetup && (
@@ -490,6 +509,15 @@ export default function Layout({ children }: LayoutProps) {
           googleAvatarUrl={googleUser?.picture}
         />
       )}
+
+      {/* Bottom Nav for mobile */}
+      <BottomNavWrapper />
     </div>
   );
+}
+
+// Import BottomNav lazily to avoid circular deps
+import BottomNav from './BottomNav';
+function BottomNavWrapper() {
+  return <BottomNav />;
 }

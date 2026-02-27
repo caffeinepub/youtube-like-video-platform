@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { LogIn, UserPlus } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import type { VideoMetadata } from '../backend';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import OfflineErrorState from '../components/OfflineErrorState';
 
 type Tab = 'forYou' | 'following';
 
@@ -20,9 +22,10 @@ export default function ReelsPage() {
 
   const { identity } = useInternetIdentity();
   const isAuthenticated = !!identity;
+  const isOnline = useNetworkStatus();
 
-  const { data: allVideos, isLoading: allLoading } = useGetAllVideos();
-  const { data: subscribedReels, isLoading: subscribedLoading } = useGetSubscribedReels();
+  const { data: allVideos, isLoading: allLoading, refetch: refetchAll } = useGetAllVideos();
+  const { data: subscribedReels, isLoading: subscribedLoading, refetch: refetchSubscribed } = useGetSubscribedReels();
 
   const forYouReels = (allVideos || []).filter((v) => v.isShort);
   const followingReels = subscribedReels || [];
@@ -31,6 +34,14 @@ export default function ReelsPage() {
     activeTab === 'forYou' ? forYouReels : followingReels;
 
   const isLoading = activeTab === 'forYou' ? allLoading : subscribedLoading;
+
+  const handleRetry = () => {
+    if (activeTab === 'forYou') {
+      refetchAll();
+    } else {
+      refetchSubscribed();
+    }
+  };
 
   // Intersection Observer to track active reel
   const setupObserver = useCallback(() => {
@@ -105,7 +116,15 @@ export default function ReelsPage() {
       </div>
 
       {/* Content */}
-      {isLoading ? (
+      {!isOnline && isLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <OfflineErrorState
+            onRetry={handleRetry}
+            message="Unable to load reels. Please check your internet connection."
+            className="text-white [&_h2]:text-white [&_p]:text-white/60"
+          />
+        </div>
+      ) : isLoading ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="w-full max-w-sm mx-auto space-y-3 px-4">
             <Skeleton className="w-full aspect-[9/16] rounded-xl bg-white/10" />
@@ -146,6 +165,14 @@ export default function ReelsPage() {
               Discover Channels
             </Button>
           </div>
+        </div>
+      ) : !isOnline && activeReels.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center">
+          <OfflineErrorState
+            onRetry={handleRetry}
+            message="Unable to load reels. Please check your internet connection."
+            className="text-white [&_h2]:text-white [&_p]:text-white/60"
+          />
         </div>
       ) : activeReels.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">

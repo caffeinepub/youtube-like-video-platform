@@ -2,32 +2,13 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-implement-google-sign-in-on-the-login-page-so-users-can-authenticate-using-their-gmail-google-account-via-the-existing-google-identity-services-gsi-script-already-loaded-in-index-html-on-successful-google-sign-in-if-the-user-has-no-existing-profile-open-the-profilesetupmodal-pre-filled-with-the-google-account-s-name-and-email-data-if-a-profile-already-exists-navigate-the-user-to-the-home-page",
-      "featureTitle": "Implement Google Sign-In on the Login page so users can authenticate using their Gmail/Google account via the existing Google Identity Services (GSI) script already loaded in index.html. On successful Google sign-in, if the user has no existing profile, open the ProfileSetupModal pre-filled with the Google account's name and email data. If a profile already exists, navigate the user to the home page.",
+      "featureId": "feature-create-a-dollar-withdrawal-page-route-withdrawal-accessible-from-the-sidebar-and-or-the-monetization-page-the-page-must-display-the-current-usd-balance-an-input-field-for-the-withdrawal-amount-a-submit-button-to-request-a-withdrawal-and-a-transaction-history-table-showing-past-withdrawals-with-their-amount-date-and-status",
+      "featureTitle": "Create a Dollar Withdrawal page (route: /withdrawal) accessible from the sidebar and/or the Monetization page. The page must display the current USD balance, an input field for the withdrawal amount, a submit button to request a withdrawal, and a transaction history table showing past withdrawals with their amount, date, and status.",
       "files": [
-        "frontend/src/components/Layout.tsx",
-        "frontend/src/pages/LoginPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "camera@1.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-google-sign-up-on-the-signup-page-so-new-users-can-create-an-account-by-joining-with-their-gmail-google-id-on-successful-google-authentication-for-a-new-user-open-the-profilesetupmodal-pre-filled-with-data-from-the-google-jwt-name-profile-picture-url-to-complete-channel-setup",
-      "featureTitle": "Implement Google Sign-Up on the Signup page so new users can create an account by joining with their Gmail/Google ID. On successful Google authentication for a new user, open the ProfileSetupModal pre-filled with data from the Google JWT (name, profile picture URL) to complete channel setup.",
-      "files": [
-        "frontend/src/pages/SignupPage.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/hooks/useGetCreatorBankAccountState.ts",
+        "frontend/src/hooks/useRequestWithdrawal.ts",
+        "frontend/src/pages/WithdrawalPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -45,10 +26,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-profilesetupmodal-component-to-accept-optional-pre-fill-props-displayname-avatarurl-sourced-from-google-auth-data-when-these-props-are-provided-pre-populate-the-channel-name-input-and-attempt-to-display-the-google-profile-picture-as-the-initial-avatar-preview",
-      "featureTitle": "Update the ProfileSetupModal component to accept optional pre-fill props (displayName, avatarUrl) sourced from Google auth data. When these props are provided, pre-populate the channel name input and attempt to display the Google profile picture as the initial avatar preview.",
+      "featureId": "feature-add-a-navigation-link-to-the-dollar-withdrawal-page-in-the-sidebar-desktop-and-the-bottom-navigation-bar-mobile-using-an-appropriate-wallet-withdrawal-icon-and-label-withdraw",
+      "featureTitle": "Add a navigation link to the Dollar Withdrawal page in the sidebar (desktop) and the bottom navigation bar (mobile), using an appropriate wallet/withdrawal icon and label 'Withdraw'.",
       "files": [
-        "frontend/src/components/ProfileSetupModal.tsx"
+        "frontend/src/components/BottomNav.tsx",
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/i18n/translations.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -62,27 +45,6 @@
       ],
       "testIds": [
         "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-the-layout-navbar-component-to-display-the-authenticated-google-user-s-profile-picture-and-display-name-when-signed-in-via-google-usegoogleauth-hook-clicking-the-avatar-should-navigate-to-the-profile-page-show-a-sign-in-button-when-no-google-session-and-no-internet-identity-session-is-active",
-      "featureTitle": "Update the Layout/navbar component to display the authenticated Google user's profile picture and display name when signed in via Google (useGoogleAuth hook). Clicking the avatar should navigate to the Profile page. Show a sign-in button when no Google session and no Internet Identity session is active.",
-      "files": [
-        "frontend/src/components/Layout.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "camera@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
       ],
       "confidence": "high"
     }
