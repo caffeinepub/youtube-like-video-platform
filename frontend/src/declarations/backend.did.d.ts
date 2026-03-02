@@ -52,6 +52,14 @@ export interface MonetizationStats {
   'totalEarnings' : bigint,
   'estimatedRevenue' : bigint,
 }
+export interface PlatformEarningsStats {
+  'numCreators' : bigint,
+  'totalBalanceCents' : bigint,
+  'numPendingWithdrawals' : bigint,
+  'numCompletedWithdrawals' : bigint,
+  'pendingWithdrawalsCents' : bigint,
+  'totalWithdrawalsCents' : bigint,
+}
 export interface PlaylistView {
   'id' : string,
   'title' : string,
@@ -119,8 +127,10 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addComment' : ActorMethod<[string, string], undefined>,
   'addVideoToPlaylist' : ActorMethod<[string, string], undefined>,
+  'adminGetEarningsStats' : ActorMethod<[], PlatformEarningsStats>,
   'adminRemoveUserProfile' : ActorMethod<[Principal], undefined>,
   'adminRemoveVideo' : ActorMethod<[string], undefined>,
+  'adminSaveUserProfile' : ActorMethod<[UserProfile, Principal], undefined>,
   'approveWithdrawal' : ActorMethod<[], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'cancelWithdrawal' : ActorMethod<[], undefined>,

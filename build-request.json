@@ -1,81 +1,146 @@
 {
   "kind": "build_request",
-  "title": "Add Dollar Bank Account Withdrawal Feature",
+  "title": "Add Settings Page with Language, Version, Admin, About App, and Download sections",
   "projectName": "Mediatube",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a backend data model and logic for a creator dollar bank account, including: storing a USD balance (as a float or integer cents), recording withdrawal transactions (amount, timestamp, status), and exposing methods to get the current balance, request a withdrawal, and list transaction history.",
-      "target": "backend",
+      "text": "Create a dedicated Settings page (frontend/src/pages/SettingsPage.tsx) accessible from the app navigation. The page must contain clearly separated sections: Language, Version, Admin, About App, and Download App.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-4"
         ],
         "quotes": [
-          "Dollar bank account nikal ke liye"
+          "Language ko settings me rakha hai and version and admin and about app download"
         ]
       },
       "acceptanceCriteria": [
-        "Backend stores a USD balance per authenticated user.",
-        "A withdraw method accepts an amount and creates a pending transaction record.",
-        "A getBalance method returns the current balance for the caller.",
-        "A getTransactionHistory method returns a list of past withdrawal records with amount, timestamp, and status.",
-        "Withdrawals that exceed the available balance are rejected with an error."
+        "A Settings page exists and is reachable via a navigation link (sidebar and/or bottom nav).",
+        "The page renders five distinct sections: Language, Version, Admin, About App, and Download App.",
+        "The page follows the existing dark-mode-first design system (CSS custom properties, Tailwind tokens)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Create a Dollar Withdrawal page (route: /withdrawal) accessible from the sidebar and/or the Monetization page. The page must display the current USD balance, an input field for the withdrawal amount, a submit button to request a withdrawal, and a transaction history table showing past withdrawals with their amount, date, and status.",
+      "text": "In the Settings page Language section, embed the existing LanguageSelector component (frontend/src/components/LanguageSelector.tsx) so users can switch the app language from within Settings. Remove or hide the LanguageSelector from any other location where it currently appears (e.g., top navigation bar) to avoid duplication.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-4"
         ],
         "quotes": [
-          "Dollar bank account nikal ke liye"
+          "Language ko settings me rakha hai"
         ]
       },
       "acceptanceCriteria": [
-        "The page is reachable via a /withdrawal route registered in App.tsx.",
-        "Current USD balance is fetched from the backend and displayed prominently.",
-        "User can enter a withdrawal amount and submit the request.",
-        "An error message is shown if the entered amount exceeds the available balance.",
-        "A table or list of past withdrawal transactions is displayed with amount, date, and status columns.",
-        "The page shows a sign-in prompt for unauthenticated users.",
-        "Loading skeletons are displayed while data is fetching.",
-        "Offline error state is handled using the existing OfflineErrorState component."
+        "The Language section in Settings shows the LanguageSelector dropdown.",
+        "Selecting a language updates the app's LanguageContext and persists to localStorage.",
+        "The LanguageSelector is no longer duplicated in the top navigation bar or other areas."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add a navigation link to the Dollar Withdrawal page in the sidebar (desktop) and the bottom navigation bar (mobile), using an appropriate wallet/withdrawal icon and label 'Withdraw'.",
+      "text": "In the Settings page Version section, display the current app version string (e.g., 'v1.0.0' or a hardcoded build version) as a read-only informational row with a label 'App Version' and the version value.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-4"
         ],
         "quotes": [
-          "Dollar bank account nikal ke liye"
+          "version"
         ]
       },
       "acceptanceCriteria": [
-        "A 'Withdraw' link with a wallet or cash icon appears in the desktop sidebar.",
-        "A 'Withdraw' tab appears in the BottomNav component on mobile.",
-        "Clicking the link navigates to /withdrawal."
+        "The Version section displays a label 'App Version' and a version string.",
+        "The version info is read-only (no editable fields)."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "In the Settings page Admin section, show an 'Admin Dashboard' navigation link that is only visible to users for whom useIsCallerAdmin returns true. Unauthenticated users or non-admin users must not see this row. Clicking the link navigates to the existing Admin Dashboard page.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "admin"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The Admin section row is hidden for non-admin and unauthenticated users.",
+        "For admin users, the row is visible and clicking it navigates to the Admin Dashboard.",
+        "The admin check uses the existing useIsCallerAdmin hook."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "In the Settings page About App section, display static informational content about the Mediatube app: app name, a short description, links to the Privacy Policy and Copyright Policy pages, and contact/support info. This section must be visible to all users.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "about app"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The About App section displays the app name 'Mediatube' and a short description.",
+        "Links to Copyright Policy (existing CopyrightPolicyPage) are present and functional.",
+        "The section is visible to all users regardless of authentication state."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "In the Settings page Download App section, display a button or link that navigates to the existing Download App page (frontend/src/pages/DownloadAppPage.tsx). The row should show platform icons (Android/iOS) and a label 'Download Mediatube App'.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "download"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The Download section row shows a 'Download Mediatube App' label with Android and iOS indicators.",
+        "Clicking the row navigates to the existing DownloadAppPage.",
+        "The section is visible to all users."
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Register the Settings page as a new route (e.g., /settings) in the TanStack Router route tree in frontend/src/App.tsx, and add a 'Settings' entry to the sidebar navigation in frontend/src/components/Layout.tsx and to the bottom navigation bar in frontend/src/components/BottomNav.tsx using an appropriate settings icon.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Language ko settings me rakha hai and version and admin and about app download"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Navigating to /settings renders the Settings page.",
+        "A Settings link with an icon appears in the sidebar.",
+        "The active route is correctly highlighted when on the Settings page."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
-    "All backend logic must remain in the single main actor (backend/main.mo).",
-    "Use the existing OfflineErrorState and NetworkStatusBanner components for offline handling."
+    "Do not modify any files listed in frontend.immutablePaths.",
+    "The LanguageSelector component must not be rewritten — compose it as-is within the Settings page.",
+    "Admin section visibility must be gated strictly by useIsCallerAdmin — no client-side workarounds.",
+    "Do not add any new backend endpoints; all Settings page content is frontend-only."
   ],
   "nonGoals": [
-    "Real money transfer or integration with any external payment gateway.",
-    "Stripe or any third-party payment processing.",
-    "Email or SMS notifications for withdrawal status changes.",
-    "Admin approval workflow for withdrawals (basic status tracking only)."
+    "Adding new backend logic or data models for settings.",
+    "Persisting any settings other than language (already handled by LanguageContext).",
+    "Building a notification settings or account security section.",
+    "Modifying the existing DownloadAppPage or AdminDashboardPage content."
   ],
   "imageRequirements": {
     "required": [],

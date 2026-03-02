@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useUpdateUserProfile } from '../hooks/useUpdateUserProfile';
+import { Principal } from '@dfinity/principal';
+import { useAdminSaveUserProfile } from '../hooks/useAdminSaveUserProfile';
 import { UserProfile } from '../backend';
 import {
   Dialog,
@@ -14,35 +15,43 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 
-interface EditProfileModalProps {
+interface EditUserModalProps {
   open: boolean;
   onClose: () => void;
-  userProfile: UserProfile;
+  userPrincipal: Principal;
+  initialProfile: UserProfile;
 }
 
-export default function EditProfileModal({ open, onClose, userProfile }: EditProfileModalProps) {
-  const { mutate: updateProfile, isPending } = useUpdateUserProfile();
-  const [name, setName] = useState(userProfile.name);
-  const [handle, setHandle] = useState(userProfile.handle);
-  const [description, setDescription] = useState(userProfile.channelDescription);
+export default function EditUserModal({ open, onClose, userPrincipal, initialProfile }: EditUserModalProps) {
+  const { mutate: saveProfile, isPending } = useAdminSaveUserProfile();
+  const [name, setName] = useState(initialProfile.name);
+  const [handle, setHandle] = useState(initialProfile.handle);
+  const [description, setDescription] = useState(initialProfile.channelDescription);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (open) {
-      setName(userProfile.name);
-      setHandle(userProfile.handle);
-      setDescription(userProfile.channelDescription);
+      setName(initialProfile.name);
+      setHandle(initialProfile.handle);
+      setDescription(initialProfile.channelDescription);
       setError('');
     }
-  }, [open, userProfile]);
+  }, [open, initialProfile]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) { setError('Name is required'); return; }
-    if (!handle.trim()) { setError('Handle is required'); return; }
     setError('');
-    updateProfile(
-      { name: name.trim(), channelDescription: description.trim(), handle: handle.trim(), avatar: null },
+    saveProfile(
+      {
+        profile: {
+          name: name.trim(),
+          handle: handle.trim(),
+          channelDescription: description.trim(),
+          avatar: initialProfile.avatar,
+        },
+        user: userPrincipal,
+      },
       { onSuccess: onClose }
     );
   };
@@ -51,15 +60,15 @@ export default function EditProfileModal({ open, onClose, userProfile }: EditPro
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="bg-mt-charcoal-900 border-mt-charcoal-700 text-foreground max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl">Edit Profile</DialogTitle>
+          <DialogTitle className="font-display text-xl">Edit User Profile</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-1.5">
-            <Label className="text-mt-charcoal-300 text-sm">Channel Name</Label>
+            <Label className="text-mt-charcoal-300 text-sm">Name</Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Your channel name"
+              placeholder="User name"
               className="bg-mt-charcoal-800 border-mt-charcoal-700 text-foreground placeholder:text-mt-charcoal-500 focus:border-mt-red-500 focus:ring-mt-red-500"
             />
           </div>
@@ -70,7 +79,7 @@ export default function EditProfileModal({ open, onClose, userProfile }: EditPro
               <Input
                 value={handle}
                 onChange={(e) => setHandle(e.target.value.replace(/^@/, ''))}
-                placeholder="yourhandle"
+                placeholder="handle"
                 className="pl-7 bg-mt-charcoal-800 border-mt-charcoal-700 text-foreground placeholder:text-mt-charcoal-500 focus:border-mt-red-500 focus:ring-mt-red-500"
               />
             </div>
@@ -80,7 +89,7 @@ export default function EditProfileModal({ open, onClose, userProfile }: EditPro
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Tell viewers about your channel..."
+              placeholder="Channel description..."
               rows={3}
               className="bg-mt-charcoal-800 border-mt-charcoal-700 text-foreground placeholder:text-mt-charcoal-500 focus:border-mt-red-500 focus:ring-mt-red-500 resize-none"
             />

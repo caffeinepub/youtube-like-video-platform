@@ -1,58 +1,51 @@
 import React from 'react';
 import { Globe } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
+import type { LanguageCode } from '../contexts/LanguageContext';
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { useLanguage, type LanguageCode } from '../contexts/LanguageContext';
 
-const LANGUAGES: { code: LanguageCode; label: string; native: string }[] = [
-  { code: 'en', label: 'English', native: 'English' },
-  { code: 'es', label: 'Spanish', native: 'Español' },
-  { code: 'fr', label: 'French', native: 'Français' },
-  { code: 'de', label: 'German', native: 'Deutsch' },
-  { code: 'ar', label: 'Arabic', native: 'العربية' },
-  { code: 'hi', label: 'Hindi', native: 'हिन्दी' },
-  { code: 'ja', label: 'Japanese', native: '日本語' },
+const LANGUAGES: { code: LanguageCode; native: string }[] = [
+  { code: 'en', native: 'English' },
+  { code: 'hi', native: 'हिन्दी' },
+  { code: 'es', native: 'Español' },
+  { code: 'fr', native: 'Français' },
+  { code: 'de', native: 'Deutsch' },
+  { code: 'ja', native: '日本語' },
+  { code: 'ar', native: 'العربية' },
 ];
 
 export default function LanguageSelector() {
   const { currentLanguage, setLanguage } = useLanguage();
-
-  const current = LANGUAGES.find((l) => l.code === currentLanguage);
+  const current = LANGUAGES.find(l => l.code === currentLanguage) || LANGUAGES[0];
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="flex items-center gap-1.5 px-2 text-muted-foreground hover:text-foreground"
-          title="Select language"
-        >
+        <button className="flex items-center gap-1.5 p-2 rounded-lg text-mt-charcoal-300 hover:text-foreground hover:bg-mt-charcoal-800 transition-colors text-sm">
           <Globe className="w-4 h-4" />
-          <span className="hidden sm:inline text-xs font-medium">{current?.native ?? 'EN'}</span>
-        </Button>
+          <span className="hidden sm:inline text-xs font-medium">{current.native}</span>
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">Language</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {LANGUAGES.map((lang) => (
+      <DropdownMenuContent
+        align="end"
+        className="w-44 bg-mt-charcoal-800 border-mt-charcoal-700 text-foreground"
+      >
+        {LANGUAGES.map(lang => (
           <DropdownMenuItem
             key={lang.code}
             onClick={() => setLanguage(lang.code)}
-            className={`flex items-center justify-between ${
-              currentLanguage === lang.code ? 'text-primary font-medium' : ''
+            className={`flex items-center justify-between cursor-pointer hover:bg-mt-charcoal-700 ${
+              currentLanguage === lang.code ? 'text-mt-red-400' : 'text-mt-charcoal-200'
             }`}
           >
             <span>{lang.native}</span>
             {currentLanguage === lang.code && (
-              <span className="w-1.5 h-1.5 rounded-full bg-primary ml-2 flex-shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-mt-red-500" />
             )}
           </DropdownMenuItem>
         ))}

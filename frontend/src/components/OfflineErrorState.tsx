@@ -1,38 +1,36 @@
 import React from 'react';
-import { WifiOff } from 'lucide-react';
+import { WifiOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface OfflineErrorStateProps {
-  onRetry: () => void;
+  onRetry?: () => void;
   message?: string;
   className?: string;
 }
 
 export default function OfflineErrorState({
   onRetry,
-  message = 'Unable to load content. Please check your internet connection.',
+  message = "You're offline. Please check your connection and try again.",
   className = '',
 }: OfflineErrorStateProps) {
   return (
-    <div
-      role="alert"
-      className={`flex flex-col items-center justify-center py-24 gap-4 text-center px-6 ${className}`}
-    >
-      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-        <WifiOff className="w-8 h-8 text-muted-foreground" aria-hidden="true" />
+    <div className={`flex flex-col items-center justify-center gap-4 py-16 px-6 text-center ${className}`}>
+      <div className="p-4 bg-mt-charcoal-800 rounded-full">
+        <WifiOff className="w-10 h-10 text-mt-charcoal-400" />
       </div>
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold text-foreground">No Internet Connection</h2>
-        <p className="text-sm text-muted-foreground max-w-sm">{message}</p>
+      <div>
+        <h3 className="text-lg font-display font-bold text-foreground mb-1">No Connection</h3>
+        <p className="text-sm text-mt-charcoal-400 max-w-xs">{message}</p>
       </div>
-      <Button
-        onClick={onRetry}
-        variant="outline"
-        className="mt-2"
-        aria-label="Retry loading content"
-      >
-        Retry
-      </Button>
+      {onRetry && (
+        <Button
+          onClick={onRetry}
+          className="bg-mt-red-500 hover:bg-mt-red-600 text-white border-0 rounded-full flex items-center gap-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Retry
+        </Button>
+      )}
     </div>
   );
 }

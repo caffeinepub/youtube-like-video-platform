@@ -1,241 +1,145 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react';
-import { SiGoogle } from 'react-icons/si';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
+import { useGetCallerUserProfile } from '../hooks/useGetCallerUserProfile';
+import ProfileSetupModal from '../components/ProfileSetupModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { useGoogleAuth, type GoogleUser } from '../hooks/useGoogleAuth';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetCallerUserProfile } from '../hooks/useGetCallerUserProfile';
-import ProfileSetupModal from '../components/ProfileSetupModal';
-import { toast } from 'sonner';
+import { Loader2, Mail, Lock, Play } from 'lucide-react';
+import { SiGoogle } from 'react-icons/si';
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+  const { login, loginStatus } = useInternetIdentity();
+  const { handleGoogleLogin, isGoogleLoading } = useGoogleAuth();
+  const { refetch: refetchProfile } = useGetCallerUserProfile();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Profile setup modal state (for Google sign-in flow)
   const [showProfileSetup, setShowProfileSetup] = useState(false);
-  const [googlePrefillName, setGooglePrefillName] = useState('');
-  const [googlePrefillAvatar, setGooglePrefillAvatar] = useState('');
+  const [googleName, setGoogleName] = useState('');
+  const [googleAvatar, setGoogleAvatar] = useState('');
 
-  const { handleGoogleLogin, isGoogleLoading, googleUser } = useGoogleAuth();
-  const { login, loginStatus } = useInternetIdentity();
-  const { data: userProfile, refetch: refetchProfile } = useGetCallerUserProfile();
-  const navigate = useNavigate();
+  const isLoggingIn = loginStatus === 'logging-in';
 
-  const isIILoggingIn = loginStatus === 'logging-in';
-
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim() || !password.trim()) {
-      toast.error('Please enter your email and password.');
-      return;
-    }
-    setIsSubmitting(true);
-    toast.info('Email/password login is coming soon. Please use Internet Identity or Google to sign in.');
-    setIsSubmitting(false);
-  };
-
-  const handleIILogin = async () => {
-    try {
-      await login();
-      navigate({ to: '/' });
-    } catch {
-      // handled by II provider
-    }
-  };
-
-  const handleGoogleSignIn = () => {
-    handleGoogleLogin(async (user: GoogleUser) => {
-      // After successful Google auth, check if profile exists
-      try {
-        const result = await refetchProfile();
-        const profile = result.data;
-        if (profile) {
-          // Profile exists — go home
-          navigate({ to: '/' });
-        } else {
-          // No profile — show setup modal pre-filled with Google data
-          setGooglePrefillName(user.name || '');
-          setGooglePrefillAvatar(user.picture || '');
-          setShowProfileSetup(true);
-        }
-      } catch {
-        // If we can't check, show setup modal as fallback
-        setGooglePrefillName(user.name || '');
-        setGooglePrefillAvatar(user.picture || '');
+  const handleGoogleClick = () => {
+    handleGoogleLogin(async (user) => {
+      const result = await refetchProfile();
+      if (result.data === null) {
+        setGoogleName(user.name || '');
+        setGoogleAvatar(user.picture || '');
         setShowProfileSetup(true);
+      } else {
+        navigate({ to: '/' });
       }
     });
-  };
-
-  const handleProfileSetupClose = () => {
-    setShowProfileSetup(false);
-    navigate({ to: '/' });
   };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <Link to="/" className="flex items-center gap-3 mb-2">
-            <img
-              src="/assets/generated/mediatube-logo-icon.dim_128x128.png"
-              alt="Mediatube"
-              className="h-12 w-12"
-            />
-            <span className="font-bold text-2xl brand-gradient-text">Mediatube</span>
-          </Link>
-          <p className="text-muted-foreground text-sm mt-1">Sign in to your account</p>
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="w-10 h-10 bg-mt-red-500 rounded-xl flex items-center justify-center shadow-glow-red">
+              <Play className="w-5 h-5 text-white fill-white" />
+            </div>
+            <span className="font-display font-bold text-2xl text-foreground">
+              Media<span className="text-mt-red-500">Tube</span>
+            </span>
+          </div>
+          <p className="text-mt-charcoal-400 text-sm">Sign in to your account</p>
         </div>
 
         {/* Card */}
-        <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
+        <div className="bg-mt-charcoal-900 border border-mt-charcoal-800 rounded-2xl p-8 shadow-card">
+          <h1 className="font-display font-bold text-2xl text-foreground mb-6">Welcome back</h1>
+
           {/* Email/Password Form */}
-          <form onSubmit={handleEmailLogin} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Gmail / Email
-              </Label>
+          <div className="space-y-4 mb-6">
+            <div className="space-y-1.5">
+              <Label className="text-mt-charcoal-300 text-sm">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-mt-charcoal-500" />
                 <Input
-                  id="email"
                   type="email"
-                  placeholder="you@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 bg-muted/30 border-border focus:border-primary"
-                  autoComplete="email"
+                  placeholder="you@example.com"
+                  className="pl-9 bg-mt-charcoal-800 border-mt-charcoal-700 text-foreground placeholder:text-mt-charcoal-500 focus:border-mt-red-500 focus:ring-mt-red-500"
                 />
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">
-                Password
-              </Label>
+            <div className="space-y-1.5">
+              <Label className="text-mt-charcoal-300 text-sm">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-mt-charcoal-500" />
                 <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 bg-muted/30 border-border focus:border-primary"
-                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  className="pl-9 bg-mt-charcoal-800 border-mt-charcoal-700 text-foreground placeholder:text-mt-charcoal-500 focus:border-mt-red-500 focus:ring-mt-red-500"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
               </div>
             </div>
-
-            <Button
-              type="submit"
-              className="w-full brand-gradient-bg text-white font-semibold rounded-full hover:opacity-90 transition-opacity"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  Signing in...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <LogIn className="h-4 w-4" />
-                  Sign In
-                </span>
-              )}
-            </Button>
-          </form>
+          </div>
 
           {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
-            <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground">or continue with</span>
-            <Separator className="flex-1" />
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-mt-charcoal-700" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-mt-charcoal-900 px-3 text-mt-charcoal-500">or continue with</span>
+            </div>
           </div>
 
-          {/* Social / Identity Buttons */}
+          {/* Auth Buttons */}
           <div className="space-y-3">
-            {/* Continue with Google */}
             <Button
-              variant="outline"
-              className="w-full rounded-full border-border hover:bg-muted flex items-center gap-3 font-medium"
-              onClick={handleGoogleSignIn}
+              onClick={handleGoogleClick}
               disabled={isGoogleLoading}
+              variant="outline"
+              className="w-full bg-mt-charcoal-800 border-mt-charcoal-700 text-foreground hover:bg-mt-charcoal-700 hover:border-mt-red-500 rounded-xl h-11 font-medium"
             >
               {isGoogleLoading ? (
-                <span className="h-4 w-4 border-2 border-muted-foreground/40 border-t-muted-foreground rounded-full animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : (
-                <SiGoogle className="h-4 w-4" style={{ color: '#4285F4' }} />
+                <SiGoogle className="w-4 h-4 mr-2 text-red-400" />
               )}
-              {isGoogleLoading ? 'Signing in with Google...' : 'Continue with Google'}
+              Continue with Google
             </Button>
 
-            {/* Continue with Internet Identity */}
             <Button
-              variant="outline"
-              className="w-full rounded-full border-border hover:bg-muted flex items-center gap-3 font-medium"
-              onClick={handleIILogin}
-              disabled={isIILoggingIn}
+              onClick={() => login()}
+              disabled={isLoggingIn}
+              className="w-full bg-mt-red-500 hover:bg-mt-red-600 text-white border-0 rounded-xl h-11 font-semibold"
             >
-              {isIILoggingIn ? (
-                <span className="h-4 w-4 border-2 border-muted-foreground/40 border-t-muted-foreground rounded-full animate-spin" />
-              ) : (
-                <img
-                  src="/assets/generated/mediatube-logo-icon.dim_128x128.png"
-                  alt="II"
-                  className="h-4 w-4 rounded-full"
-                />
-              )}
-              {isIILoggingIn ? 'Connecting...' : 'Continue with Internet Identity'}
+              {isLoggingIn ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              Continue with Internet Identity
             </Button>
           </div>
 
-          {/* Footer links */}
-          <p className="text-center text-sm text-muted-foreground mt-6">
+          <p className="text-center text-sm text-mt-charcoal-400 mt-6">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-primary hover:underline font-medium">
+            <Link to="/signup" className="text-mt-red-400 hover:text-mt-red-300 font-medium">
               Sign up
             </Link>
           </p>
         </div>
-
-        {/* App footer */}
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Built with ❤️ using{' '}
-          <a
-            href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:underline"
-          >
-            caffeine.ai
-          </a>
-        </p>
       </div>
 
-      {/* Profile Setup Modal for Google sign-in */}
-      {showProfileSetup && googleUser && (
+      {showProfileSetup && (
         <ProfileSetupModal
           open={showProfileSetup}
-          onClose={handleProfileSetupClose}
-          googleDisplayName={googlePrefillName}
-          googleAvatarUrl={googlePrefillAvatar}
+          onClose={() => { setShowProfileSetup(false); navigate({ to: '/' }); }}
+          googleDisplayName={googleName}
+          googleAvatarUrl={googleAvatar}
         />
       )}
     </div>

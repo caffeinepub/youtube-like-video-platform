@@ -1,74 +1,109 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T04:44:15.767Z",
+  "generatedAt": "2026-03-02T15:01:22.505Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 2,
+    "total": 7,
+    "implemented": 7,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a backend data model and logic for a creator dollar bank account, including: storing a USD balance (as a float or integer cents), recording withdrawal transactions (amount, timestamp, status), and exposing methods to get the current balance, request a withdrawal, and list transaction history.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
+        "summary": "Create a dedicated Settings page (frontend/src/pages/SettingsPage.tsx) accessible from the app navigation. The page must contain clearly separated sections: Language, Version, Admin, About App, and Download App.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/SettingsPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/SettingsPage.tsx"
+        ]
       },
       {
         "id": "REQ-2",
-        "summary": "Create a Dollar Withdrawal page (route: /withdrawal) accessible from the sidebar and/or the Monetization page. The page must display the current USD balance, an input field for the withdrawal amount, a submit button to request a withdrawal, and a transaction history table showing past withdrawals with their amount, date, and status.",
+        "summary": "In the Settings page Language section, embed the existing LanguageSelector component (frontend/src/components/LanguageSelector.tsx) so users can switch the app language from within Settings. Remove or hide the LanguageSelector from any other location where it currently appears (e.g., top navigation bar) to avoid duplication.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/WithdrawalPage.tsx",
-          "frontend/src/hooks/useGetCreatorBankAccountState.ts",
-          "frontend/src/hooks/useRequestWithdrawal.ts",
-          "frontend/src/App.tsx"
+          "frontend/src/pages/SettingsPage.tsx",
+          "frontend/src/components/Layout.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/WithdrawalPage.tsx",
-          "frontend/src/hooks/useGetCreatorBankAccountState.ts",
-          "frontend/src/hooks/useRequestWithdrawal.ts",
-          "frontend/src/App.tsx"
+          "frontend/src/pages/SettingsPage.tsx",
+          "frontend/src/components/Layout.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Add a navigation link to the Dollar Withdrawal page in the sidebar (desktop) and the bottom navigation bar (mobile), using an appropriate wallet/withdrawal icon and label 'Withdraw'.",
+        "summary": "In the Settings page Version section, display the current app version string (e.g., 'v1.0.0' or a hardcoded build version) as a read-only informational row with a label 'App Version' and the version value.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/Layout.tsx",
-          "frontend/src/components/BottomNav.tsx",
-          "frontend/src/i18n/translations.ts"
+          "frontend/src/pages/SettingsPage.tsx"
         ],
         "matchedFiles": [
+          "frontend/src/pages/SettingsPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "In the Settings page Admin section, show an 'Admin Dashboard' navigation link that is only visible to users for whom useIsCallerAdmin returns true. Unauthenticated users or non-admin users must not see this row. Clicking the link navigates to the existing Admin Dashboard page.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/SettingsPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/SettingsPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "In the Settings page About App section, display static informational content about the Mediatube app: app name, a short description, links to the Privacy Policy and Copyright Policy pages, and contact/support info. This section must be visible to all users.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/SettingsPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/SettingsPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "In the Settings page Download App section, display a button or link that navigates to the existing Download App page (frontend/src/pages/DownloadAppPage.tsx). The row should show platform icons (Android/iOS) and a label 'Download Mediatube App'.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/SettingsPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/SettingsPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Register the Settings page as a new route (e.g., /settings) in the TanStack Router route tree in frontend/src/App.tsx, and add a 'Settings' entry to the sidebar navigation in frontend/src/components/Layout.tsx and to the bottom navigation bar in frontend/src/components/BottomNav.tsx using an appropriate settings icon.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/App.tsx",
           "frontend/src/components/Layout.tsx",
-          "frontend/src/components/BottomNav.tsx",
-          "frontend/src/i18n/translations.ts"
+          "frontend/src/components/BottomNav.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/App.tsx",
+          "frontend/src/components/Layout.tsx",
+          "frontend/src/components/BottomNav.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/App.tsx",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
     "frontend/src/components/BottomNav.tsx",
     "frontend/src/components/Layout.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useGetCreatorBankAccountState.ts",
-    "frontend/src/hooks/useRequestWithdrawal.ts",
-    "frontend/src/i18n/translations.ts",
-    "frontend/src/pages/WithdrawalPage.tsx",
+    "frontend/src/pages/SettingsPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useActor } from '../hooks/useActor';
 import { VideoMetadata, PlaylistView } from '../backend';
 import { Principal } from '@dfinity/principal';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import VideoCard from '../components/VideoCard';
 import SubscribeButton from '../components/SubscribeButton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -121,7 +121,7 @@ export default function ChannelPage() {
 
   if (profileLoading && !isOnline) {
     return (
-      <div className="bg-yt-bg min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <OfflineErrorState
           onRetry={handleRetry}
           message="Unable to load channel. Please check your internet connection."
@@ -132,14 +132,14 @@ export default function ChannelPage() {
 
   if (profileLoading) {
     return (
-      <div className="bg-yt-bg min-h-screen">
-        <Skeleton className="w-full h-32 sm:h-48 bg-yt-chip" />
+      <div className="min-h-screen bg-background">
+        <Skeleton className="w-full h-32 sm:h-48 bg-mt-charcoal-800" />
         <div className="max-w-screen-xl mx-auto px-4 py-4">
           <div className="flex items-end gap-4 -mt-8 mb-6">
-            <Skeleton className="w-20 h-20 rounded-full bg-yt-chip shrink-0" />
+            <Skeleton className="w-20 h-20 rounded-full bg-mt-charcoal-800 shrink-0" />
             <div className="flex-1 space-y-2 pb-2">
-              <Skeleton className="h-6 w-48 bg-yt-chip" />
-              <Skeleton className="h-4 w-32 bg-yt-chip" />
+              <Skeleton className="h-6 w-48 bg-mt-charcoal-800" />
+              <Skeleton className="h-4 w-32 bg-mt-charcoal-800" />
             </div>
           </div>
         </div>
@@ -148,9 +148,9 @@ export default function ChannelPage() {
   }
 
   return (
-    <div className="bg-yt-bg min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Channel Banner */}
-      <div className="w-full h-32 sm:h-48 overflow-hidden bg-yt-chip">
+      <div className="w-full h-32 sm:h-48 overflow-hidden bg-mt-charcoal-800">
         <img
           src="/assets/generated/default-channel-banner.dim_1280x200.png"
           alt="Channel banner"
@@ -162,7 +162,7 @@ export default function ChannelPage() {
       <div className="max-w-screen-xl mx-auto px-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 py-4">
           {/* Avatar */}
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-yt-chip flex items-center justify-center overflow-hidden shrink-0 border-4 border-yt-bg -mt-10 sm:-mt-12">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-mt-charcoal-800 flex items-center justify-center overflow-hidden shrink-0 border-4 border-background -mt-10 sm:-mt-12">
             {avatarUrl ? (
               <img src={avatarUrl} alt={channelName} className="w-full h-full object-cover" />
             ) : (
@@ -172,8 +172,8 @@ export default function ChannelPage() {
 
           {/* Channel Info */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-white">{channelName}</h1>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-yt-text-secondary mt-1">
+            <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">{channelName}</h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-mt-charcoal-400 mt-1">
               {handle && <span>{handle}</span>}
               <span>•</span>
               <span>{subscribers.length} subscribers</span>
@@ -181,7 +181,7 @@ export default function ChannelPage() {
               <span>{videos.length} videos</span>
             </div>
             {description && (
-              <p className="text-sm text-yt-text-secondary mt-2 line-clamp-2">{description}</p>
+              <p className="text-sm text-mt-charcoal-400 mt-2 line-clamp-2">{description}</p>
             )}
           </div>
 
@@ -194,7 +194,7 @@ export default function ChannelPage() {
           {isOwnChannel && (
             <Link
               to="/profile"
-              className="shrink-0 px-4 py-2 bg-yt-chip text-white rounded-full text-sm font-medium hover:bg-yt-chip-hover transition-colors"
+              className="shrink-0 px-4 py-2 bg-mt-charcoal-800 text-foreground rounded-full text-sm font-medium hover:bg-mt-charcoal-700 transition-colors border border-mt-charcoal-700"
             >
               Manage Channel
             </Link>
@@ -203,28 +203,28 @@ export default function ChannelPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="videos" className="mt-2">
-          <TabsList className="bg-transparent border-b border-yt-border w-full justify-start rounded-none h-auto p-0 gap-0">
+          <TabsList className="bg-transparent border-b border-mt-charcoal-800 w-full justify-start rounded-none h-auto p-0 gap-0">
             <TabsTrigger
               value="videos"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:bg-transparent text-yt-text-secondary data-[state=active]:text-white px-4 py-3 text-sm font-medium"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-mt-red-500 data-[state=active]:bg-transparent text-mt-charcoal-400 data-[state=active]:text-foreground px-4 py-3 text-sm font-medium"
             >
               Videos
             </TabsTrigger>
             <TabsTrigger
               value="shorts"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:bg-transparent text-yt-text-secondary data-[state=active]:text-white px-4 py-3 text-sm font-medium"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-mt-red-500 data-[state=active]:bg-transparent text-mt-charcoal-400 data-[state=active]:text-foreground px-4 py-3 text-sm font-medium"
             >
               Shorts
             </TabsTrigger>
             <TabsTrigger
               value="playlists"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:bg-transparent text-yt-text-secondary data-[state=active]:text-white px-4 py-3 text-sm font-medium"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-mt-red-500 data-[state=active]:bg-transparent text-mt-charcoal-400 data-[state=active]:text-foreground px-4 py-3 text-sm font-medium"
             >
               Playlists
             </TabsTrigger>
             <TabsTrigger
               value="community"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-white data-[state=active]:bg-transparent text-yt-text-secondary data-[state=active]:text-white px-4 py-3 text-sm font-medium"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-mt-red-500 data-[state=active]:bg-transparent text-mt-charcoal-400 data-[state=active]:text-foreground px-4 py-3 text-sm font-medium"
             >
               Community
             </TabsTrigger>
@@ -232,29 +232,21 @@ export default function ChannelPage() {
 
           {/* Videos Tab */}
           <TabsContent value="videos" className="mt-6">
-            {videosLoading && !isOnline ? (
-              <OfflineErrorState
-                onRetry={handleRetry}
-                message="Unable to load videos. Please check your internet connection."
-              />
-            ) : videosLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+            {videosLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="space-y-3">
-                    <Skeleton className="w-full aspect-video rounded-xl bg-yt-chip" />
-                    <Skeleton className="h-4 w-full bg-yt-chip" />
-                    <Skeleton className="h-3 w-3/4 bg-yt-chip" />
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="aspect-video w-full rounded-xl bg-mt-charcoal-800" />
+                    <Skeleton className="h-4 w-3/4 bg-mt-charcoal-800" />
                   </div>
                 ))}
               </div>
             ) : longVideos.length === 0 ? (
-              <div className="text-center py-16 text-yt-text-secondary">
-                <p>No videos uploaded yet</p>
-              </div>
+              <p className="text-mt-charcoal-400 text-center py-12">No videos uploaded yet.</p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {longVideos.map((video) => (
-                  <VideoCard key={video.id} video={video} hideChannelInfo />
+                  <VideoCard key={video.id} video={video} />
                 ))}
               </div>
             )}
@@ -263,13 +255,11 @@ export default function ChannelPage() {
           {/* Shorts Tab */}
           <TabsContent value="shorts" className="mt-6">
             {shortVideos.length === 0 ? (
-              <div className="text-center py-16 text-yt-text-secondary">
-                <p>No shorts uploaded yet</p>
-              </div>
+              <p className="text-mt-charcoal-400 text-center py-12">No shorts uploaded yet.</p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {shortVideos.map((video) => (
-                  <VideoCard key={video.id} video={video} linkToReels hideChannelInfo />
+                  <VideoCard key={video.id} video={video} />
                 ))}
               </div>
             )}
@@ -278,28 +268,20 @@ export default function ChannelPage() {
           {/* Playlists Tab */}
           <TabsContent value="playlists" className="mt-6">
             {playlists.length === 0 ? (
-              <div className="text-center py-16 text-yt-text-secondary">
-                <p>No playlists yet</p>
-              </div>
+              <p className="text-mt-charcoal-400 text-center py-12">No playlists created yet.</p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {playlists.map((playlist) => (
                   <Link
                     key={playlist.id}
                     to="/playlist/$playlistId"
                     params={{ playlistId: playlist.id }}
-                    className="bg-yt-chip rounded-xl p-4 hover:bg-yt-chip-hover transition-colors"
+                    className="bg-mt-charcoal-900 border border-mt-charcoal-800 rounded-xl p-4 hover:border-mt-red-500/50 transition-colors shadow-card"
                   >
-                    <div className="w-full aspect-video bg-yt-surface rounded-lg mb-3 flex items-center justify-center">
-                      <span className="text-yt-text-secondary text-sm">
-                        {playlist.videos.length} videos
-                      </span>
-                    </div>
-                    <h3 className="text-sm font-medium text-white line-clamp-2">{playlist.title}</h3>
+                    <h3 className="font-semibold text-foreground mb-1">{playlist.title}</h3>
+                    <p className="text-sm text-mt-charcoal-400">{playlist.videos.length} videos</p>
                     {playlist.description && (
-                      <p className="text-xs text-yt-text-secondary mt-1 line-clamp-1">
-                        {playlist.description}
-                      </p>
+                      <p className="text-xs text-mt-charcoal-500 mt-1 line-clamp-2">{playlist.description}</p>
                     )}
                   </Link>
                 ))}
@@ -310,16 +292,12 @@ export default function ChannelPage() {
           {/* Community Tab */}
           <TabsContent value="community" className="mt-6">
             {communityPosts.length === 0 ? (
-              <div className="text-center py-16 text-yt-text-secondary">
-                <p>No community posts yet</p>
-              </div>
+              <p className="text-mt-charcoal-400 text-center py-12">No community posts yet.</p>
             ) : (
-              <div className="max-w-2xl space-y-4">
-                {[...communityPosts]
-                  .sort((a, b) => Number(b.timestamp) - Number(a.timestamp))
-                  .map((post) => (
-                    <CommunityPostCard key={post.id} post={post} showDelete={false} />
-                  ))}
+              <div className="space-y-4 max-w-2xl">
+                {communityPosts.map((post) => (
+                  <CommunityPostCard key={post.id} post={post} />
+                ))}
               </div>
             )}
           </TabsContent>

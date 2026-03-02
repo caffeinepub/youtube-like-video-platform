@@ -14,6 +14,14 @@ export class ExternalBlob {
     static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
     withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
+export interface PlatformEarningsStats {
+    numCreators: bigint;
+    totalBalanceCents: bigint;
+    numPendingWithdrawals: bigint;
+    numCompletedWithdrawals: bigint;
+    pendingWithdrawalsCents: bigint;
+    totalWithdrawalsCents: bigint;
+}
 export interface PlaylistView {
     id: string;
     title: string;
@@ -99,8 +107,10 @@ export enum WithdrawalStatus {
 export interface backendInterface {
     addComment(videoId: string, content: string): Promise<void>;
     addVideoToPlaylist(playlistId: string, videoId: string): Promise<void>;
+    adminGetEarningsStats(): Promise<PlatformEarningsStats>;
     adminRemoveUserProfile(user: Principal): Promise<void>;
     adminRemoveVideo(videoId: string): Promise<void>;
+    adminSaveUserProfile(profile: UserProfile, user: Principal): Promise<void>;
     approveWithdrawal(): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     cancelWithdrawal(): Promise<void>;

@@ -6,15 +6,15 @@ import List "mo:core/List";
 import Text "mo:core/Text";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
+import Iter "mo:core/Iter";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
-import Iter "mo:core/Iter";
-import Migration "migration";
+
 import AccessControl "authorization/access-control";
 
 // Migrate on upgrade to persist data
-(with migration = Migration.run)
+
 actor {
   include MixinStorage();
 
@@ -54,7 +54,7 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Update User Profile Function
+  // Update User Profile Function (creator access)
   public shared ({ caller }) func updateUserProfile(name : Text, channelDescription : Text, handle : Text, avatar : ?[Nat8]) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can update profiles");
@@ -68,6 +68,137 @@ actor {
     };
 
     userProfiles.add(caller, updatedProfile);
+  };
+
+  // ADMIN DASHBOARD
+
+  type AdminAnalytics = {
+    totalVideos : Nat;
+    totalUsers : Nat;
+    totalComments : Nat;
+    totalViews : Nat;
+  };
+
+  type AdminDashboard = {
+    users : [UserProfile];
+    videos : [VideoMetadata];
+    analytics : AdminAnalytics;
+  };
+
+  public query ({ caller }) func getAdminDashboard() : async AdminDashboard {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admin can access dashboard");
+    };
+
+    let totalVideos = videos.size();
+    let totalUsers = userProfiles.size();
+
+    var totalComments = 0;
+    comments.values().forEach(func(commentList) { totalComments += commentList.size() });
+
+    var totalViews = 0;
+    videos.values().forEach(func(video) { totalViews += video.viewCount });
+
+    let analytics : AdminAnalytics = {
+      totalVideos;
+      totalUsers;
+      totalComments;
+      totalViews;
+    };
+
+    {
+      users = userProfiles.values().toArray();
+      videos = videos.values().toArray();
+      analytics;
+    };
+  };
+
+  // ADMIN - Save/Update any user profile
+  public shared ({ caller }) func adminSaveUserProfile(profile : UserProfile, user : Principal) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can modify user profiles");
+    };
+
+    userProfiles.add(user, profile);
+  };
+
+  public shared ({ caller }) func adminRemoveVideo(videoId : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admin can remove videos");
+    };
+
+    switch (videos.get(videoId)) {
+      case (null) { Runtime.trap("Video not found") };
+      case (_) {
+        videos.remove(videoId);
+        comments.remove(videoId);
+      };
+    };
+  };
+
+  public shared ({ caller }) func adminRemoveUserProfile(user : Principal) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admin can remove user profiles");
+    };
+
+    switch (userProfiles.get(user)) {
+      case (null) { Runtime.trap("User profile not found") };
+      case (_) {
+        userProfiles.remove(user);
+        let userVideos = videos.values().toArray().filter(
+          func(video) { video.uploader == user }
+        );
+        userVideos.values().forEach(
+          func(video) { videos.remove(video.id) }
+        );
+      };
+    };
+  };
+
+  // ADMIN Earnings Stats
+  type PlatformEarningsStats = {
+    totalBalanceCents : Nat;
+    totalWithdrawalsCents : Nat;
+    pendingWithdrawalsCents : Nat;
+    numPendingWithdrawals : Nat;
+    numCompletedWithdrawals : Nat;
+    numCreators : Nat;
+  };
+
+  public query ({ caller }) func adminGetEarningsStats() : async PlatformEarningsStats {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admin can access earnings stats");
+    };
+
+    var totalWithdrawals = 0;
+    var pending = 0;
+    var numPending = 0;
+    var numCompleted = 0;
+
+    withdrawalRequests.values().forEach(
+      func(withdrawal) {
+        switch (withdrawal.status) {
+          case (#pending) {
+            pending += withdrawal.amountCents;
+            numPending += 1;
+          };
+          case (#approved) {
+            totalWithdrawals += withdrawal.amountCents;
+            numCompleted += 1;
+          };
+          case (_) {};
+        };
+      }
+    );
+
+    {
+      totalBalanceCents = creatorBankBalance;
+      totalWithdrawalsCents = totalWithdrawals;
+      pendingWithdrawalsCents = pending;
+      numPendingWithdrawals = numPending;
+      numCompletedWithdrawals = numCompleted;
+      numCreators = 1; // Assuming single global bank account for creators
+    };
   };
 
   // Video Data Types
@@ -657,82 +788,6 @@ actor {
           }
         );
         matches.toArray();
-      };
-    };
-  };
-
-  // ADMIN DASHBOARD
-
-  type AdminAnalytics = {
-    totalVideos : Nat;
-    totalUsers : Nat;
-    totalComments : Nat;
-    totalViews : Nat;
-  };
-
-  type AdminDashboard = {
-    users : [UserProfile];
-    videos : [VideoMetadata];
-    analytics : AdminAnalytics;
-  };
-
-  public query ({ caller }) func getAdminDashboard() : async AdminDashboard {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admin can access dashboard");
-    };
-
-    let totalVideos = videos.size();
-    let totalUsers = userProfiles.size();
-
-    var totalComments = 0;
-    comments.values().forEach(func(commentList) { totalComments += commentList.size() });
-
-    var totalViews = 0;
-    videos.values().forEach(func(video) { totalViews += video.viewCount });
-
-    let analytics : AdminAnalytics = {
-      totalVideos;
-      totalUsers;
-      totalComments;
-      totalViews;
-    };
-
-    {
-      users = userProfiles.values().toArray();
-      videos = videos.values().toArray();
-      analytics;
-    };
-  };
-
-  public shared ({ caller }) func adminRemoveVideo(videoId : Text) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admin can remove videos");
-    };
-
-    switch (videos.get(videoId)) {
-      case (null) { Runtime.trap("Video not found") };
-      case (_) {
-        videos.remove(videoId);
-        comments.remove(videoId);
-      };
-    };
-  };
-
-  public shared ({ caller }) func adminRemoveUserProfile(user : Principal) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
-      Runtime.trap("Unauthorized: Only admin can remove user profiles");
-    };
-
-    switch (userProfiles.get(user)) {
-      case (null) { Runtime.trap("User profile not found") };
-      case (_) {
-        userProfiles.remove(user);
-        let userVideos = videos.values().toArray().filter(
-          func(video) { video.uploader == user }
-        );
-        userVideos.values().forEach(
-          func(video) { videos.remove(video.id) }
-        );
       };
     };
   };

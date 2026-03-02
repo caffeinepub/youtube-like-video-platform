@@ -1,24 +1,66 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "App with bank account withdrawal/extraction feature (dollar bank account)",
-  "architectural_notes": [],
+  "summary": "App project with settings screen containing language, version info, admin panel, about app, and download options.",
+  "architectural_notes": [
+    "Settings screen consolidates: Language, Version, Admin, About App, and Download"
+  ],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-create-a-dollar-withdrawal-page-route-withdrawal-accessible-from-the-sidebar-and-or-the-monetization-page-the-page-must-display-the-current-usd-balance-an-input-field-for-the-withdrawal-amount-a-submit-button-to-request-a-withdrawal-and-a-transaction-history-table-showing-past-withdrawals-with-their-amount-date-and-status",
-      "title": "Create a Dollar Withdrawal page (route: /withdrawal) accessible from the sidebar and/or the Monetization page. The page must display the current USD balance, an input field for the withdrawal amount, a submit button to request a withdrawal, and a transaction history table showing past withdrawals with their amount, date, and status.",
+      "id": "feature-create-a-dedicated-settings-page-frontend-src-pages-settingspage-tsx-accessible-from-the-app-navigation-the-page-must-contain-clearly-separated-sections-language-version-admin-about-app-and-download-app",
+      "title": "Create a dedicated Settings page (frontend/src/pages/SettingsPage.tsx) accessible from the app navigation. The page must contain clearly separated sections: Language, Version, Admin, About App, and Download App.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-the-settings-page-language-section-embed-the-existing-languageselector-component-frontend-src-components-languageselector-tsx-so-users-can-switch-the-app-language-from-within-settings-remove-or-hide-the-languageselector-from-any-other-location-where-it-currently-appears-e-g-top-navigation-bar-to-avoid-duplication",
+      "title": "In the Settings page Language section, embed the existing LanguageSelector component (frontend/src/components/LanguageSelector.tsx) so users can switch the app language from within Settings. Remove or hide the LanguageSelector from any other location where it currently appears (e.g., top navigation bar) to avoid duplication.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-navigation-link-to-the-dollar-withdrawal-page-in-the-sidebar-desktop-and-the-bottom-navigation-bar-mobile-using-an-appropriate-wallet-withdrawal-icon-and-label-withdraw",
-      "title": "Add a navigation link to the Dollar Withdrawal page in the sidebar (desktop) and the bottom navigation bar (mobile), using an appropriate wallet/withdrawal icon and label 'Withdraw'.",
+      "id": "feature-in-the-settings-page-version-section-display-the-current-app-version-string-e-g-v1-0-0-or-a-hardcoded-build-version-as-a-read-only-informational-row-with-a-label-app-version-and-the-version-value",
+      "title": "In the Settings page Version section, display the current app version string (e.g., 'v1.0.0' or a hardcoded build version) as a read-only informational row with a label 'App Version' and the version value.",
       "reqIds": [
         "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-the-settings-page-admin-section-show-an-admin-dashboard-navigation-link-that-is-only-visible-to-users-for-whom-useiscalleradmin-returns-true-unauthenticated-users-or-non-admin-users-must-not-see-this-row-clicking-the-link-navigates-to-the-existing-admin-dashboard-page",
+      "title": "In the Settings page Admin section, show an 'Admin Dashboard' navigation link that is only visible to users for whom useIsCallerAdmin returns true. Unauthenticated users or non-admin users must not see this row. Clicking the link navigates to the existing Admin Dashboard page.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-the-settings-page-about-app-section-display-static-informational-content-about-the-mediatube-app-app-name-a-short-description-links-to-the-privacy-policy-and-copyright-policy-pages-and-contact-support-info-this-section-must-be-visible-to-all-users",
+      "title": "In the Settings page About App section, display static informational content about the Mediatube app: app name, a short description, links to the Privacy Policy and Copyright Policy pages, and contact/support info. This section must be visible to all users.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-the-settings-page-download-app-section-display-a-button-or-link-that-navigates-to-the-existing-download-app-page-frontend-src-pages-downloadapppage-tsx-the-row-should-show-platform-icons-android-ios-and-a-label-download-mediatube-app",
+      "title": "In the Settings page Download App section, display a button or link that navigates to the existing Download App page (frontend/src/pages/DownloadAppPage.tsx). The row should show platform icons (Android/iOS) and a label 'Download Mediatube App'.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-register-the-settings-page-as-a-new-route-e-g-settings-in-the-tanstack-router-route-tree-in-frontend-src-app-tsx-and-add-a-settings-entry-to-the-sidebar-navigation-in-frontend-src-components-layout-tsx-and-to-the-bottom-navigation-bar-in-frontend-src-components-bottomnav-tsx-using-an-appropriate-settings-icon",
+      "title": "Register the Settings page as a new route (e.g., /settings) in the TanStack Router route tree in frontend/src/App.tsx, and add a 'Settings' entry to the sidebar navigation in frontend/src/components/Layout.tsx and to the bottom navigation bar in frontend/src/components/BottomNav.tsx using an appropriate settings icon.",
+      "reqIds": [
+        "REQ-7"
       ],
       "version": 1
     }
@@ -26,16 +68,32 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Dollar bank account withdrawal/extraction feature",
+      "summary": "Settings screen with Language option",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Add a backend data model and logic for a creator dollar bank account, including: storing a USD balance (as a float or integer cents), recording withdrawal transactions (amount, timestamp, status), and exposing methods to get the current balance, request a withdrawal, and list transaction history.",
-      "reqIds": [
-        "REQ-1"
-      ],
+      "summary": "Settings screen with Version info",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Settings screen with Admin panel access",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Settings screen with About App section",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Settings screen with Download option",
+      "reqIds": [],
       "status": "pending"
     }
   ],

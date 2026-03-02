@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Principal } from '@dfinity/principal';
-import { Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CommunityPost } from '../backend';
+import { useGetUserProfile } from '../hooks/useGetUserProfile';
+import { useDeleteCommunityPost } from '../hooks/useDeleteCommunityPost';
+import { convertBlobToDataURL } from '../utils/avatarHelpers';
+import { formatTimeAgo } from '../utils/formatters';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,13 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import type { CommunityPost } from '../backend';
-import { useGetUserProfile } from '../hooks/useGetUserProfile';
-import { useDeleteCommunityPost } from '../hooks/useDeleteCommunityPost';
-import { convertBlobToDataURL, getInitials } from '../utils/avatarHelpers';
-import { formatTimeAgo } from '../utils/formatters';
-import { useLanguage } from '../contexts/LanguageContext';
-import { getTranslation } from '../i18n/translations';
+import { Trash2 } from 'lucide-react';
 
 interface CommunityPostCardProps {
   post: CommunityPost;
@@ -29,116 +24,99 @@ interface CommunityPostCardProps {
 }
 
 export default function CommunityPostCard({ post, showDelete = false }: CommunityPostCardProps) {
-  const { currentLanguage } = useLanguage();
-  const t = (key: string) => getTranslation(currentLanguage, key);
+  const { data: profile } = useGetUserProfile(post.author);
+  const { mutate: deletePost, isPending } = useDeleteCommunityPost();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
 
-  const authorPrincipal = post.author as Principal;
-  const { data: profile, isLoading: profileLoading } = useGetUserProfile(authorPrincipal);
-  const { mutate: deletePost, isPending: isDeleting } = useDeleteCommunityPost();
+  useEffect(() => {
+    async function load() {
+      if (profile?.avatar) {
+        const url = await convertBlobToDataURL(profile.avatar);
+        setAvatarUrl(url);
+      }
+    }
+    load();
+  }, [profile]);
 
-  const [isHovered, setIsHovered] = useState(false);
+  useEffect(() => {
+    if (post.attachment) {
+      setAttachmentUrl(post.attachment.getDirectURL());
+    }
+  }, [post.attachment]);
 
-  const displayName = profile?.name || 'Unknown User';
-  const handle = profile?.name
-    ? '@' + profile.name.toLowerCase().replace(/\s+/g, '')
-    : '@unknown';
-  const channelDescription = profile?.channelDescription || '';
-
-  const avatarBytes = profile?.avatar;
-  const avatarDataUrl = avatarBytes ? convertBlobToDataURL(avatarBytes) : undefined;
-
-  const imageUrl = post.attachment ? post.attachment.getDirectURL() : null;
-  const timestamp = formatTimeAgo(Number(post.timestamp));
+  const name = profile?.name || post.author.toString().slice(0, 8) + '...';
+  const handle = profile?.handle || '';
+  const initials = name.slice(0, 2).toUpperCase();
+  const timestampMs = Number(post.timestamp) / 1_000_000;
 
   return (
-    <div
-      className="relative bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Delete button */}
-      {showDelete && isHovered && (
-        <div className="absolute top-3 right-3 z-10">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
-                )}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t('deletePost')}</AlertDialogTitle>
-                <AlertDialogDescription>{t('confirmDeletePost')}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => deletePost(post.id)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  {t('confirmDelete')}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      )}
+    <div className="bg-mt-charcoal-900 border border-mt-charcoal-800 rounded-xl p-4 shadow-card hover:border-mt-charcoal-700 transition-colors">
+      <div className="flex items-start gap-3">
+        <Avatar className="w-10 h-10 shrink-0">
+          {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
+          <AvatarFallback className="bg-mt-charcoal-700 text-mt-charcoal-300 text-sm font-bold">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
 
-      {/* Author info */}
-      <div className="flex items-start gap-3 mb-3">
-        {profileLoading ? (
-          <>
-            <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-            <div className="space-y-1.5 flex-1">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-          </>
-        ) : (
-          <>
-            <Avatar className="h-10 w-10 shrink-0">
-              {avatarDataUrl && <AvatarImage src={avatarDataUrl} alt={displayName} />}
-              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
-                {getInitials(displayName)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2 flex-wrap">
-                <span className="font-semibold text-sm text-foreground truncate">{displayName}</span>
-                <span className="text-xs text-muted-foreground truncate">{handle}</span>
-              </div>
-              {channelDescription && (
-                <p className="text-xs text-muted-foreground truncate mt-0.5">{channelDescription}</p>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div>
+              <span className="text-sm font-semibold text-foreground">{name}</span>
+              {handle && (
+                <span className="text-xs text-mt-charcoal-500 ml-1.5">@{handle}</span>
               )}
-              <span className="text-xs text-muted-foreground">{timestamp}</span>
             </div>
-          </>
-        )}
-      </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs text-mt-charcoal-500">{formatTimeAgo(timestampMs)}</span>
+              {showDelete && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      disabled={isPending}
+                      className="p-1.5 rounded-lg text-mt-charcoal-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-mt-charcoal-800 border-mt-charcoal-700">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-foreground">Delete Post</AlertDialogTitle>
+                      <AlertDialogDescription className="text-mt-charcoal-400">
+                        Are you sure you want to delete this post? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="bg-mt-charcoal-700 border-mt-charcoal-600 text-foreground hover:bg-mt-charcoal-600">
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deletePost(post.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white border-0"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+          </div>
 
-      {/* Post body */}
-      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap mb-3">{post.body}</p>
+          <p className="text-sm text-mt-charcoal-200 leading-relaxed whitespace-pre-wrap">{post.body}</p>
 
-      {/* Attached image */}
-      {imageUrl && (
-        <div className="rounded-lg overflow-hidden border border-border">
-          <img
-            src={imageUrl}
-            alt="Post attachment"
-            className="w-full object-cover max-h-80"
-            loading="lazy"
-          />
+          {attachmentUrl && (
+            <div className="mt-3 rounded-xl overflow-hidden border border-mt-charcoal-700">
+              <img
+                src={attachmentUrl}
+                alt="Post attachment"
+                className="w-full max-h-80 object-cover"
+              />
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,34 +1,37 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Loader2, Bell } from 'lucide-react';
+import { Principal } from '@dfinity/principal';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useGetSubscribers } from '../hooks/useGetSubscribers';
 import { useSubscribeToChannel, useUnsubscribeFromChannel } from '../hooks/useSubscribeToChannel';
-import type { Principal } from '@dfinity/principal';
+import { Button } from '@/components/ui/button';
+import { Loader2, UserPlus, UserCheck } from 'lucide-react';
 
 interface SubscribeButtonProps {
   channelPrincipal: Principal;
-  className?: string;
+  size?: 'sm' | 'default' | 'lg';
 }
 
-export default function SubscribeButton({ channelPrincipal, className }: SubscribeButtonProps) {
+export default function SubscribeButton({ channelPrincipal, size = 'sm' }: SubscribeButtonProps) {
   const { identity } = useInternetIdentity();
   const { googleUser } = useGoogleAuth();
   const isAuthenticated = !!identity || !!googleUser;
 
-  const { data: subscribers = [] } = useGetSubscribers(channelPrincipal);
-  const { mutate: subscribe, isPending: isSubscribing } = useSubscribeToChannel();
-  const { mutate: unsubscribe, isPending: isUnsubscribing } = useUnsubscribeFromChannel();
+  const { data: subscribers } = useGetSubscribers(channelPrincipal);
+  const { mutate: subscribe, isPending: subscribing } = useSubscribeToChannel();
+  const { mutate: unsubscribe, isPending: unsubscribing } = useUnsubscribeFromChannel();
 
-  const isSubscribed = identity
-    ? subscribers.some((s) => s.toString() === identity.getPrincipal().toString())
-    : false;
+  const isSubscribed = subscribers?.some(
+    sub => identity && sub.toString() === identity.getPrincipal().toString()
+  ) ?? false;
 
-  const isPending = isSubscribing || isUnsubscribing;
+  const isPending = subscribing || unsubscribing;
 
-  const handleClick = () => {
-    if (!isAuthenticated) return;
+  if (!isAuthenticated) return null;
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (isSubscribed) {
       unsubscribe(channelPrincipal);
     } else {
@@ -36,39 +39,25 @@ export default function SubscribeButton({ channelPrincipal, className }: Subscri
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className={`rounded-full ${className}`}
-        disabled
-      >
-        <Bell className="h-4 w-4 mr-1" />
-        Subscribe
-      </Button>
-    );
-  }
-
   return (
     <Button
-      variant={isSubscribed ? 'secondary' : 'default'}
-      size="sm"
+      size={size}
       onClick={handleClick}
       disabled={isPending}
-      className={`rounded-full ${
-        isSubscribed
-          ? 'bg-muted text-foreground hover:bg-muted/80'
-          : 'bg-mt-magenta hover:bg-mt-purple text-white'
-      } ${className}`}
+      className={`
+        rounded-full font-semibold transition-all duration-200 text-xs
+        ${isSubscribed
+          ? 'bg-mt-charcoal-700 text-mt-charcoal-200 hover:bg-mt-red-500/20 hover:text-mt-red-400 border border-mt-charcoal-600'
+          : 'bg-mt-red-500 hover:bg-mt-red-600 text-white shadow-glow-red-sm border-0'
+        }
+      `}
     >
       {isPending ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <Loader2 className="w-3 h-3 animate-spin" />
+      ) : isSubscribed ? (
+        <><UserCheck className="w-3 h-3 mr-1" />Subscribed</>
       ) : (
-        <>
-          <Bell className="h-4 w-4 mr-1" />
-          {isSubscribed ? 'Subscribed' : 'Subscribe'}
-        </>
+        <><UserPlus className="w-3 h-3 mr-1" />Subscribe</>
       )}
     </Button>
   );

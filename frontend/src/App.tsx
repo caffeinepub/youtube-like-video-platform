@@ -13,22 +13,26 @@ import ReelsPage from './pages/ReelsPage';
 import PlaylistsPage from './pages/PlaylistsPage';
 import PlaylistDetailPage from './pages/PlaylistDetailPage';
 import CommunityPage from './pages/CommunityPage';
-import MonetizationPage from './pages/MonetizationPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import CopyrightPolicyPage from './pages/CopyrightPolicyPage';
 import DownloadAppPage from './pages/DownloadAppPage';
-import ApiKeysPage from './pages/ApiKeysPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import WithdrawalPage from './pages/WithdrawalPage';
+import SettingsPage from './pages/SettingsPage';
+import BottomNav from './components/BottomNav';
+import { Toaster } from '@/components/ui/sonner';
 
 const queryClient = new QueryClient();
 
+// Root layout uses Outlet — Layout renders children via <Outlet />
 const rootRoute = createRootRoute({
   component: () => (
-    <Layout>
-      <Outlet />
-    </Layout>
+    <>
+      <Layout />
+      <BottomNav />
+      <Toaster richColors position="top-right" />
+    </>
   ),
 });
 
@@ -104,12 +108,6 @@ const communityRoute = createRoute({
   component: CommunityPage,
 });
 
-const monetizationRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/monetization',
-  component: MonetizationPage,
-});
-
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin',
@@ -126,12 +124,6 @@ const downloadRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/download',
   component: DownloadAppPage,
-});
-
-const apiKeysRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/api-keys',
-  component: ApiKeysPage,
 });
 
 const loginRoute = createRoute({
@@ -152,6 +144,12 @@ const withdrawalRoute = createRoute({
   component: WithdrawalPage,
 });
 
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/settings',
+  component: SettingsPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   videoRoute,
@@ -165,14 +163,13 @@ const routeTree = rootRoute.addChildren([
   playlistsRoute,
   playlistDetailRoute,
   communityRoute,
-  monetizationRoute,
   adminRoute,
   copyrightRoute,
   downloadRoute,
-  apiKeysRoute,
   loginRoute,
   signupRoute,
   withdrawalRoute,
+  settingsRoute,
 ]);
 
 const router = createRouter({ routeTree });

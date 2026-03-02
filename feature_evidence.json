@@ -2,13 +2,32 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-create-a-dollar-withdrawal-page-route-withdrawal-accessible-from-the-sidebar-and-or-the-monetization-page-the-page-must-display-the-current-usd-balance-an-input-field-for-the-withdrawal-amount-a-submit-button-to-request-a-withdrawal-and-a-transaction-history-table-showing-past-withdrawals-with-their-amount-date-and-status",
-      "featureTitle": "Create a Dollar Withdrawal page (route: /withdrawal) accessible from the sidebar and/or the Monetization page. The page must display the current USD balance, an input field for the withdrawal amount, a submit button to request a withdrawal, and a transaction history table showing past withdrawals with their amount, date, and status.",
+      "featureId": "feature-create-a-dedicated-settings-page-frontend-src-pages-settingspage-tsx-accessible-from-the-app-navigation-the-page-must-contain-clearly-separated-sections-language-version-admin-about-app-and-download-app",
+      "featureTitle": "Create a dedicated Settings page (frontend/src/pages/SettingsPage.tsx) accessible from the app navigation. The page must contain clearly separated sections: Language, Version, Admin, About App, and Download App.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/hooks/useGetCreatorBankAccountState.ts",
-        "frontend/src/hooks/useRequestWithdrawal.ts",
-        "frontend/src/pages/WithdrawalPage.tsx"
+        "frontend/src/pages/SettingsPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-in-the-settings-page-language-section-embed-the-existing-languageselector-component-frontend-src-components-languageselector-tsx-so-users-can-switch-the-app-language-from-within-settings-remove-or-hide-the-languageselector-from-any-other-location-where-it-currently-appears-e-g-top-navigation-bar-to-avoid-duplication",
+      "featureTitle": "In the Settings page Language section, embed the existing LanguageSelector component (frontend/src/components/LanguageSelector.tsx) so users can switch the app language from within Settings. Remove or hide the LanguageSelector from any other location where it currently appears (e.g., top navigation bar) to avoid duplication.",
+      "files": [
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/pages/SettingsPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -26,12 +45,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-navigation-link-to-the-dollar-withdrawal-page-in-the-sidebar-desktop-and-the-bottom-navigation-bar-mobile-using-an-appropriate-wallet-withdrawal-icon-and-label-withdraw",
-      "featureTitle": "Add a navigation link to the Dollar Withdrawal page in the sidebar (desktop) and the bottom navigation bar (mobile), using an appropriate wallet/withdrawal icon and label 'Withdraw'.",
+      "featureId": "feature-in-the-settings-page-version-section-display-the-current-app-version-string-e-g-v1-0-0-or-a-hardcoded-build-version-as-a-read-only-informational-row-with-a-label-app-version-and-the-version-value",
+      "featureTitle": "In the Settings page Version section, display the current app version string (e.g., 'v1.0.0' or a hardcoded build version) as a read-only informational row with a label 'App Version' and the version value.",
       "files": [
-        "frontend/src/components/BottomNav.tsx",
-        "frontend/src/components/Layout.tsx",
-        "frontend/src/i18n/translations.ts"
+        "frontend/src/pages/SettingsPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -45,6 +62,92 @@
       ],
       "testIds": [
         "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-in-the-settings-page-admin-section-show-an-admin-dashboard-navigation-link-that-is-only-visible-to-users-for-whom-useiscalleradmin-returns-true-unauthenticated-users-or-non-admin-users-must-not-see-this-row-clicking-the-link-navigates-to-the-existing-admin-dashboard-page",
+      "featureTitle": "In the Settings page Admin section, show an 'Admin Dashboard' navigation link that is only visible to users for whom useIsCallerAdmin returns true. Unauthenticated users or non-admin users must not see this row. Clicking the link navigates to the existing Admin Dashboard page.",
+      "files": [
+        "frontend/src/pages/SettingsPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-in-the-settings-page-about-app-section-display-static-informational-content-about-the-mediatube-app-app-name-a-short-description-links-to-the-privacy-policy-and-copyright-policy-pages-and-contact-support-info-this-section-must-be-visible-to-all-users",
+      "featureTitle": "In the Settings page About App section, display static informational content about the Mediatube app: app name, a short description, links to the Privacy Policy and Copyright Policy pages, and contact/support info. This section must be visible to all users.",
+      "files": [
+        "frontend/src/pages/SettingsPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-in-the-settings-page-download-app-section-display-a-button-or-link-that-navigates-to-the-existing-download-app-page-frontend-src-pages-downloadapppage-tsx-the-row-should-show-platform-icons-android-ios-and-a-label-download-mediatube-app",
+      "featureTitle": "In the Settings page Download App section, display a button or link that navigates to the existing Download App page (frontend/src/pages/DownloadAppPage.tsx). The row should show platform icons (Android/iOS) and a label 'Download Mediatube App'.",
+      "files": [
+        "frontend/src/pages/SettingsPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-6"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-register-the-settings-page-as-a-new-route-e-g-settings-in-the-tanstack-router-route-tree-in-frontend-src-app-tsx-and-add-a-settings-entry-to-the-sidebar-navigation-in-frontend-src-components-layout-tsx-and-to-the-bottom-navigation-bar-in-frontend-src-components-bottomnav-tsx-using-an-appropriate-settings-icon",
+      "featureTitle": "Register the Settings page as a new route (e.g., /settings) in the TanStack Router route tree in frontend/src/App.tsx, and add a 'Settings' entry to the sidebar navigation in frontend/src/components/Layout.tsx and to the bottom navigation bar in frontend/src/components/BottomNav.tsx using an appropriate settings icon.",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/BottomNav.tsx",
+        "frontend/src/components/Layout.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-7"
       ],
       "confidence": "high"
     }

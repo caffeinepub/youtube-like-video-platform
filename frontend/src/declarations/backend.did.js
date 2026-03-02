@@ -19,6 +19,20 @@ export const _CaffeineStorageRefillResult = IDL.Record({
   'success' : IDL.Opt(IDL.Bool),
   'topped_up_amount' : IDL.Opt(IDL.Nat),
 });
+export const PlatformEarningsStats = IDL.Record({
+  'numCreators' : IDL.Nat,
+  'totalBalanceCents' : IDL.Nat,
+  'numPendingWithdrawals' : IDL.Nat,
+  'numCompletedWithdrawals' : IDL.Nat,
+  'pendingWithdrawalsCents' : IDL.Nat,
+  'totalWithdrawalsCents' : IDL.Nat,
+});
+export const UserProfile = IDL.Record({
+  'name' : IDL.Text,
+  'handle' : IDL.Text,
+  'channelDescription' : IDL.Text,
+  'avatar' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+});
 export const UserRole = IDL.Variant({
   'admin' : IDL.Null,
   'user' : IDL.Null,
@@ -30,12 +44,6 @@ export const AdminAnalytics = IDL.Record({
   'totalVideos' : IDL.Nat,
   'totalUsers' : IDL.Nat,
   'totalComments' : IDL.Nat,
-});
-export const UserProfile = IDL.Record({
-  'name' : IDL.Text,
-  'handle' : IDL.Text,
-  'channelDescription' : IDL.Text,
-  'avatar' : IDL.Opt(IDL.Vec(IDL.Nat8)),
 });
 export const Time = IDL.Int;
 export const VideoMetadata = IDL.Record({
@@ -133,8 +141,10 @@ export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'addComment' : IDL.Func([IDL.Text, IDL.Text], [], []),
   'addVideoToPlaylist' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'adminGetEarningsStats' : IDL.Func([], [PlatformEarningsStats], ['query']),
   'adminRemoveUserProfile' : IDL.Func([IDL.Principal], [], []),
   'adminRemoveVideo' : IDL.Func([IDL.Text], [], []),
+  'adminSaveUserProfile' : IDL.Func([UserProfile, IDL.Principal], [], []),
   'approveWithdrawal' : IDL.Func([], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'cancelWithdrawal' : IDL.Func([], [], []),
@@ -240,6 +250,20 @@ export const idlFactory = ({ IDL }) => {
     'success' : IDL.Opt(IDL.Bool),
     'topped_up_amount' : IDL.Opt(IDL.Nat),
   });
+  const PlatformEarningsStats = IDL.Record({
+    'numCreators' : IDL.Nat,
+    'totalBalanceCents' : IDL.Nat,
+    'numPendingWithdrawals' : IDL.Nat,
+    'numCompletedWithdrawals' : IDL.Nat,
+    'pendingWithdrawalsCents' : IDL.Nat,
+    'totalWithdrawalsCents' : IDL.Nat,
+  });
+  const UserProfile = IDL.Record({
+    'name' : IDL.Text,
+    'handle' : IDL.Text,
+    'channelDescription' : IDL.Text,
+    'avatar' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
   const UserRole = IDL.Variant({
     'admin' : IDL.Null,
     'user' : IDL.Null,
@@ -251,12 +275,6 @@ export const idlFactory = ({ IDL }) => {
     'totalVideos' : IDL.Nat,
     'totalUsers' : IDL.Nat,
     'totalComments' : IDL.Nat,
-  });
-  const UserProfile = IDL.Record({
-    'name' : IDL.Text,
-    'handle' : IDL.Text,
-    'channelDescription' : IDL.Text,
-    'avatar' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
   const Time = IDL.Int;
   const VideoMetadata = IDL.Record({
@@ -354,8 +372,10 @@ export const idlFactory = ({ IDL }) => {
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'addComment' : IDL.Func([IDL.Text, IDL.Text], [], []),
     'addVideoToPlaylist' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'adminGetEarningsStats' : IDL.Func([], [PlatformEarningsStats], ['query']),
     'adminRemoveUserProfile' : IDL.Func([IDL.Principal], [], []),
     'adminRemoveVideo' : IDL.Func([IDL.Text], [], []),
+    'adminSaveUserProfile' : IDL.Func([UserProfile, IDL.Principal], [], []),
     'approveWithdrawal' : IDL.Func([], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'cancelWithdrawal' : IDL.Func([], [], []),

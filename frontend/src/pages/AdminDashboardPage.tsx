@@ -1,173 +1,273 @@
 import React, { useState } from 'react';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useIsCallerAdmin } from '../hooks/useIsCallerAdmin';
-import { useGetAdminDashboard } from '../hooks/useGetAdminDashboard';
-import { useAdminRemoveVideo } from '../hooks/useAdminRemoveVideo';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useNavigate } from '@tanstack/react-router';
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from '@/components/ui/table';
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from '@/components/ui/alert-dialog';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import {
-  ShieldAlert,
+  LayoutDashboard,
   Users,
   Video,
-  BarChart3,
-  Trash2,
-  Loader2,
+  DollarSign,
   Eye,
   MessageSquare,
-  TrendingUp,
+  Trash2,
+  Edit,
+  LogOut,
+  Menu,
+  ChevronRight,
+  Shield,
 } from 'lucide-react';
-import { getInitials, convertBlobToDataURL } from '../utils/avatarHelpers';
-import type { VideoMetadata, UserProfile } from '../backend';
+import { useGetAdminDashboard } from '../hooks/useGetAdminDashboard';
+import { useAdminRemoveVideo } from '../hooks/useAdminRemoveVideo';
+import { useGetAdminEarningsStats } from '../hooks/useGetAdminEarningsStats';
+import { useIsCallerAdmin } from '../hooks/useIsCallerAdmin';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useQueryClient } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import EditUserModal from '../components/EditUserModal';
+import EarningsStatsCards from '../components/EarningsStatsCards';
+import type { UserProfile, VideoMetadata } from '../backend';
+import { Principal } from '@dfinity/principal';
+import { formatViewCount } from '../utils/formatters';
+import { convertBlobToDataURL, getInitials } from '../utils/avatarHelpers';
 
-function formatDate(timestamp: bigint): string {
-  const ms = Number(timestamp) / 1_000_000;
-  return new Date(ms).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
+type AdminSection = 'dashboard' | 'users' | 'videos' | 'earnings';
 
-function formatViews(count: bigint): string {
-  const n = Number(count);
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return n.toString();
-}
+const navItems: { id: AdminSection; label: string; icon: React.ReactNode }[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+  { id: 'users', label: 'Users', icon: <Users size={18} /> },
+  { id: 'videos', label: 'Videos', icon: <Video size={18} /> },
+  { id: 'earnings', label: 'Earnings', icon: <DollarSign size={18} /> },
+];
 
 function StatCard({
   icon,
   label,
   value,
-  color,
+  accent,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string | number;
-  color: string;
+  accent: 'teal' | 'violet' | 'blue' | 'amber';
 }) {
+  const accentClasses: Record<string, string> = {
+    teal: 'bg-admin-teal/10 text-admin-teal',
+    violet: 'bg-admin-violet/10 text-admin-violet',
+    blue: 'bg-blue-500/10 text-blue-400',
+    amber: 'bg-amber-500/10 text-amber-400',
+  };
+
   return (
-    <div className="rounded-xl border border-border bg-card p-5 flex items-center gap-4">
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
-        {icon}
-      </div>
+    <div className="admin-card rounded-xl p-5 flex items-center gap-4">
+      <div className={`p-3 rounded-lg ${accentClasses[accent]}`}>{icon}</div>
       <div>
-        <p className="text-2xl font-bold text-foreground">{value}</p>
-        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className="text-admin-muted text-sm font-medium">{label}</p>
+        <p className="text-admin-text text-2xl font-bold mt-0.5">{value}</p>
       </div>
     </div>
   );
 }
 
-function RemoveVideoButton({ video }: { video: VideoMetadata }) {
-  const { mutate: removeVideo, isPending } = useAdminRemoveVideo();
+function UserRow({
+  user,
+  index,
+  onEdit,
+}: {
+  user: UserProfile;
+  index: number;
+  onEdit: (user: UserProfile) => void;
+}) {
+  const avatarUrl =
+    user.avatar && user.avatar.length > 0 ? convertBlobToDataURL(user.avatar) : null;
 
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm" className="gap-1.5" disabled={isPending}>
-          {isPending ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Trash2 className="w-3.5 h-3.5" />
-          )}
-          Remove
+    <tr className="border-b border-admin-border hover:bg-white/5 transition-colors">
+      <td className="px-4 py-3 text-admin-muted text-sm">{index + 1}</td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={user.name} className="h-8 w-8 rounded-full object-cover" />
+            ) : (
+              <AvatarFallback className="bg-admin-teal/20 text-admin-teal text-xs font-semibold">
+                {getInitials(user.name)}
+              </AvatarFallback>
+            )}
+          </Avatar>
+          <div>
+            <p className="text-admin-text text-sm font-medium">{user.name || 'Unnamed'}</p>
+            <p className="text-admin-muted text-xs">@{user.handle || 'no-handle'}</p>
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-3 text-admin-muted text-sm max-w-xs truncate">
+        {user.channelDescription || '—'}
+      </td>
+      <td className="px-4 py-3">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-admin-teal hover:text-admin-teal hover:bg-admin-teal/10 h-7 px-2"
+          onClick={() => onEdit(user)}
+        >
+          <Edit size={14} className="mr-1" />
+          Edit
         </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Remove Video</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to remove <strong>"{video.title}"</strong>? This action cannot be
-            undone and will also delete all associated comments.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => removeVideo(video.id)}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            Remove Video
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      </td>
+    </tr>
+  );
+}
+
+function VideoRow({
+  video,
+  onRemove,
+  isRemoving,
+}: {
+  video: VideoMetadata;
+  onRemove: (id: string) => void;
+  isRemoving: boolean;
+}) {
+  return (
+    <tr className="border-b border-admin-border hover:bg-white/5 transition-colors">
+      <td className="px-4 py-3 text-admin-text text-sm font-medium max-w-xs">
+        <div className="truncate max-w-[200px]">{video.title}</div>
+      </td>
+      <td className="px-4 py-3 text-admin-muted text-sm">
+        <div className="truncate max-w-[120px]">{video.uploader.toString().slice(0, 12)}…</div>
+      </td>
+      <td className="px-4 py-3 text-admin-muted text-sm">
+        {formatViewCount(Number(video.viewCount))}
+      </td>
+      <td className="px-4 py-3">
+        <Badge
+          variant={video.isShort ? 'secondary' : 'outline'}
+          className={
+            video.isShort
+              ? 'bg-admin-violet/20 text-admin-violet border-admin-violet/30 text-xs'
+              : 'border-admin-border text-admin-muted text-xs'
+          }
+        >
+          {video.isShort ? 'Short' : 'Video'}
+        </Badge>
+      </td>
+      <td className="px-4 py-3">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-7 px-2"
+              disabled={isRemoving}
+            >
+              <Trash2 size={14} className="mr-1" />
+              Remove
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="bg-admin-card border-admin-border">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-admin-text">Remove Video</AlertDialogTitle>
+              <AlertDialogDescription className="text-admin-muted">
+                Are you sure you want to remove "{video.title}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="border-admin-border text-admin-muted hover:bg-white/5">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => onRemove(video.id)}
+                className="bg-red-500 hover:bg-red-600 text-white"
+              >
+                Remove
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </td>
+    </tr>
   );
 }
 
 export default function AdminDashboardPage() {
-  const { identity } = useInternetIdentity();
-  const isAuthenticated = !!identity;
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { clear } = useInternetIdentity();
+  const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [editUserPrincipal, setEditUserPrincipal] = useState<Principal | null>(null);
+  const [editUserModalOpen, setEditUserModalOpen] = useState(false);
 
-  const { data: isAdmin, isLoading: adminCheckLoading } = useIsCallerAdmin();
+  const { data: isAdmin, isLoading: adminLoading } = useIsCallerAdmin();
   const { data: dashboard, isLoading: dashboardLoading } = useGetAdminDashboard();
+  const { mutate: removeVideo, isPending: removingVideo } = useAdminRemoveVideo();
+  const {
+    data: earningsStats,
+    isLoading: earningsLoading,
+    error: earningsError,
+    refetch: refetchEarnings,
+  } = useGetAdminEarningsStats();
 
-  // Not logged in
-  if (!isAuthenticated) {
+  const handleLogout = async () => {
+    await clear();
+    queryClient.clear();
+    navigate({ to: '/login' });
+  };
+
+  const handleEditUser = (user: UserProfile) => {
+    setEditingUser(user);
+    // We don't have the principal from UserProfile alone; use a placeholder
+    setEditUserPrincipal(Principal.anonymous());
+    setEditUserModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditUserModalOpen(false);
+    setEditingUser(null);
+    setEditUserPrincipal(null);
+  };
+
+  const handleRemoveVideo = (videoId: string) => {
+    removeVideo(videoId);
+  };
+
+  if (adminLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-6">
-          <ShieldAlert className="w-8 h-8 text-destructive" />
+      <div className="min-h-screen admin-bg flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-admin-teal border-t-transparent rounded-full animate-spin" />
+          <p className="text-admin-muted text-sm">Loading admin panel…</p>
         </div>
-        <h1 className="text-2xl font-bold text-foreground mb-3">Authentication Required</h1>
-        <p className="text-muted-foreground">Please log in to access the Admin Dashboard.</p>
       </div>
     );
   }
 
-  // Checking admin status
-  if (adminCheckLoading) {
-    return (
-      <div className="max-w-6xl mx-auto px-4 py-10">
-        <div className="flex items-center gap-3 mb-8">
-          <Skeleton className="w-10 h-10 rounded-xl" />
-          <Skeleton className="h-8 w-48" />
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-xl" />
-          ))}
-        </div>
-        <Skeleton className="h-64 rounded-xl" />
-      </div>
-    );
-  }
-
-  // Not admin
   if (!isAdmin) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-6">
-          <ShieldAlert className="w-8 h-8 text-destructive" />
+      <div className="min-h-screen admin-bg flex items-center justify-center">
+        <div className="text-center">
+          <Shield size={48} className="text-red-400 mx-auto mb-4" />
+          <h2 className="text-admin-text text-xl font-semibold mb-2">Access Denied</h2>
+          <p className="text-admin-muted mb-6">You don't have permission to access this page.</p>
+          <Button
+            onClick={() => navigate({ to: '/' })}
+            className="bg-admin-teal hover:bg-admin-teal/90 text-white"
+          >
+            Go Home
+          </Button>
         </div>
-        <h1 className="text-2xl font-bold text-foreground mb-3">Access Denied</h1>
-        <p className="text-muted-foreground">
-          You do not have permission to access the Admin Dashboard. This area is restricted to
-          administrators only.
-        </p>
       </div>
     );
   }
@@ -177,289 +277,324 @@ export default function AdminDashboardPage() {
   const videos = dashboard?.videos ?? [];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <ShieldAlert className="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Manage Mediatube platform</p>
-        </div>
-      </div>
+    <div className="min-h-screen admin-bg flex">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-      {/* Analytics Cards */}
-      {dashboardLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-xl" />
+      {/* Sidebar */}
+      <aside
+        className={`fixed top-0 left-0 h-full w-60 admin-sidebar z-30 flex flex-col transition-transform duration-300 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0`}
+      >
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+          <img
+            src="/assets/generated/admin-logo-icon.dim_128x128.png"
+            alt="Mediatube Admin"
+            className="w-9 h-9 rounded-lg object-cover"
+          />
+          <div>
+            <p className="text-white font-bold text-sm leading-tight">Mediatube</p>
+            <p className="text-admin-teal text-xs font-medium">Admin Panel</p>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          <p className="text-white/30 text-xs font-semibold uppercase tracking-wider px-3 mb-3">
+            Main Menu
+          </p>
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                setActiveSection(item.id);
+                setSidebarOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                activeSection === item.id
+                  ? 'bg-admin-teal text-white shadow-lg'
+                  : 'text-white/60 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              {item.icon}
+              {item.label}
+              {activeSection === item.id && (
+                <ChevronRight size={14} className="ml-auto opacity-70" />
+              )}
+            </button>
           ))}
-        </div>
-      ) : analytics ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            icon={<Users className="w-6 h-6 text-blue-600" />}
-            label="Total Users"
-            value={Number(analytics.totalUsers).toLocaleString()}
-            color="bg-blue-500/10"
-          />
-          <StatCard
-            icon={<Video className="w-6 h-6 text-primary" />}
-            label="Total Videos"
-            value={Number(analytics.totalVideos).toLocaleString()}
-            color="bg-primary/10"
-          />
-          <StatCard
-            icon={<MessageSquare className="w-6 h-6 text-green-600" />}
-            label="Total Comments"
-            value={Number(analytics.totalComments).toLocaleString()}
-            color="bg-green-500/10"
-          />
-          <StatCard
-            icon={<Eye className="w-6 h-6 text-amber-600" />}
-            label="Total Views"
-            value={formatViews(analytics.totalViews)}
-            color="bg-amber-500/10"
-          />
-        </div>
-      ) : null}
+        </nav>
 
-      {/* Tabs */}
-      <Tabs defaultValue="users">
-        <TabsList className="mb-6">
-          <TabsTrigger value="users" className="gap-2">
-            <Users className="w-4 h-4" />
-            User Management
-          </TabsTrigger>
-          <TabsTrigger value="videos" className="gap-2">
-            <Video className="w-4 h-4" />
-            Video Moderation
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="gap-2">
-            <BarChart3 className="w-4 h-4" />
-            Analytics
-          </TabsTrigger>
-        </TabsList>
+        {/* Sidebar footer */}
+        <div className="px-3 py-4 border-t border-white/10">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:text-red-400 hover:bg-red-500/10 transition-all"
+          >
+            <LogOut size={18} />
+            Logout
+          </button>
+        </div>
+      </aside>
 
-        {/* User Management Tab */}
-        <TabsContent value="users">
-          <div className="rounded-xl border border-border overflow-hidden">
-            <div className="px-5 py-4 border-b border-border bg-muted/30">
-              <h2 className="font-semibold text-foreground">
-                All Users{' '}
-                <Badge variant="secondary" className="ml-2">
-                  {users.length}
-                </Badge>
-              </h2>
+      {/* Main content */}
+      <div className="flex-1 lg:ml-60 flex flex-col min-h-screen">
+        {/* Top header */}
+        <header className="admin-header sticky top-0 z-10 flex items-center justify-between px-5 h-16 border-b border-admin-border">
+          <div className="flex items-center gap-3">
+            <button
+              className="lg:hidden text-admin-muted hover:text-admin-text"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu size={22} />
+            </button>
+            <div>
+              <h1 className="text-admin-text font-semibold text-base capitalize">
+                {activeSection === 'dashboard' ? 'Overview' : activeSection}
+              </h1>
+              <p className="text-admin-muted text-xs hidden sm:block">
+                {activeSection === 'dashboard' && 'Platform statistics at a glance'}
+                {activeSection === 'users' && 'Manage registered users'}
+                {activeSection === 'videos' && 'Moderate uploaded content'}
+                {activeSection === 'earnings' && 'Platform earnings overview'}
+              </p>
             </div>
-            {dashboardLoading ? (
-              <div className="p-6 space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-12 rounded-lg" />
-                ))}
-              </div>
-            ) : users.length === 0 ? (
-              <div className="py-16 text-center text-muted-foreground">
-                <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p>No users found</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Channel Description</TableHead>
-                    <TableHead>Avatar</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((user: UserProfile, idx: number) => {
-                    const avatarSrc =
-                      user.avatar && user.avatar.length > 0
-                        ? convertBlobToDataURL(user.avatar)
-                        : undefined;
-                    return (
-                      <TableRow key={idx}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="w-8 h-8">
-                              {avatarSrc && (
-                                <img src={avatarSrc} alt={user.name} className="w-full h-full object-cover rounded-full" />
-                              )}
-                              <AvatarFallback className="text-xs bg-primary/20 text-primary">
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 bg-admin-teal/10 border border-admin-teal/20 rounded-full px-3 py-1.5">
+              <div className="w-2 h-2 rounded-full bg-admin-teal animate-pulse" />
+              <span className="text-admin-teal text-xs font-medium">Admin</span>
+            </div>
+            <Avatar className="h-8 w-8 cursor-pointer" onClick={handleLogout}>
+              <AvatarFallback className="bg-admin-violet/20 text-admin-violet text-xs font-bold">
+                AD
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 p-5 lg:p-7">
+          {/* DASHBOARD SECTION */}
+          {activeSection === 'dashboard' && (
+            <div className="space-y-6">
+              {dashboardLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-24 rounded-xl bg-white/5" />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                  <StatCard
+                    icon={<Users size={22} />}
+                    label="Total Users"
+                    value={Number(analytics?.totalUsers ?? 0).toLocaleString()}
+                    accent="teal"
+                  />
+                  <StatCard
+                    icon={<Video size={22} />}
+                    label="Total Videos"
+                    value={Number(analytics?.totalVideos ?? 0).toLocaleString()}
+                    accent="violet"
+                  />
+                  <StatCard
+                    icon={<Eye size={22} />}
+                    label="Total Views"
+                    value={formatViewCount(Number(analytics?.totalViews ?? 0))}
+                    accent="blue"
+                  />
+                  <StatCard
+                    icon={<MessageSquare size={22} />}
+                    label="Total Comments"
+                    value={Number(analytics?.totalComments ?? 0).toLocaleString()}
+                    accent="amber"
+                  />
+                </div>
+              )}
+
+              {/* Quick overview */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="admin-card rounded-xl overflow-hidden">
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-admin-border">
+                    <h3 className="text-admin-text font-semibold text-sm flex items-center gap-2">
+                      <Users size={16} className="text-admin-teal" />
+                      Recent Users
+                    </h3>
+                    <button
+                      onClick={() => setActiveSection('users')}
+                      className="text-admin-teal text-xs hover:underline"
+                    >
+                      View all
+                    </button>
+                  </div>
+                  <div className="divide-y divide-admin-border">
+                    {dashboardLoading
+                      ? [...Array(3)].map((_, i) => (
+                          <div key={i} className="px-5 py-3 flex items-center gap-3">
+                            <Skeleton className="h-8 w-8 rounded-full bg-white/5" />
+                            <div className="space-y-1.5">
+                              <Skeleton className="h-3 w-24 bg-white/5" />
+                              <Skeleton className="h-2.5 w-16 bg-white/5" />
+                            </div>
+                          </div>
+                        ))
+                      : users.slice(0, 5).map((user, i) => (
+                          <div key={i} className="px-5 py-3 flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="bg-admin-teal/20 text-admin-teal text-xs">
                                 {getInitials(user.name)}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="font-medium text-sm">{user.name || 'Unnamed User'}</span>
+                            <div>
+                              <p className="text-admin-text text-sm font-medium">
+                                {user.name || 'Unnamed'}
+                              </p>
+                              <p className="text-admin-muted text-xs">@{user.handle || 'no-handle'}</p>
+                            </div>
                           </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
-                          {user.channelDescription || '—'}
-                        </TableCell>
-                        <TableCell>
-                          {avatarSrc ? (
-                            <Badge variant="secondary">Has Avatar</Badge>
-                          ) : (
-                            <Badge variant="outline">No Avatar</Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-          </div>
-        </TabsContent>
+                        ))}
+                  </div>
+                </div>
 
-        {/* Video Moderation Tab */}
-        <TabsContent value="videos">
-          <div className="rounded-xl border border-border overflow-hidden">
-            <div className="px-5 py-4 border-b border-border bg-muted/30">
-              <h2 className="font-semibold text-foreground">
-                All Videos{' '}
-                <Badge variant="secondary" className="ml-2">
-                  {videos.length}
-                </Badge>
-              </h2>
+                <div className="admin-card rounded-xl overflow-hidden">
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-admin-border">
+                    <h3 className="text-admin-text font-semibold text-sm flex items-center gap-2">
+                      <Video size={16} className="text-admin-violet" />
+                      Recent Videos
+                    </h3>
+                    <button
+                      onClick={() => setActiveSection('videos')}
+                      className="text-admin-violet text-xs hover:underline"
+                    >
+                      View all
+                    </button>
+                  </div>
+                  <div className="divide-y divide-admin-border">
+                    {dashboardLoading
+                      ? [...Array(3)].map((_, i) => (
+                          <div key={i} className="px-5 py-3">
+                            <Skeleton className="h-3 w-3/4 bg-white/5 mb-1.5" />
+                            <Skeleton className="h-2.5 w-1/2 bg-white/5" />
+                          </div>
+                        ))
+                      : videos.slice(0, 5).map((video, i) => (
+                          <div key={i} className="px-5 py-3">
+                            <p className="text-admin-text text-sm font-medium truncate">
+                              {video.title}
+                            </p>
+                            <p className="text-admin-muted text-xs mt-0.5">
+                              {formatViewCount(Number(video.viewCount))} views
+                            </p>
+                          </div>
+                        ))}
+                  </div>
+                </div>
+              </div>
             </div>
-            {dashboardLoading ? (
-              <div className="p-6 space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-12 rounded-lg" />
-                ))}
+          )}
+
+          {/* USERS SECTION */}
+          {activeSection === 'users' && (
+            <div className="admin-card rounded-xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-admin-border">
+                <h2 className="text-admin-text font-semibold flex items-center gap-2">
+                  <Users size={18} className="text-admin-teal" />
+                  All Users ({users.length})
+                </h2>
               </div>
-            ) : videos.length === 0 ? (
-              <div className="py-16 text-center text-muted-foreground">
-                <Video className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p>No videos found</p>
-              </div>
-            ) : (
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Views</TableHead>
-                      <TableHead>Upload Date</TableHead>
-                      <TableHead>Uploader</TableHead>
-                      <TableHead className="text-right">Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {videos.map((video: VideoMetadata) => (
-                      <TableRow key={video.id}>
-                        <TableCell className="font-medium max-w-[200px] truncate">
-                          {video.title}
-                        </TableCell>
-                        <TableCell>
-                          {video.isShort ? (
-                            <Badge variant="secondary">Short</Badge>
-                          ) : (
-                            <Badge variant="outline">Video</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Eye className="w-3.5 h-3.5" />
-                            {formatViews(video.viewCount)}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {formatDate(video.uploadDate)}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground font-mono max-w-[120px] truncate">
-                          {video.uploader.toString().slice(0, 12)}…
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <RemoveVideoButton video={video} />
-                        </TableCell>
-                      </TableRow>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-admin-border">
+                      <th className="px-4 py-3 text-left text-admin-muted text-xs font-semibold uppercase tracking-wider">#</th>
+                      <th className="px-4 py-3 text-left text-admin-muted text-xs font-semibold uppercase tracking-wider">User</th>
+                      <th className="px-4 py-3 text-left text-admin-muted text-xs font-semibold uppercase tracking-wider">Description</th>
+                      <th className="px-4 py-3 text-left text-admin-muted text-xs font-semibold uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((user, i) => (
+                      <UserRow key={i} user={user} index={i} onEdit={handleEditUser} />
                     ))}
-                  </TableBody>
-                </Table>
+                  </tbody>
+                </table>
+                {users.length === 0 && (
+                  <p className="text-admin-muted text-sm text-center py-8">No users found.</p>
+                )}
               </div>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Analytics Tab */}
-        <TabsContent value="analytics">
-          <div className="rounded-xl border border-border overflow-hidden">
-            <div className="px-5 py-4 border-b border-border bg-muted/30">
-              <h2 className="font-semibold text-foreground">Platform Analytics</h2>
             </div>
-            {dashboardLoading ? (
-              <div className="p-6 space-y-4">
-                {[...Array(4)].map((_, i) => (
-                  <Skeleton key={i} className="h-16 rounded-xl" />
-                ))}
-              </div>
-            ) : analytics ? (
-              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-border bg-muted/20 p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <span className="font-medium text-foreground">Registered Users</span>
-                  </div>
-                  <p className="text-3xl font-bold text-foreground">
-                    {Number(analytics.totalUsers).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Total user profiles created</p>
-                </div>
+          )}
 
-                <div className="rounded-xl border border-border bg-muted/20 p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Video className="w-5 h-5 text-primary" />
-                    </div>
-                    <span className="font-medium text-foreground">Total Videos</span>
-                  </div>
-                  <p className="text-3xl font-bold text-foreground">
-                    {Number(analytics.totalVideos).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Videos uploaded to the platform</p>
-                </div>
-
-                <div className="rounded-xl border border-border bg-muted/20 p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center">
-                      <MessageSquare className="w-5 h-5 text-green-600" />
-                    </div>
-                    <span className="font-medium text-foreground">Total Comments</span>
-                  </div>
-                  <p className="text-3xl font-bold text-foreground">
-                    {Number(analytics.totalComments).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Comments across all videos</p>
-                </div>
-
-                <div className="rounded-xl border border-border bg-muted/20 p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-amber-600" />
-                    </div>
-                    <span className="font-medium text-foreground">Total Views</span>
-                  </div>
-                  <p className="text-3xl font-bold text-foreground">
-                    {Number(analytics.totalViews).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Cumulative video views</p>
-                </div>
+          {/* VIDEOS SECTION */}
+          {activeSection === 'videos' && (
+            <div className="admin-card rounded-xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-admin-border">
+                <h2 className="text-admin-text font-semibold flex items-center gap-2">
+                  <Video size={18} className="text-admin-violet" />
+                  All Videos ({videos.length})
+                </h2>
               </div>
-            ) : (
-              <div className="py-16 text-center text-muted-foreground">
-                <BarChart3 className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p>No analytics data available</p>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-admin-border">
+                      <th className="px-4 py-3 text-left text-admin-muted text-xs font-semibold uppercase tracking-wider">Title</th>
+                      <th className="px-4 py-3 text-left text-admin-muted text-xs font-semibold uppercase tracking-wider">Uploader</th>
+                      <th className="px-4 py-3 text-left text-admin-muted text-xs font-semibold uppercase tracking-wider">Views</th>
+                      <th className="px-4 py-3 text-left text-admin-muted text-xs font-semibold uppercase tracking-wider">Type</th>
+                      <th className="px-4 py-3 text-left text-admin-muted text-xs font-semibold uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {videos.map((video, i) => (
+                      <VideoRow
+                        key={i}
+                        video={video}
+                        onRemove={handleRemoveVideo}
+                        isRemoving={removingVideo}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+                {videos.length === 0 && (
+                  <p className="text-admin-muted text-sm text-center py-8">No videos found.</p>
+                )}
               </div>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
+            </div>
+          )}
+
+          {/* EARNINGS SECTION */}
+          {activeSection === 'earnings' && (
+            <div className="space-y-6">
+              <EarningsStatsCards
+                stats={earningsStats}
+                isLoading={earningsLoading}
+                error={earningsError as Error | null}
+                onRetry={() => refetchEarnings()}
+              />
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Edit User Modal */}
+      {editUserModalOpen && editingUser && editUserPrincipal && (
+        <EditUserModal
+          open={editUserModalOpen}
+          onClose={handleCloseEditModal}
+          userPrincipal={editUserPrincipal}
+          initialProfile={editingUser}
+        />
+      )}
     </div>
   );
 }

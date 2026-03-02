@@ -1,67 +1,131 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add Dollar Bank Account Withdrawal Feature",
+  "title": "Add Settings Page with Language, Version, Admin, About App, and Download sections",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Create a Dollar Withdrawal page at /withdrawal with balance display, withdrawal form, and transaction history",
+      "id": "REQ-1",
+      "summary": "Create a dedicated Settings page with five distinct sections (Language, Version, Admin, About App, Download App) accessible from app navigation",
       "acceptanceCriteria": [
-        "The page is reachable via a /withdrawal route registered in App.tsx.",
-        "Current USD balance is fetched from the backend and displayed prominently.",
-        "User can enter a withdrawal amount and submit the request.",
-        "An error message is shown if the entered amount exceeds the available balance.",
-        "A table or list of past withdrawal transactions is displayed with amount, date, and status columns.",
-        "The page shows a sign-in prompt for unauthenticated users.",
-        "Loading skeletons are displayed while data is fetching.",
-        "Offline error state is handled using the existing OfflineErrorState component."
+        "A Settings page exists and is reachable via a navigation link (sidebar and/or bottom nav).",
+        "The page renders five distinct sections: Language, Version, Admin, About App, and Download App.",
+        "The page follows the existing dark-mode-first design system (CSS custom properties, Tailwind tokens)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/WithdrawalPage.tsx",
+          "path": "frontend/src/pages/SettingsPage.tsx",
           "operation": "create",
-          "description": "Create the Dollar Withdrawal page component that fetches and displays the current USD balance (converted from cents to dollars with 2 decimal places), provides an input field and submit button for withdrawal requests, validates the amount against available balance, displays a transaction history table with columns for amount, date, and status, shows authentication prompts for unauthenticated users, renders loading skeletons while data is fetching, and uses the OfflineErrorState component for offline scenarios. Use the authorization component's authentication patterns to guard access. Verify the component's usage instructions before implementing."
-        },
+          "description": "Create a new Settings page component that renders five distinct sections in a vertical layout: Language, Version, Admin, About App, and Download App. Use the existing dark-mode design tokens from frontend/src/index.css (mt-charcoal, mt-red, etc.) and Tailwind utility classes. Structure each section as a card or bordered div with a heading and content area. Ensure the page is responsive and accessible."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Embed the existing LanguageSelector component in the Settings page Language section and remove it from the top navigation bar",
+      "acceptanceCriteria": [
+        "The Language section in Settings shows the LanguageSelector dropdown.",
+        "Selecting a language updates the app's LanguageContext and persists to localStorage.",
+        "The LanguageSelector is no longer duplicated in the top navigation bar or other areas."
+      ],
+      "file_operations": [
         {
-          "path": "frontend/src/hooks/useGetCreatorBankAccountState.ts",
-          "operation": "create",
-          "description": "Create a React Query hook that fetches the creator's bank account state (balance and withdrawals) from the backend actor using getCreatorBankAccountState, enabled only when the actor and identity are available. Return the account state with isLoading, isFetching, and error states following the existing query hook patterns in the codebase."
-        },
-        {
-          "path": "frontend/src/hooks/useRequestWithdrawal.ts",
-          "operation": "create",
-          "description": "Create a React Query mutation hook that calls actor.requestWithdrawal with the amount in cents (user enters dollars, convert to cents by multiplying by 100), invalidates the creator bank account query cache on success, and shows a toast notification for success or error states following the existing mutation hook patterns."
-        },
-        {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/pages/SettingsPage.tsx",
           "operation": "modify",
-          "description": "Register a new route at path '/withdrawal' that renders the WithdrawalPage component in the existing router configuration alongside the other page routes (home, video, channel, upload, etc.). Ensure the route is wrapped in the Layout component like other authenticated pages."
+          "description": "In the Language section of the Settings page, import and render the existing LanguageSelector component from frontend/src/components/LanguageSelector.tsx. Add a section heading 'Language' and descriptive text explaining that users can select their preferred app language. The LanguageSelector will automatically handle language switching via LanguageContext."
+        },
+        {
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "modify",
+          "description": "Remove or hide the LanguageSelector component from the top navigation bar to avoid duplication. Locate where LanguageSelector is currently rendered in the Layout component and remove that JSX block. Ensure the removal does not break the existing navigation layout or styling."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Add 'Withdraw' navigation link with wallet icon to sidebar and bottom navigation bar",
+      "summary": "Display the current app version string as a read-only informational row in the Version section",
       "acceptanceCriteria": [
-        "A 'Withdraw' link with a wallet or cash icon appears in the desktop sidebar.",
-        "A 'Withdraw' tab appears in the BottomNav component on mobile.",
-        "Clicking the link navigates to /withdrawal."
+        "The Version section displays a label 'App Version' and a version string.",
+        "The version info is read-only (no editable fields)."
       ],
       "file_operations": [
         {
+          "path": "frontend/src/pages/SettingsPage.tsx",
+          "operation": "modify",
+          "description": "In the Version section of the Settings page, add a read-only row displaying 'App Version' as a label and a hardcoded version string (e.g., 'v1.0.0') as the value. Use a flexbox or grid layout to align the label and value horizontally. Style the row to match the existing design system (e.g., border-b divider, padding, text colors)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Show an 'Admin Dashboard' navigation link in the Admin section, visible only to admin users",
+      "acceptanceCriteria": [
+        "The Admin section row is hidden for non-admin and unauthenticated users.",
+        "For admin users, the row is visible and clicking it navigates to the Admin Dashboard.",
+        "The admin check uses the existing useIsCallerAdmin hook."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/SettingsPage.tsx",
+          "operation": "modify",
+          "description": "In the Admin section of the Settings page, import and use the useIsCallerAdmin hook from frontend/src/hooks/useIsCallerAdmin.ts. Conditionally render an 'Admin Dashboard' navigation link only if useIsCallerAdmin returns true. Use TanStack Router's Link component or useNavigate hook to navigate to the existing Admin Dashboard route when clicked. Hide the entire Admin section (or show a placeholder message) for non-admin users."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Display static informational content about the Mediatube app in the About App section (name, description, policy links, contact)",
+      "acceptanceCriteria": [
+        "The About App section displays the app name 'Mediatube' and a short description.",
+        "Links to Copyright Policy (existing CopyrightPolicyPage) are present and functional.",
+        "The section is visible to all users regardless of authentication state."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/SettingsPage.tsx",
+          "operation": "modify",
+          "description": "In the About App section of the Settings page, display the app name 'Mediatube' as a heading or bold text, followed by a short description (e.g., 'A modern video sharing platform'). Add navigation links to the existing CopyrightPolicyPage route using TanStack Router's Link component. Include contact or support information (e.g., email, support link) as plain text or links. Ensure this section is always visible to all users."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Display a button or link in the Download App section that navigates to the existing Download App page",
+      "acceptanceCriteria": [
+        "The Download section row shows a 'Download Mediatube App' label with Android and iOS indicators.",
+        "Clicking the row navigates to the existing DownloadAppPage.",
+        "The section is visible to all users."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/SettingsPage.tsx",
+          "operation": "modify",
+          "description": "In the Download App section of the Settings page, add a clickable row or button that displays the label 'Download Mediatube App' along with Android and iOS platform icons (use lucide-react icons or inline SVGs). Use TanStack Router's Link component or useNavigate hook to navigate to the existing DownloadAppPage route (e.g., /download-app) when clicked. Style the row to be visually distinct and indicate it is clickable (hover effects, cursor pointer). Ensure the section is visible to all users."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Register the Settings page route in the TanStack Router route tree and add Settings navigation entries to the sidebar and bottom nav",
+      "acceptanceCriteria": [
+        "Navigating to /settings renders the Settings page.",
+        "A Settings link with an icon appears in the sidebar.",
+        "The active route is correctly highlighted when on the Settings page."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Register a new route for the Settings page in the TanStack Router route tree. Import SettingsPage from frontend/src/pages/SettingsPage.tsx and add a route definition with path '/settings' that renders the SettingsPage component. Ensure the route is properly nested under the root route alongside other main routes (Home, Shorts, Reels, etc.)."
+        },
+        {
           "path": "frontend/src/components/Layout.tsx",
           "operation": "modify",
-          "description": "Add a 'Withdraw' navigation link to the desktop sidebar navigation menu with a wallet icon (use lucide-react's Wallet icon), positioned after the Monetization link and before Admin Dashboard. The link should navigate to /withdrawal and use the same styling and active state logic as other sidebar links. Add multilingual label support by adding 'withdraw' key to the translations map if needed."
+          "description": "Add a 'Settings' navigation link to the sidebar navigation in the Layout component. Import an appropriate settings icon from lucide-react (e.g., Settings or Settings2) and add a new Link entry pointing to '/settings'. Position the Settings link logically within the sidebar (e.g., after Profile or at the bottom of the main navigation items). Ensure the active route highlighting works correctly when on the Settings page by checking the current route path."
         },
         {
           "path": "frontend/src/components/BottomNav.tsx",
           "operation": "modify",
-          "description": "Add a 'Withdraw' tab to the mobile bottom navigation bar using the Wallet icon from lucide-react, positioned between Community and Profile tabs. The tab should link to /withdrawal and follow the existing styling and active state patterns. Add multilingual label support by using the translations context with a 'withdraw' key."
-        },
-        {
-          "path": "frontend/src/i18n/translations.ts",
-          "operation": "modify",
-          "description": "Add a 'withdraw' translation key to all language objects in the translations map with appropriate translations (e.g., 'Withdraw' for English, 'Retirar' for Spanish, etc.) to support the new withdrawal navigation labels in the sidebar and bottom navigation."
+          "description": "Add a 'Settings' navigation entry to the bottom navigation bar in BottomNav.tsx. Import a settings icon from lucide-react (e.g., Settings or Settings2) and add a new nav item linking to '/settings'. Position it appropriately among the existing nav items (Home, Shorts, Reels, Subscriptions, Profile). Ensure the active route is highlighted correctly when on the Settings page by comparing the current route path. Consider screen space constraints and ensure all nav items remain visible and accessible on mobile devices."
         }
       ]
     }

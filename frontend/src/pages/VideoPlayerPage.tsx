@@ -47,7 +47,6 @@ export default function VideoPlayerPage() {
   const { data: allVideos = [], isLoading: videosLoading, refetch: refetchAllVideos } = useGetAllVideos();
   const { mutate: incrementViewCount } = useIncrementViewCount();
 
-  // video.uploader is a Principal — pass it directly (undefined-safe)
   const uploaderPrincipal = video?.uploader as Principal | undefined;
   const { data: uploaderProfile } = useGetUserProfile(uploaderPrincipal);
 
@@ -91,9 +90,9 @@ export default function VideoPlayerPage() {
   if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <Skeleton className="w-full aspect-video rounded-xl mb-4" />
-        <Skeleton className="h-8 w-3/4 mb-2" />
-        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="w-full aspect-video rounded-xl mb-4 bg-mt-charcoal-800" />
+        <Skeleton className="h-8 w-3/4 mb-2 bg-mt-charcoal-800" />
+        <Skeleton className="h-4 w-1/2 bg-mt-charcoal-800" />
       </div>
     );
   }
@@ -107,7 +106,7 @@ export default function VideoPlayerPage() {
             message="Unable to load video. Please check your internet connection."
           />
         ) : (
-          <p className="text-muted-foreground">Video not found.</p>
+          <p className="text-mt-charcoal-400">Video not found.</p>
         )}
       </div>
     );
@@ -116,104 +115,114 @@ export default function VideoPlayerPage() {
   const uploaderName = uploaderProfile?.name || video.uploader.toString().slice(0, 8) + '...';
   const uploaderHandle = uploaderProfile?.handle || '';
 
-  // Use the correct route param name: principalId (matches /channel/$principalId in App.tsx)
   const channelLinkProps = {
     to: '/channel/$principalId' as const,
     params: { principalId: video.uploader.toString() },
   };
 
+  const viewCount = Number(video.viewCount);
+  const uploadDate = Number(video.uploadDate) / 1_000_000;
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
-      <div className={`flex gap-6 ${theatreMode ? 'flex-col' : 'flex-col lg:flex-row'}`}>
+      <div className={`flex gap-6 ${theatreMode ? 'flex-col' : 'flex-col xl:flex-row'}`}>
         {/* Main content */}
         <div className={theatreMode ? 'w-full' : 'flex-1 min-w-0'}>
-          {/* Video Player */}
-          <div className="relative">
+          {/* Video Player — pass video object and chapters as expected by VideoPlayer */}
+          <div className="rounded-xl overflow-hidden mb-4 bg-black">
             <VideoPlayer video={video} chapters={chapters} />
-            {/* Theatre mode toggle */}
-            <button
-              onClick={() => setTheatreMode((v) => !v)}
-              className="absolute bottom-14 right-14 z-10 w-8 h-8 bg-black/60 hover:bg-black/80 rounded flex items-center justify-center transition-colors"
-              title={theatreMode ? 'Exit theatre mode' : 'Theatre mode'}
-            >
-              {theatreMode ? (
-                <Minimize2 className="w-4 h-4 text-white" />
-              ) : (
-                <Maximize2 className="w-4 h-4 text-white" />
-              )}
-            </button>
           </div>
 
           {/* Video Info */}
-          <div className="mt-4">
-            <h1 className="text-xl font-bold text-foreground leading-tight">{video.title}</h1>
-            <div className="flex flex-wrap items-center justify-between gap-3 mt-3">
+          <div className="bg-mt-charcoal-900 border border-mt-charcoal-800 rounded-xl p-4 mb-4 shadow-card">
+            <h1 className="text-xl font-display font-bold text-foreground mb-3">{video.title}</h1>
+
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* Channel info */}
               <div className="flex items-center gap-3">
-                {/* Uploader avatar */}
-                <Link {...channelLinkProps} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                  <div className="w-9 h-9 rounded-full overflow-hidden bg-muted border border-border">
+                <Link {...channelLinkProps}>
+                  <div className="w-10 h-10 rounded-full bg-mt-charcoal-700 overflow-hidden flex items-center justify-center">
                     {avatarUrl ? (
                       <img src={avatarUrl} alt={uploaderName} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-sm font-bold text-muted-foreground">
-                        {uploaderName.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{uploaderName}</p>
-                    {uploaderHandle && (
-                      <p className="text-xs text-muted-foreground">@{uploaderHandle}</p>
+                      <span className="text-sm font-bold text-foreground">
+                        {uploaderName.slice(0, 2).toUpperCase()}
+                      </span>
                     )}
                   </div>
                 </Link>
-                {/* SubscribeButton expects channelPrincipal: Principal */}
-                <SubscribeButton channelPrincipal={video.uploader as Principal} />
+                <div>
+                  <Link {...channelLinkProps}>
+                    <p className="font-semibold text-foreground hover:text-mt-red-400 transition-colors">
+                      {uploaderName}
+                    </p>
+                  </Link>
+                  {uploaderHandle && (
+                    <p className="text-xs text-mt-charcoal-400">@{uploaderHandle}</p>
+                  )}
+                </div>
+                {uploaderPrincipal && (
+                  <SubscribeButton channelPrincipal={uploaderPrincipal} />
+                )}
               </div>
 
               {/* Actions */}
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="gap-1.5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-1.5 text-mt-charcoal-300 hover:text-foreground hover:bg-mt-charcoal-800 rounded-full"
+                >
                   <ThumbsUp className="w-4 h-4" />
                   Like
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1.5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-1.5 text-mt-charcoal-300 hover:text-foreground hover:bg-mt-charcoal-800 rounded-full"
+                >
                   <ThumbsDown className="w-4 h-4" />
                 </Button>
-                <ShareButton videoId={video.id} iconOnly={false} />
+                <ShareButton videoId={video.id} />
                 <AddToPlaylistButton videoId={video.id} />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setTheatreMode(!theatreMode)}
+                  className="text-mt-charcoal-300 hover:text-foreground hover:bg-mt-charcoal-800 rounded-full"
+                  title={theatreMode ? 'Exit theatre mode' : 'Theatre mode'}
+                >
+                  {theatreMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </Button>
               </div>
             </div>
 
             {/* Stats */}
-            <div className="mt-3 text-sm text-muted-foreground flex gap-3">
-              <span>{formatViewCount(Number(video.viewCount))} views</span>
+            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-mt-charcoal-800 text-sm text-mt-charcoal-400">
+              <span>{formatViewCount(viewCount)} views</span>
               <span>•</span>
-              <span>{formatTimeAgo(Number(video.uploadDate))}</span>
+              <span>{formatTimeAgo(uploadDate)}</span>
             </div>
 
             {/* Description */}
             {video.description && (
-              <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                <p className="text-sm text-foreground whitespace-pre-wrap">{video.description}</p>
+              <div className="mt-3 pt-3 border-t border-mt-charcoal-800">
+                <p className="text-sm text-mt-charcoal-300 whitespace-pre-wrap leading-relaxed">
+                  {video.description}
+                </p>
               </div>
             )}
           </div>
 
           {/* Comments */}
-          <div className="mt-6">
-            <CommentsSection videoId={video.id} />
-          </div>
+          <CommentsSection videoId={video.id} />
         </div>
 
-        {/* Sidebar - hidden in theatre mode; pass required videos prop */}
+        {/* Sidebar: Recommended */}
         {!theatreMode && (
-          <div className="w-full lg:w-80 shrink-0">
-            <RecommendedVideos
-              videos={allVideos}
-              isLoading={videosLoading}
-              currentVideoId={video.id}
-            />
+          <div className="xl:w-80 shrink-0">
+            <h3 className="text-sm font-display font-bold text-foreground mb-3">Up Next</h3>
+            <RecommendedVideos currentVideoId={video.id} />
           </div>
         )}
       </div>

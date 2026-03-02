@@ -1,42 +1,58 @@
 import React, { useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Loader2, MessageSquare } from 'lucide-react';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useGetComments } from '../hooks/useGetComments';
 import { useAddComment } from '../hooks/useAddComment';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
 import { useGetUserProfile } from '../hooks/useGetUserProfile';
-import { convertBlobToDataURL, getInitials } from '../utils/avatarHelpers';
 import { formatTimeAgo } from '../utils/formatters';
-import type { Principal } from '@dfinity/principal';
-import type { Comment } from '../backend';
+import { convertBlobToDataURL } from '../utils/avatarHelpers';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2, MessageSquare, Send } from 'lucide-react';
 
 interface CommentItemProps {
-  comment: Comment;
+  comment: {
+    id: string;
+    author: import('@dfinity/principal').Principal;
+    content: string;
+    timestamp: bigint;
+  };
 }
 
 function CommentItem({ comment }: CommentItemProps) {
-  const { data: authorProfile } = useGetUserProfile(comment.author as unknown as Principal);
-  const avatarUrl = authorProfile?.avatar ? convertBlobToDataURL(authorProfile.avatar) : null;
+  const { data: profile } = useGetUserProfile(comment.author);
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    async function load() {
+      if (profile?.avatar) {
+        const url = await convertBlobToDataURL(profile.avatar);
+        setAvatarUrl(url);
+      }
+    }
+    load();
+  }, [profile]);
+
+  const name = profile?.name || comment.author.toString().slice(0, 8) + '...';
+  const initials = name.slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex gap-3">
-      <Avatar className="h-8 w-8 shrink-0">
-        {avatarUrl && <AvatarImage src={avatarUrl} />}
-        <AvatarFallback className="text-xs bg-muted">
-          {getInitials(authorProfile?.name || '?')}
+    <div className="flex gap-3 py-3 border-b border-mt-charcoal-800 last:border-0">
+      <Avatar className="w-8 h-8 shrink-0">
+        {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
+        <AvatarFallback className="bg-mt-charcoal-700 text-mt-charcoal-300 text-xs font-bold">
+          {initials}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-sm font-medium">{authorProfile?.name || 'Anonymous'}</span>
-          <span className="text-xs text-muted-foreground">
-            {formatTimeAgo(Number(comment.timestamp))}
+          <span className="text-sm font-semibold text-foreground">{name}</span>
+          <span className="text-xs text-mt-charcoal-500">
+            {formatTimeAgo(Number(comment.timestamp) / 1_000_000)}
           </span>
         </div>
-        <p className="text-sm text-foreground/90 break-words">{comment.content}</p>
+        <p className="text-sm text-mt-charcoal-200 leading-relaxed">{comment.content}</p>
       </div>
     </div>
   );
@@ -50,94 +66,69 @@ export default function CommentsSection({ videoId }: CommentsSectionProps) {
   const { identity } = useInternetIdentity();
   const { googleUser } = useGoogleAuth();
   const isAuthenticated = !!identity || !!googleUser;
+  const [newComment, setNewComment] = useState('');
 
-  const { data: comments = [], isLoading } = useGetComments(videoId);
-  const { mutateAsync: addComment, isPending } = useAddComment();
-  const [commentText, setCommentText] = useState('');
+  const { data: comments, isLoading } = useGetComments(videoId);
+  const { mutate: addComment, isPending } = useAddComment();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentText.trim() || !isAuthenticated) return;
-    try {
-      await addComment({ videoId, content: commentText.trim() });
-      setCommentText('');
-    } catch {
-      // error handled by mutation
-    }
+    if (!newComment.trim()) return;
+    addComment({ videoId, content: newComment.trim() }, {
+      onSuccess: () => setNewComment(''),
+    });
   };
 
   return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
-        <MessageSquare className="h-5 w-5" />
-        {comments.length} Comments
-      </h3>
+    <div className="bg-mt-charcoal-900 rounded-xl p-4 border border-mt-charcoal-800">
+      <div className="flex items-center gap-2 mb-4">
+        <MessageSquare className="w-5 h-5 text-mt-red-500" />
+        <h3 className="text-base font-display font-bold text-foreground">
+          Comments {comments && <span className="text-mt-charcoal-400 font-normal text-sm">({comments.length})</span>}
+        </h3>
+      </div>
 
       {/* Comment Input */}
       {isAuthenticated ? (
-        <form onSubmit={handleSubmit} className="flex gap-3">
-          <Avatar className="h-9 w-9 shrink-0">
-            {googleUser?.picture && <AvatarImage src={googleUser.picture} />}
-            <AvatarFallback className="text-xs bg-primary/20">
-              {googleUser ? getInitials(googleUser.name) : 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 space-y-2">
-            <Textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Add a comment..."
-              className="min-h-[80px] resize-none"
-              disabled={isPending}
-            />
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setCommentText('')}
-                disabled={isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={!commentText.trim() || isPending}
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    Posting...
-                  </>
-                ) : (
-                  'Comment'
-                )}
-              </Button>
-            </div>
-          </div>
+        <form onSubmit={handleSubmit} className="flex gap-3 mb-4">
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Add a comment..."
+            className="flex-1 h-10 px-4 bg-mt-charcoal-800 border border-mt-charcoal-700 rounded-full text-sm text-foreground placeholder:text-mt-charcoal-500 focus:outline-none focus:border-mt-red-500 focus:ring-1 focus:ring-mt-red-500 transition-colors"
+          />
+          <Button
+            type="submit"
+            disabled={isPending || !newComment.trim()}
+            size="sm"
+            className="bg-mt-red-500 hover:bg-mt-red-600 text-white border-0 rounded-full px-4"
+          >
+            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          </Button>
         </form>
       ) : (
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/50 border border-border">
-          <MessageSquare className="h-5 w-5 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            Sign in to leave a comment
-          </p>
-        </div>
+        <p className="text-sm text-mt-charcoal-400 mb-4 italic">Sign in to leave a comment</p>
       )}
 
       {/* Comments List */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex gap-3">
+              <Skeleton className="w-8 h-8 rounded-full bg-mt-charcoal-800" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-3 w-1/4 bg-mt-charcoal-800" />
+                <Skeleton className="h-4 w-3/4 bg-mt-charcoal-800" />
+              </div>
+            </div>
+          ))}
         </div>
-      ) : comments.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-8">
-          No comments yet. Be the first to comment!
-        </p>
+      ) : comments?.length === 0 ? (
+        <p className="text-sm text-mt-charcoal-500 text-center py-6">No comments yet. Be the first!</p>
       ) : (
-        <div className="space-y-4">
-          {comments.map((comment) => (
+        <div>
+          {comments?.map(comment => (
             <CommentItem key={comment.id} comment={comment} />
           ))}
         </div>
